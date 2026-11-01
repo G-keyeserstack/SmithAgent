@@ -265,14 +265,16 @@ describe("storage path resolution", () => {
 		process.env.CLINE_DIR = "/tmp/home/.cline";
 		delete process.env.MAKERRR_DIR;
 		setHomeDir("/tmp/home");
-
-		expect(resolveAgentsConfigDirPath()).toBe(
-			join("/tmp/home", ".makerrr", AGENT_CONFIG_DIRECTORY_NAME),
-		);
-		expect(resolveAgentConfigSearchPaths()).toContain(
-			join("/tmp/home", ".cline", AGENT_CONFIG_DIRECTORY_NAME),
-		);
-		setHomeDir(previousHome);
+		try {
+			expect(resolveAgentsConfigDirPath()).toBe(
+				join("/tmp/home", ".makerrr", AGENT_CONFIG_DIRECTORY_NAME),
+			);
+			expect(resolveAgentConfigSearchPaths()).toContain(
+				join("/tmp/home", ".cline", AGENT_CONFIG_DIRECTORY_NAME),
+			);
+		} finally {
+			setHomeDir(previousHome);
+		}
 	});
 
 	it("resolves global hooks from ~/.cline", () => {
