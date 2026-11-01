@@ -192,6 +192,7 @@ for (const item of targets) {
 				cpu: [item.arch],
 				...(repository ? { repository } : {}),
 				bin: {
+					makerrr: `bin/${binaryName}`,
 					cline: `bin/${binaryName}`,
 				},
 			},
