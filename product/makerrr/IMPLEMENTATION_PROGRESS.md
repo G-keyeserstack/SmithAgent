@@ -9,9 +9,12 @@
 - Canonical global root: `~/.makerrr/`.
 - Runtime data root: `~/.makerrr/data/`.
 - Project configuration root: `.makerrr/`.
+- New global Documents-based context files use `Documents/Makerrr/`; `Documents/Cline/` remains discoverable.
 - Explicit overrides: `MAKERRR_DIR`, `MAKERRR_DATA_DIR`, `MAKERRR_GLOBAL_SETTINGS_PATH`, `MAKERRR_PROVIDER_SETTINGS_PATH`, `MAKERRR_MCP_SETTINGS_PATH`.
 - Explicit legacy `CLINE_DIR` and `CLINE_DATA_DIR` values are captured as compatibility/migration sources.
+- Shared SDK storage now defaults to Makerrr for CLI, VS Code, desktop and other clients using the shared path resolver.
 - Global and workspace discovery now prefers Makerrr rules, skills, hooks, workflows, agents and plugins while retaining legacy Cline locations.
+- Existing Cline session, team, connector, database and chat-workspace directories remain the active runtime stores when present. New users use Makerrr data directories; existing runtime stores are not silently hidden or split between two databases.
 - MCP settings now use `makerrr_mcp_settings.json`; the migration maps the old Cline MCP file to this name.
 - CLI migration defaults to preview. Actual copying requires `makerrr migrate --yes`.
 - VS Code offers a one-time consent prompt before copying settings.
@@ -26,7 +29,7 @@
 - Legacy `cline` wrapper and internal `@cline/*` workspace package identifiers remain for compatibility.
 - `makerrr search` reuses the SDK's existing bounded ripgrep/regex content-search executor.
 - `makerrr context` aliases the existing configuration inspector for rules, skills, workflows, agents, plugins and MCP.
-- Makerrr-prefixed VCR variables are supported with Cline-prefixed fallback.
+- Makerrr-prefixed VCR and sandbox variables are supported with Cline-prefixed fallback.
 - CLI README has been rewritten to reflect development status and current migration boundaries.
 
 ### Edit safety
@@ -42,6 +45,7 @@
 
 - Clean install, build, typecheck, unit and integration test runs.
 - Full workspace-wide audit of Cline identifiers and persistent storage consumers.
+- Offline migration of legacy SQLite/session/runtime data into Makerrr data paths.
 - Migration of SQLite sessions, teams, connector state and other runtime data.
 - A Makerrr-owned configuration migration UI/rollback report across all clients.
 - Unified VS Code/CLI file-picker backend. CLI content search now shares the SDK executor; the VS Code file picker retains its host-native fuzzy file discovery path.
