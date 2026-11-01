@@ -18,7 +18,7 @@ import {
 	resolve,
 } from "node:path";
 import type { PluginManifest } from "..";
-import { resolveLegacyClineDir } from "./makerrr-paths";
+import { resolveLegacyClineDataDir, resolveLegacyClineDir } from "./makerrr-paths";
 import {
 	CLINE_CHAT_WORKSPACE_DIRECTORY_NAME,
 	CLINE_WORKSPACES_DIRECTORY_NAME,
@@ -212,6 +212,21 @@ export function resolveClineDataDir(): string {
 	return join(resolveClineDir(), "data");
 }
 
+
+/**
+ * Keep existing runtime data visible until an explicit offline migration has
+ * moved it. New data goes to Makerrr; if the Makerrr subdirectory is not yet
+ * present but the corresponding Cline directory exists, continue using the
+ * legacy directory rather than silently presenting an empty history.
+ */
+function resolveRuntimeDataSubdirectory(name: string): string {
+	const makerrrPath = join(resolveClineDataDir(), name);
+	const legacyPath = join(resolveLegacyClineDataDir(), name);
+	return !existsSync(makerrrPath) && existsSync(legacyPath)
+		? legacyPath
+		: makerrrPath;
+}
+
 export function resolveSessionDataDir(): string {
 	const explicitDir =
 		process.env.MAKERRR_SESSION_DATA_DIR?.trim() ||
@@ -219,7 +234,7 @@ export function resolveSessionDataDir(): string {
 	if (explicitDir) {
 		return explicitDir;
 	}
-	return join(resolveClineDataDir(), "sessions");
+	return resolveRuntimeDataSubdirectory("sessions");
 }
 
 export function resolveTeamDataDir(): string {
@@ -229,7 +244,7 @@ export function resolveTeamDataDir(): string {
 	if (explicitDir) {
 		return explicitDir;
 	}
-	return join(resolveClineDataDir(), "teams");
+	return resolveRuntimeDataSubdirectory("teams");
 }
 
 export function resolveConnectorDataDir(): string {
@@ -239,7 +254,7 @@ export function resolveConnectorDataDir(): string {
 	if (explicitDir) {
 		return explicitDir;
 	}
-	return join(resolveClineDataDir(), "connectors");
+	return resolveRuntimeDataSubdirectory("connectors");
 }
 
 /**
@@ -279,7 +294,7 @@ export function resolveDbDataDir(): string {
 	if (explicitDir) {
 		return explicitDir;
 	}
-	return join(resolveClineDataDir(), "db");
+	return resolveRuntimeDataSubdirectory("db");
 }
 
 /**
