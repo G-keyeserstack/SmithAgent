@@ -1,5 +1,6 @@
 {
 	"name": "@cline/sdk",
+	"x-makerrr-attribution": "Based on Cline (Apache-2.0)",
 	"description": "Cline SDK - user-facing alias for @cline/core",
 	"version": "0.2.0",
 	"repository": {
