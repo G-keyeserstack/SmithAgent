@@ -3,17 +3,17 @@ export const CLINE_CHAT_WORKSPACE_DIRECTORY_NAME = "chat";
 
 // Default data-dir anchors for the structural check below. The Node resolver
 // derives the real location from resolveClineDataDir(), which defaults to
-// `~/.cline/data`.
+// `~/.makerrr/data` while retaining legacy Cline runtime data when present.
 const CLINE_CONFIG_DIRECTORY_NAME = ".cline";
 const MAKERRR_CONFIG_DIRECTORY_NAME = ".makerrr";
 const CLINE_DATA_DIRECTORY_NAME = "data";
 
 /**
  * Browser-safe structural check for the shared chat workspace that hosts
- * sessions started without a project: `~/.makerrr/data/workspaces/chat` or the legacy `~/.cline/data/workspaces/chat`. Matches
- * the directory itself only — project folders created inside it are regular
- * workspaces. Matches the default data-dir layout; explicit `CLINE_DATA_DIR`
- * overrides are not detectable from a bare path string.
+ * sessions started without a project. Recognizes both Makerrr and legacy
+ * Cline default data layouts. Matches the directory itself only — project
+ * folders created inside it are regular workspaces. Explicit data-dir overrides
+ * are not detectable from a bare path string.
  */
 export function isChatWorkspacePath(path: string): boolean {
 	const normalizedPath = path.trim();
