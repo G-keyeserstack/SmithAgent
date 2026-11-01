@@ -301,9 +301,7 @@ export function migrateLegacyRuntimeData(options: {
 				readFileSync(journalPath, "utf8"),
 			) as RuntimeMigrationJournal;
 			if (previous.phase !== "committed" && previous.phase !== "rolled-back") {
-				throw new Error(
-					"An interrupted migration journal must be recovered before retrying: " + journalPath,
-				);
+				recoverInterruptedRuntimeMigration(destination);
 			}
 		}
 		writeJournal(journalPath, journal);
