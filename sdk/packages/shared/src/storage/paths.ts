@@ -161,12 +161,14 @@ export function setClineDirIfUnset(dir: string): void {
 }
 
 export function resolveClineDir(): string {
-	if (CLINE_DIR_SET_EXPLICITLY && CLINE_DIR) {
-		return CLINE_DIR;
-	}
+	// The Makerrr-specific environment override is canonical and must win over
+	// any in-process Cline compatibility path left by an older client.
 	const makerrrDir = process.env.MAKERRR_DIR?.trim();
 	if (makerrrDir) {
 		return makerrrDir;
+	}
+	if (CLINE_DIR_SET_EXPLICITLY && CLINE_DIR) {
+		return CLINE_DIR;
 	}
 	if (CLINE_DIR) {
 		return CLINE_DIR;
