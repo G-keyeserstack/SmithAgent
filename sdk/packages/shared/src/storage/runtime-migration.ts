@@ -188,11 +188,32 @@ function lockPathFor(destinationDataDir: string): string {
 	return destinationDataDir + ".migration.lock";
 }
 
+function clearStaleMigrationLock(lockPath: string): void {
+	if (!existsSync(lockPath)) return;
+	let lock: { pid?: number } | undefined;
+	try {
+		lock = JSON.parse(readFileSync(lockPath, "utf8")) as { pid?: number };
+	} catch {
+		throw new Error("Migration lock is unreadable; inspect it before removing: " + lockPath);
+	}
+	if (!Number.isInteger(lock?.pid) || (lock?.pid ?? 0) <= 0) {
+		throw new Error("Migration lock has no valid owner PID; inspect it before removing: " + lockPath);
+	}
+	try {
+		process.kill(lock.pid!, 0);
+		throw new Error("A Makerrr migration is still running (PID " + lock.pid + "): " + lockPath);
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
+		rmSync(lockPath, { force: true });
+	}
+}
+
 export function recoverInterruptedRuntimeMigration(
 	destinationDataDir: string,
 ): RuntimeMigrationJournal | undefined {
 	const destination = resolve(destinationDataDir);
 	const journalPath = journalPathFor(destination);
+	clearStaleMigrationLock(lockPathFor(destination));
 	if (!existsSync(journalPath)) return undefined;
 	const journal = JSON.parse(
 		readFileSync(journalPath, "utf8"),
@@ -265,12 +286,23 @@ export function migrateLegacyRuntimeData(options: {
 		};
 	}
 
+	if (existsSync(journalPath)) {
+		const previous = JSON.parse(
+			readFileSync(journalPath, "utf8"),
+		) as RuntimeMigrationJournal;
+		if (previous.phase !== "committed" && previous.phase !== "rolled-back") {
+			recoverInterruptedRuntimeMigration(destination);
+		}
+	}
+
 	const parent = dirname(destination);
 	mkdirSync(parent, { recursive: true, mode: 0o700 });
 	const lockPath = lockPathFor(destination);
+	clearStaleMigrationLock(lockPath);
 	let lockFd: number | undefined;
 	try {
 		lockFd = openSync(lockPath, "wx", 0o600);
+		writeFileSync(lockFd, JSON.stringify({ pid: process.pid, createdAt: new Date().toISOString() }) + "\n");
 	} catch {
 		throw new Error(
 			"Another Makerrr migration is running, or a stale migration lock exists: " + lockPath,
@@ -296,14 +328,6 @@ export function migrateLegacyRuntimeData(options: {
 		snapshottedDatabases: [],
 	};
 	try {
-		if (existsSync(journalPath)) {
-			const previous = JSON.parse(
-				readFileSync(journalPath, "utf8"),
-			) as RuntimeMigrationJournal;
-			if (previous.phase !== "committed" && previous.phase !== "rolled-back") {
-				recoverInterruptedRuntimeMigration(destination);
-			}
-		}
 		writeJournal(journalPath, journal);
 		mkdirSync(stagingDir, { recursive: true, mode: 0o700 });
 		if (hadDestination) {
@@ -370,9 +394,11 @@ export function rollbackLegacyRuntimeMigration(
 		throw new Error("Only a committed migration can be rolled back (phase: " + journal.phase + ")");
 	}
 	const lockPath = lockPathFor(destination);
+	clearStaleMigrationLock(lockPath);
 	let lockFd: number;
 	try {
 		lockFd = openSync(lockPath, "wx", 0o600);
+		writeFileSync(lockFd, JSON.stringify({ pid: process.pid, createdAt: new Date().toISOString() }) + "\n");
 	} catch {
 		throw new Error("Cannot roll back while another migration holds the lock: " + lockPath);
 	}
