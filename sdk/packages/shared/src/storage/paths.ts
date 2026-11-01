@@ -219,6 +219,16 @@ export function resolveClineDataDir(): string {
  * databases or silently presenting an empty history. New users use Makerrr.
  */
 function resolveRuntimeDataSubdirectory(name: string): string {
+	// Explicit Makerrr overrides always win. Legacy discovery is only a
+	// compatibility fallback when the user has not selected a Makerrr root.
+	const explicitMakerrrDataDir = process.env.MAKERRR_DATA_DIR?.trim();
+	if (explicitMakerrrDataDir) {
+		return join(explicitMakerrrDataDir, name);
+	}
+	const explicitMakerrrDir = process.env.MAKERRR_DIR?.trim();
+	if (explicitMakerrrDir) {
+		return join(explicitMakerrrDir, "data", name);
+	}
 	const makerrrPath = join(resolveClineDataDir(), name);
 	const legacyPath = join(resolveLegacyClineDataDir(), name);
 	return existsSync(legacyPath) ? legacyPath : makerrrPath;
