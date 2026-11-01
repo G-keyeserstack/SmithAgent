@@ -204,14 +204,18 @@ export function resolveLegacyDocumentsExtensionPath(
 
 export function resolveClineDataDir(): string {
 	const makerrrDataDir = resolveMakerrrDataDir();
-	const legacyOverride = process.env.CLINE_DATA_DIR?.trim();
 	if (process.env.MAKERRR_DATA_DIR?.trim()) {
 		return makerrrDataDir;
 	}
 	if (!hasCommittedRuntimeMigration(makerrrDataDir)) {
-		if (legacyOverride) return legacyOverride;
 		const legacyDataDir = resolveLegacyClineDataDir();
-		if (existsSync(legacyDataDir)) return legacyDataDir;
+		const hasLegacyOverride = [
+			process.env.MAKERRR_LEGACY_CLINE_DIR,
+			process.env.MAKERRR_LEGACY_CLINE_DATA_DIR,
+			process.env.CLINE_DIR,
+			process.env.CLINE_DATA_DIR,
+		].some((value) => !!value?.trim());
+		if (hasLegacyOverride || existsSync(legacyDataDir)) return legacyDataDir;
 	}
 	return makerrrDataDir;
 }
@@ -256,16 +260,10 @@ function hasCommittedRuntimeMigration(destinationDataDir: string): boolean {
 }
 
 function resolveRuntimeDataSubdirectory(name: string): string {
-	const makerrrDataDir = resolveMakerrrDataDir();
-	const makerrrPath = join(makerrrDataDir, name);
-	const legacyPath = join(resolveLegacyClineDataDir(), name);
-	// Once a journaled migration commits, every client using this shared
-	// resolver must switch to the staged Makerrr store even though the
-	// untouched Cline source directory still exists for rollback/audit.
-	if (hasCommittedRuntimeMigration(makerrrDataDir)) {
-		return makerrrPath;
-	}
-	return existsSync(legacyPath) ? legacyPath : makerrrPath;
+	// Use one canonical root for sessions, teams, connectors and databases.
+	// resolveClineDataDir preserves legacy overrides until a committed
+	// migration journal makes the Makerrr destination authoritative.
+	return join(resolveClineDataDir(), name);
 }
 
 export function resolveSessionDataDir(): string {
