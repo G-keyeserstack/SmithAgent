@@ -63,7 +63,7 @@ describe("plugin install service", () => {
 			"cline_mcp_settings.json",
 		);
 		setHomeDir(home);
-		setClineDir(process.env.CLINE_DIR);
+		setClineDir(process.env.MAKERRR_DIR);
 	});
 
 	afterEach(() => {
@@ -156,7 +156,7 @@ describe("plugin install service", () => {
 		expect(result.installPath).toContain(join(home, ".makerrr", "plugins"));
 		expect(result.entryPaths).toHaveLength(1);
 		expect(existsSync(result.entryPaths[0] ?? "")).toBe(true);
-		expect(discoverPluginModulePaths(join(home, ".cline", "plugins"))).toEqual(
+		expect(discoverPluginModulePaths(join(home, ".makerrr", "plugins"))).toEqual(
 			result.entryPaths,
 		);
 	});
