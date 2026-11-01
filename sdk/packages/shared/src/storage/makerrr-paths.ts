@@ -52,7 +52,9 @@ export function resolveLegacyClineDir(): string {
 }
 
 export function resolveLegacyClineDataDir(): string {
-	const configured = process.env.CLINE_DATA_DIR?.trim();
+	const configured =
+		process.env.MAKERRR_LEGACY_CLINE_DATA_DIR?.trim() ||
+		process.env.CLINE_DATA_DIR?.trim();
 	return configured || join(resolveLegacyClineDir(), "data");
 }
 
