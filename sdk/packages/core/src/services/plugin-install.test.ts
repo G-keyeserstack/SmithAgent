@@ -11,6 +11,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
 	discoverPluginModulePaths,
+	resolveClineDir,
 	resolvePluginConfigSearchPaths,
 	setClineDir,
 	setHomeDir,
@@ -27,6 +28,7 @@ type FetchCall = (
 ) => ReturnType<typeof fetch>;
 
 describe("plugin install service", () => {
+	const originalResolvedClineDir = resolveClineDir();
 	let root = "";
 	let home = "";
 	let workspace = "";
@@ -66,6 +68,7 @@ describe("plugin install service", () => {
 
 	afterEach(() => {
 		vi.unstubAllGlobals();
+		setClineDir(originalResolvedClineDir);
 		if (originalMakerrrDir === undefined) delete process.env.MAKERRR_DIR;
 		else process.env.MAKERRR_DIR = originalMakerrrDir;
 		if (originalMakerrrDataDir === undefined) delete process.env.MAKERRR_DATA_DIR;
