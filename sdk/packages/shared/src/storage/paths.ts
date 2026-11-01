@@ -88,6 +88,7 @@ export function resolveChatWorkspacePath(): string {
 }
 
 export const CLINE_MCP_SETTINGS_FILE_NAME = "cline_mcp_settings.json";
+export const MAKERRR_MCP_SETTINGS_FILE_NAME = "makerrr_mcp_settings.json";
 export const CLINE_CONNECTOR_SETTINGS_FILE_NAME = "settings.json";
 
 function resolveDefaultHomeDir(): string {
@@ -451,7 +452,7 @@ export function resolveMcpSettingsPath(): string {
 	if (explicitPath) {
 		return explicitPath;
 	}
-	return join(resolveClineDataDir(), "settings", CLINE_MCP_SETTINGS_FILE_NAME);
+	return join(resolveClineDataDir(), "settings", MAKERRR_MCP_SETTINGS_FILE_NAME);
 }
 
 function dedupePaths(paths: ReadonlyArray<string>): string[] {
