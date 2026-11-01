@@ -127,3 +127,94 @@ These are options, not existing implementation claims:
 - Identity: WorkOS or equivalent for enterprise SSO; OAuth/email for standard accounts.
 - Telemetry: OpenTelemetry with Grafana or Datadog.
 - Runtime: preserve upstream Bun and Node.js compatibility requirements.
+
+## South African cloud infrastructure strategy
+
+Makerrr's preferred South African infrastructure design uses Stratos Lab and YSBERG as complementary infrastructure providers. These are target provider relationships and architecture decisions; they are not evidence of a signed commercial agreement, deployed integration, reserved capacity or production service. Commercial, technical, security and legal due diligence must precede production use.
+
+### Provider responsibilities
+
+**Stratos Lab — primary cloud and AI infrastructure partner**
+- Evaluate Stratos Lab GPU-as-a-Service for scalable hosted model inference and, where commercially and technically appropriate, fine-tuning or training workloads.
+- Evaluate its Managed PaaS and bare-metal orchestration for the Makerrr cloud data plane, model-serving operations and supporting compute services.
+- Use its published GPU catalogue (including A100, H100, H200 and B200 offerings) as planning inputs only; confirm actual availability, region, tenancy, networking, storage, service levels and pricing directly before sizing deployments.
+- Treat Stratos Lab as a provider abstraction behind Makerrr's infrastructure adapters. Avoid hard-coding provider-specific assumptions into the agent runtime.
+
+**YSBERG — complementary dedicated compute and private inference partner**
+- Evaluate dedicated GPU nodes for private, predictable inference capacity, local model hosting, development and performance benchmarking.
+- Consider its Johannesburg/Teraco footprint where it meets latency, data-location, connectivity and contractual requirements.
+- Use YSBERG as an additional capacity and resilience option rather than assuming it is a substitute for Stratos Lab's managed GPU cloud or PaaS capabilities.
+- Confirm hardware configuration, tenancy, support, network throughput, backup, failover and actual service availability contractually.
+
+### Logical deployment topology
+
+```text
+Makerrr clients (VS Code / CLI / Desktop / SDK)
+                    |
+                    v
+       Makerrr control plane and API
+  identity | organisations | policy | billing
+  session metadata | scheduler | audit | routing
+                    |
+          +---------+----------+
+          |                    |
+          v                    v
+ Isolated agent workers    Model gateway / router
+ ephemeral workspace      provider policy / quotas
+ restricted egress        model selection / telemetry
+          |                       |
+          |               +-------+-------+
+          |               |               |
+          v               v               v
+ Git / artifact store  Stratos Lab      YSBERG
+ encrypted, scoped     GPUaaS/PaaS      dedicated GPU
+          |
+          v
+ durable session and audit metadata
+```
+
+This is a target logical design, not a diagram of deployed infrastructure. The control plane should remain portable, and the model gateway should support direct provider and local-model routes where the product permits them.
+
+### Critical separation: agent execution vs model inference
+
+GPU inference and untrusted agent code execution are different security domains. A shared GPU node or model-serving process must not be treated as an isolated workspace for arbitrary user code. Keep model-serving endpoints separate from ephemeral agent workers.
+
+For cloud agent tasks:
+- provision a fresh isolated environment per task or per explicitly bounded session;
+- evaluate Firecracker microVMs or an equivalently strong isolation boundary for untrusted repository code and shell commands;
+- do not assume a standard container alone is a sufficient hostile-code boundary;
+- restrict outbound network access using explicit allowlists and policy enforcement;
+- issue short-lived, task-scoped Git and service credentials;
+- enforce CPU, memory, disk, process, runtime and wall-clock quotas;
+- destroy the execution environment after completion while retaining only approved artifacts and durable session metadata;
+- require user approval for consequential actions such as publishing, pushing, deploying or accessing external systems.
+
+Stratos Lab or YSBERG may supply compute for an execution pool only after confirming that the required isolation, privileged runtime support, networking controls, lifecycle APIs and operational guarantees are available. Do not assume GPUaaS or bare-metal orchestration automatically provides Firecracker-compatible task isolation.
+
+### Model-serving design
+
+- Place model endpoints behind a Makerrr-owned provider interface and authenticated gateway.
+- Keep API keys and provider credentials in a secrets manager, never in clients or task workspaces.
+- Route requests based on user choice, model capability, policy, latency, availability and cost.
+- Support streaming, tool calling, structured output, context limits and provider-specific errors explicitly in adapter capability metadata.
+- Apply per-user and per-tenant quotas, concurrency limits, request timeouts and circuit breakers.
+- Avoid prompt/completion retention by default; document any logging, caching, abuse-monitoring or provider retention before enabling it.
+- Benchmark representative coding-agent workloads, not just raw tokens-per-second. Measure first-token latency, end-to-end task completion, tool-call reliability, context-window behaviour and cost per successful task.
+
+### Data residency and privacy
+
+South African hosting can support local data-location objectives, but location alone does not establish POPIA compliance or eliminate cross-border processing. Map every data flow, including support access, telemetry, backups, model providers, subprocessors and disaster recovery. Complete privacy, security and contractual reviews before promising data residency or sovereignty to customers.
+
+### Provider due diligence and acceptance gates
+
+Before selecting either provider for production, obtain and validate:
+1. Written capacity, hardware/GPU specifications, region and physical hosting location.
+2. Pricing, minimum commitments, billing granularity, egress charges and scaling lead times.
+3. SLA, support escalation, maintenance windows, incident communications and service credits.
+4. Network topology, bandwidth, latency, private connectivity, firewall controls and DDoS posture.
+5. Tenant isolation, privileged access controls, vulnerability management and independent security assurance.
+6. Data-processing terms, subprocessors, retention/deletion, backup locations and cross-border transfer terms.
+7. Monitoring, usage metering, API/automation support and portability/export procedures.
+8. Recovery options, capacity reservations and exit/migration assistance.
+
+Run a proof of concept against identical Makerrr workloads on both providers. Compare reliability, latency, throughput, cost per completed task, operational burden and portability. Keep provider-specific integration behind adapters so that Makerrr can fail over or migrate without rewriting agent logic.
