@@ -173,6 +173,10 @@ export function resolveDocumentsClineDirectoryPath(): string {
 	return join(HOME_DIR, "Documents", "Cline");
 }
 
+export function resolveDocumentsMakerrrDirectoryPath(): string {
+	return join(HOME_DIR, "Documents", "Makerrr");
+}
+
 type DocumentsExtensionName =
 	| "Agents"
 	| "Hooks"
@@ -181,6 +185,12 @@ type DocumentsExtensionName =
 	| "Plugins";
 
 export function resolveDocumentsExtensionPath(
+	name: DocumentsExtensionName,
+): string {
+	return join(resolveDocumentsMakerrrDirectoryPath(), name);
+}
+
+export function resolveLegacyDocumentsExtensionPath(
 	name: DocumentsExtensionName,
 ): string {
 	return join(resolveDocumentsClineDirectoryPath(), name);
@@ -501,6 +511,8 @@ export function resolveAgentConfigSearchPaths(
 		workspacePath
 			? join(workspacePath, CLINE_CONFIG_DIR, AGENT_CONFIG_DIRECTORY_NAME)
 			: "",
+		resolveDocumentsExtensionPath("Agents"),
+		resolveLegacyDocumentsExtensionPath("Agents"),
 		resolveAgentsConfigDirPath(),
 		join(resolveLegacyClineDir(), AGENT_CONFIG_DIRECTORY_NAME),
 	]);
@@ -511,6 +523,7 @@ export function resolveHooksConfigSearchPaths(
 ): string[] {
 	const hooks = [
 		resolveDocumentsExtensionPath("Hooks"),
+		resolveLegacyDocumentsExtensionPath("Hooks"),
 		join(resolveClineDir(), HOOKS_CONFIG_DIRECTORY_NAME),
 		join(resolveLegacyClineDir(), HOOKS_CONFIG_DIRECTORY_NAME),
 	];
@@ -596,9 +609,11 @@ export function resolveGlobalRulesConfigPaths(): string[] {
 		// (cline/cline#13542).
 		join(HOME_DIR, "Cline", "Rules"),
 		resolveDocumentsExtensionPath("Rules"),
-		...resolveRedirectedDocumentsPaths().map((documentsPath) =>
+		resolveLegacyDocumentsExtensionPath("Rules"),
+		...resolveRedirectedDocumentsPaths().flatMap((documentsPath) => [
+			join(documentsPath, "Makerrr", "Rules"),
 			join(documentsPath, "Cline", "Rules"),
-		),
+		]),
 	]);
 }
 
@@ -630,6 +645,7 @@ export function resolveWorkflowsConfigSearchPaths(
 			? join(workspacePath, ".clinerules", WORKFLOWS_CONFIG_DIRECTORY_NAME)
 			: "",
 		resolveDocumentsExtensionPath("Workflows"),
+		resolveLegacyDocumentsExtensionPath("Workflows"),
 		join(resolveClineDir(), WORKFLOWS_CONFIG_DIRECTORY_NAME),
 		join(resolveLegacyClineDir(), WORKFLOWS_CONFIG_DIRECTORY_NAME),
 		workspacePath
@@ -647,6 +663,7 @@ export function resolvePluginConfigSearchPaths(
 		join(resolveClineDir(), PLUGINS_DIRECTORY_NAME),
 		join(resolveLegacyClineDir(), PLUGINS_DIRECTORY_NAME),
 		resolveDocumentsExtensionPath("Plugins"),
+		resolveLegacyDocumentsExtensionPath("Plugins"),
 	]);
 }
 
