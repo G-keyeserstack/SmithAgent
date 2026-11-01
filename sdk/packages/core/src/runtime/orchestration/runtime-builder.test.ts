@@ -14,7 +14,7 @@ import {
 	createContributionRegistry,
 	type Message,
 } from "@cline/shared";
-import { setHomeDir } from "@cline/shared/storage";
+import { setClineDir, setHomeDir } from "@cline/shared/storage";
 import { afterEach, describe, expect, it } from "vitest";
 import { createUserInstructionConfigService } from "../../extensions/config";
 import { PLAN_MODE_COMMAND_GUARD_EXTENSION_NAME } from "../../extensions/tools/command-guard-extension";
@@ -174,6 +174,7 @@ describe("DefaultRuntimeBuilder", () => {
 		const workspaceRoot = mkdtempSync(join(tmpdir(), "cline-agent-workspace-"));
 		tempDirs.push(tempHome, workspaceRoot);
 		setHomeDir(tempHome);
+		setClineDir(join(tempHome, ".makerrr"));
 
 		const globalAgentsDir = join(tempHome, ".makerrr", "agents");
 		mkdirSync(globalAgentsDir, { recursive: true });
