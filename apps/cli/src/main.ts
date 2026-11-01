@@ -264,21 +264,22 @@ export async function runCli(): Promise<void> {
 				pattern: string,
 				options: { cwd?: string; maxResults: number; contextLines: number },
 			) => {
-			const search = createSearchExecutor({
-				maxResults: options.maxResults,
-				contextLines: options.contextLines,
-			});
-			const result = await search(
-				pattern,
-				resolveWorkspaceRoot(options.cwd ?? process.cwd()),
-				{
-					agentId: "makerrr-cli-search",
-					conversationId: "makerrr-local-search",
-					iteration: 1,
-				},
-			);
-			writeln(result);
-		});
+				const search = createSearchExecutor({
+					maxResults: options.maxResults,
+					contextLines: options.contextLines,
+				});
+				const result = await search(
+					pattern,
+					resolveWorkspaceRoot(options.cwd ?? process.cwd()),
+					{
+						agentId: "makerrr-cli-search",
+						conversationId: "makerrr-local-search",
+						iteration: 1,
+					},
+				);
+				writeln(result);
+			},
+		);
 
 	// Auth subcommand: defines its own options so commander parses them
 	// directly. The short flags -p/-m intentionally shadow the root's -p (plan)
