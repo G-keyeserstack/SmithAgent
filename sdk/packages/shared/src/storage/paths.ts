@@ -349,13 +349,29 @@ export interface ResolveTaskSpecsDirOptions {
  * their unattended sessions run here) instead of inheriting whichever chat
  * workspace happened to create them.
  */
+
+function resolveConfigSubdirectory(name: string): string {
+	const makerrrPath = join(resolveClineDir(), name);
+	const legacyPath = join(resolveLegacyClineDir(), name);
+	return existsSync(legacyPath) ? legacyPath : makerrrPath;
+}
+
+function resolveWorkspaceConfigSubdirectory(
+	workspaceRoot: string,
+	name: string,
+): string {
+	const makerrrPath = join(workspaceRoot, MAKERRR_CONFIG_DIR, name);
+	const legacyPath = join(workspaceRoot, CLINE_CONFIG_DIR, name);
+	return existsSync(legacyPath) ? legacyPath : makerrrPath;
+}
+
 export function resolveAgentSchedulesDir(): string {
-	return join(resolveClineDir(), "schedules");
+	return resolveConfigSubdirectory("schedules");
 }
 
 /** Global file-backed agenda tasks: `~/.cline/tasks/`. */
 export function resolveGlobalTaskSpecsDir(): string {
-	return join(resolveClineDir(), "tasks");
+	return resolveConfigSubdirectory("tasks");
 }
 
 /** Workspace file-backed agenda tasks: `<workspace>/.cline/tasks/`. */
@@ -364,7 +380,7 @@ export function resolveWorkspaceTaskSpecsDir(workspaceRoot: string): string {
 	if (!normalized) {
 		throw new Error("workspaceRoot is required for workspace task scope");
 	}
-	return join(normalized, ".cline", "tasks");
+	return resolveWorkspaceConfigSubdirectory(normalized, "tasks");
 }
 
 export function resolveTaskSpecsDir(
@@ -399,7 +415,7 @@ export interface ResolveCronSpecsDirOptions {
  *   `~/.cline/cron/`
  */
 export function resolveGlobalCronSpecsDir(): string {
-	return join(resolveClineDir(), "cron");
+	return resolveConfigSubdirectory("cron");
 }
 
 /**
@@ -408,7 +424,7 @@ export function resolveGlobalCronSpecsDir(): string {
  *   `${workspaceRoot}/.cline/cron/`
  */
 export function resolveWorkspaceCronSpecsDir(workspaceRoot: string): string {
-	return join(workspaceRoot, ".cline", "cron");
+	return resolveWorkspaceConfigSubdirectory(workspaceRoot, "cron");
 }
 
 /**
