@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -96,6 +96,9 @@ describe("legacy Cline settings migration", () => {
 		expect(readFileSync(join(destination, "global-settings.json"), "utf8")).toBe('{"theme":"dark"}');
 		expect(readFileSync(join(destination, "providers.json"), "utf8")).toBe('{"provider":"local"}');
 		expect(readFileSync(join(destination, "makerrr_mcp_settings.json"), "utf8")).toBe('{"mcpServers":{}}');
+		if (process.platform !== "win32") {
+			expect(statSync(join(destination, "providers.json")).mode & 0o777).toBe(0o600);
+		}
 		expect(existsSync(join(source, "settings", "global-settings.json"))).toBe(true);
 		expect(existsSync(join(source, "settings", "providers.json"))).toBe(true);
 	});
