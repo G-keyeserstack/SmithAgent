@@ -625,7 +625,7 @@ export function createSkillsConfigDefinition(
 	const managedRoots = options?.workspacePath
 		? [
 				join(options.workspacePath, ".makerrr"),
-					join(options.workspacePath, ".cline"),
+				join(options.workspacePath, ".cline"),
 			]
 		: [];
 
@@ -685,7 +685,7 @@ export function createRulesConfigDefinition(
 	const managedRoots = options?.workspacePath
 		? [
 				join(options.workspacePath, ".makerrr"),
-					join(options.workspacePath, ".cline"),
+				join(options.workspacePath, ".cline"),
 			]
 		: [];
 
@@ -715,7 +715,7 @@ export function createWorkflowsConfigDefinition(
 	const managedRoots = options?.workspacePath
 		? [
 				join(options.workspacePath, ".makerrr"),
-					join(options.workspacePath, ".cline"),
+				join(options.workspacePath, ".cline"),
 			]
 		: [];
 
