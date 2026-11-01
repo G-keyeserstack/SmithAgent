@@ -16,7 +16,7 @@ function createContext(workspaceRoot: string): SidecarContext {
 
 describe("desktop MCP settings", () => {
 	it("keeps valid and malformed entries visible independently", () => {
-		const response = buildMcpServersResponse("/tmp/cline_mcp_settings.json", {
+		const response = buildMcpServersResponse("/tmp/makerrr_mcp_settings.json", {
 			mcpServers: {
 				linear: {
 					command: "npx",
