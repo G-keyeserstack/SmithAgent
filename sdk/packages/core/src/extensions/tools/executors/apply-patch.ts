@@ -95,7 +95,11 @@ async function assertWorkspacePath(
 		try {
 			const realCandidate = await fs.realpath(candidate);
 			const relativePath = path.relative(realCwd, realCandidate);
-			if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+			if (
+				relativePath === ".." ||
+				relativePath.startsWith(`..${path.sep}`) ||
+				path.isAbsolute(relativePath)
+			) {
 				throw new DiffError("Path resolves outside cwd through a symbolic link: " + inputPath);
 			}
 			return;
