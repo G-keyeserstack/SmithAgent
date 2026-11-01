@@ -1,6 +1,6 @@
 {
 	"name": "@cline/cli",
-	"displayName": "cline",
+	"displayName": "Makerrr",
 	"version": "3.0.74",
 	"description": "Autonomous coding agent CLI - capable of creating/editing files, running commands, using the browser, and more",
 	"type": "module",
@@ -13,6 +13,7 @@
 		"directory": "apps/cli"
 	},
 	"keywords": [
+		"makerrr",
 		"cline",
 		"claude",
 		"dev",
@@ -36,6 +37,7 @@
 		"url": "https://github.com/cline/cline/issues"
 	},
 	"bin": {
+		"makerrr": "src/index.ts",
 		"cline": "src/index.ts"
 	},
 	"engines": {
