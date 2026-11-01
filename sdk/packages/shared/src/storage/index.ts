@@ -67,3 +67,17 @@ export {
 	type TaskSpecsScope,
 	WORKFLOWS_CONFIG_DIRECTORY_NAME,
 } from "./paths";
+
+export {
+	migrateLegacyClineSettings,
+	resolveLegacyClineDataDir,
+	resolveLegacyClineDir,
+	resolveMakerrrDataDir,
+	resolveMakerrrDir,
+	resolveMakerrrGlobalSettingsPath,
+	resolveMakerrrMcpSettingsPath,
+	resolveMakerrrProviderSettingsPath,
+	resolveMakerrrSettingsDir,
+	type LegacySettingsMigrationItem,
+	type LegacySettingsMigrationResult,
+} from "./makerrr-paths";
