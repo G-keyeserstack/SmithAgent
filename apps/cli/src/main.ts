@@ -159,6 +159,7 @@ export async function runCli(): Promise<void> {
 	const {
 		migrateLegacyClineSettings,
 		resolveLegacyClineDataDir,
+		resolveLegacyClineDir,
 		resolveMakerrrDataDir,
 		resolveMakerrrDir,
 		setClineDir,
@@ -168,7 +169,9 @@ export async function runCli(): Promise<void> {
 	// Capture the old data root before redirecting the compatibility runtime
 	// to Makerrr's canonical paths. The migration command uses this read-only
 	// source and never removes it.
+	const legacyClineDir = resolveLegacyClineDir();
 	const legacyClineDataDir = resolveLegacyClineDataDir();
+	process.env.MAKERRR_LEGACY_CLINE_DIR = legacyClineDir;
 	const effectiveConfigDir = configDir?.trim() || resolveMakerrrDir();
 	const effectiveDataDir = process.env.MAKERRR_DATA_DIR?.trim()
 		? resolveMakerrrDataDir()
