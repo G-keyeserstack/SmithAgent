@@ -6,7 +6,7 @@ import {
 	AGENT_CONFIG_DIRECTORY_NAME,
 	CLINE_CHAT_WORKSPACE_DIRECTORY_NAME,
 	CLINE_CONNECTOR_SETTINGS_FILE_NAME,
-	CLINE_MCP_SETTINGS_FILE_NAME,
+	MAKERRR_MCP_SETTINGS_FILE_NAME,
 	CLINE_WORKSPACES_DIRECTORY_NAME,
 	discoverPluginModulePaths,
 	getPluginDisplayName,
@@ -18,10 +18,13 @@ import {
 	resolveAgentsConfigDirPath,
 	resolveChatWorkspacePath,
 	resolveClineDataDir,
+	resolveClineDir,
 	resolveConfiguredPluginModulePaths,
 	resolveConnectorDataDir,
 	resolveConnectorSettingsPath,
 	resolveDbDataDir,
+	resolveDocumentsExtensionPath,
+	resolveLegacyDocumentsExtensionPath,
 	resolveGlobalAgentsRulesPath,
 	resolveGlobalRulesConfigPaths,
 	resolveGlobalSettingsPath,
@@ -38,6 +41,8 @@ import {
 } from "./paths";
 
 type EnvSnapshot = {
+	MAKERRR_DIR: string | undefined;
+	MAKERRR_DATA_DIR: string | undefined;
 	CLINE_DIR: string | undefined;
 	CLINE_DATA_DIR: string | undefined;
 	CLINE_CONNECTOR_DATA_DIR: string | undefined;
@@ -48,10 +53,17 @@ type EnvSnapshot = {
 	CLINE_PROVIDER_SETTINGS_PATH: string | undefined;
 	CLINE_SESSION_DATA_DIR: string | undefined;
 	CLINE_TEAM_DATA_DIR: string | undefined;
+	MAKERRR_GLOBAL_SETTINGS_PATH: string | undefined;
+	MAKERRR_MCP_SETTINGS_PATH: string | undefined;
+	MAKERRR_PROVIDER_SETTINGS_PATH: string | undefined;
+	MAKERRR_LEGACY_CLINE_DIR: string | undefined;
+	MAKERRR_LEGACY_CLINE_DATA_DIR: string | undefined;
 };
 
 function captureEnv(): EnvSnapshot {
 	return {
+		MAKERRR_DIR: process.env.MAKERRR_DIR,
+		MAKERRR_DATA_DIR: process.env.MAKERRR_DATA_DIR,
 		CLINE_DIR: process.env.CLINE_DIR,
 		CLINE_DATA_DIR: process.env.CLINE_DATA_DIR,
 		CLINE_CONNECTOR_DATA_DIR: process.env.CLINE_CONNECTOR_DATA_DIR,
@@ -62,10 +74,17 @@ function captureEnv(): EnvSnapshot {
 		CLINE_PROVIDER_SETTINGS_PATH: process.env.CLINE_PROVIDER_SETTINGS_PATH,
 		CLINE_SESSION_DATA_DIR: process.env.CLINE_SESSION_DATA_DIR,
 		CLINE_TEAM_DATA_DIR: process.env.CLINE_TEAM_DATA_DIR,
+		MAKERRR_GLOBAL_SETTINGS_PATH: process.env.MAKERRR_GLOBAL_SETTINGS_PATH,
+		MAKERRR_MCP_SETTINGS_PATH: process.env.MAKERRR_MCP_SETTINGS_PATH,
+		MAKERRR_PROVIDER_SETTINGS_PATH: process.env.MAKERRR_PROVIDER_SETTINGS_PATH,
+		MAKERRR_LEGACY_CLINE_DIR: process.env.MAKERRR_LEGACY_CLINE_DIR,
+		MAKERRR_LEGACY_CLINE_DATA_DIR: process.env.MAKERRR_LEGACY_CLINE_DATA_DIR,
 	};
 }
 
 function restoreEnv(snapshot: EnvSnapshot): void {
+	process.env.MAKERRR_DIR = snapshot.MAKERRR_DIR;
+	process.env.MAKERRR_DATA_DIR = snapshot.MAKERRR_DATA_DIR;
 	process.env.CLINE_DATA_DIR = snapshot.CLINE_DATA_DIR;
 	process.env.CLINE_CONNECTOR_DATA_DIR = snapshot.CLINE_CONNECTOR_DATA_DIR;
 	process.env.CLINE_CONNECTOR_SETTINGS_PATH =
@@ -78,6 +97,11 @@ function restoreEnv(snapshot: EnvSnapshot): void {
 		snapshot.CLINE_PROVIDER_SETTINGS_PATH;
 	process.env.CLINE_SESSION_DATA_DIR = snapshot.CLINE_SESSION_DATA_DIR;
 	process.env.CLINE_TEAM_DATA_DIR = snapshot.CLINE_TEAM_DATA_DIR;
+	process.env.MAKERRR_GLOBAL_SETTINGS_PATH = snapshot.MAKERRR_GLOBAL_SETTINGS_PATH;
+	process.env.MAKERRR_MCP_SETTINGS_PATH = snapshot.MAKERRR_MCP_SETTINGS_PATH;
+	process.env.MAKERRR_PROVIDER_SETTINGS_PATH = snapshot.MAKERRR_PROVIDER_SETTINGS_PATH;
+	process.env.MAKERRR_LEGACY_CLINE_DIR = snapshot.MAKERRR_LEGACY_CLINE_DIR;
+	process.env.MAKERRR_LEGACY_CLINE_DATA_DIR = snapshot.MAKERRR_LEGACY_CLINE_DATA_DIR;
 }
 
 describe("storage path resolution", () => {
@@ -97,6 +121,56 @@ describe("storage path resolution", () => {
 			]);
 		} finally {
 			setHomeDir(previousHome);
+			rmSync(homeRoot, { recursive: true, force: true });
+		}
+	});
+
+
+	it("defaults the shared runtime storage root to Makerrr", () => {
+		snapshot = captureEnv();
+		const homeRoot = mkdtempSync(join(tmpdir(), "makerrr-default-root-"));
+		const previousHome = process.env.HOME ?? "~";
+		try {
+			delete process.env.MAKERRR_DIR;
+			delete process.env.CLINE_DIR;
+			setHomeDir(homeRoot);
+			expect(resolveClineDir()).toBe(join(homeRoot, ".makerrr"));
+			expect(resolveClineDataDir()).toBe(join(homeRoot, ".makerrr", "data"));
+			process.env.MAKERRR_DATA_DIR = join(homeRoot, "custom-data");
+			expect(resolveClineDataDir()).toBe(join(homeRoot, "custom-data"));
+		} finally {
+			setHomeDir(previousHome);
+			rmSync(homeRoot, { recursive: true, force: true });
+		}
+	});
+
+
+	it("keeps existing Cline runtime stores visible until they are migrated offline", () => {
+		snapshot = captureEnv();
+		const homeRoot = mkdtempSync(join(tmpdir(), "makerrr-legacy-runtime-data-"));
+		const legacyRoot = join(homeRoot, ".cline");
+		try {
+			process.env.MAKERRR_DIR = join(homeRoot, ".makerrr");
+			process.env.MAKERRR_LEGACY_CLINE_DIR = legacyRoot;
+			delete process.env.MAKERRR_LEGACY_CLINE_DATA_DIR;
+			delete process.env.MAKERRR_DATA_DIR;
+			delete process.env.CLINE_DATA_DIR;
+			delete process.env.CLINE_DIR;
+			mkdirSync(join(legacyRoot, "data", "sessions"), { recursive: true });
+			mkdirSync(join(legacyRoot, "data", "db"), { recursive: true });
+			mkdirSync(join(legacyRoot, "data", "workspaces"), { recursive: true });
+
+			expect(resolveSessionDataDir()).toBe(join(legacyRoot, "data", "sessions"));
+			expect(resolveDbDataDir()).toBe(join(legacyRoot, "data", "db"));
+			expect(resolveChatWorkspacePath()).toBe(
+				join(legacyRoot, "data", "workspaces", "chat"),
+			);
+
+			rmSync(join(legacyRoot, "data"), { recursive: true, force: true });
+			expect(resolveSessionDataDir()).toBe(
+				join(homeRoot, ".makerrr", "data", "sessions"),
+			);
+		} finally {
 			rmSync(homeRoot, { recursive: true, force: true });
 		}
 	});
@@ -166,6 +240,7 @@ describe("storage path resolution", () => {
 	it("falls back to CLINE_DATA_DIR/settings/providers.json for provider settings", () => {
 		snapshot = captureEnv();
 		delete process.env.CLINE_PROVIDER_SETTINGS_PATH;
+		delete process.env.MAKERRR_PROVIDER_SETTINGS_PATH;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
 
 		expect(resolveProviderSettingsPath()).toBe(
@@ -176,6 +251,7 @@ describe("storage path resolution", () => {
 	it("falls back to CLINE_DATA_DIR/settings/global-settings.json for global settings", () => {
 		snapshot = captureEnv();
 		delete process.env.CLINE_GLOBAL_SETTINGS_PATH;
+		delete process.env.MAKERRR_GLOBAL_SETTINGS_PATH;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
 
 		expect(resolveGlobalSettingsPath()).toBe(
@@ -183,13 +259,14 @@ describe("storage path resolution", () => {
 		);
 	});
 
-	it("falls back to CLINE_DATA_DIR/settings/cline_mcp_settings.json for MCP settings", () => {
+	it("uses the Makerrr MCP settings filename under the configured data directory", () => {
 		snapshot = captureEnv();
 		delete process.env.CLINE_MCP_SETTINGS_PATH;
+		delete process.env.MAKERRR_MCP_SETTINGS_PATH;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
 
 		expect(resolveMcpSettingsPath()).toBe(
-			join("/tmp/cline-data", "settings", CLINE_MCP_SETTINGS_FILE_NAME),
+			join("/tmp/cline-data", "settings", MAKERRR_MCP_SETTINGS_FILE_NAME),
 		);
 	});
 
@@ -239,10 +316,11 @@ describe("storage path resolution", () => {
 		);
 	});
 
-	it("resolves both workspace rule layouts (.clinerules and .cline/rules)", () => {
+	it("resolves Makerrr and legacy workspace rule layouts", () => {
 		const workspacePath = join("/repo", "demo");
 
 		expect(resolveWorkspaceRulesConfigPaths(workspacePath)).toEqual([
+			join(workspacePath, ".makerrr", RULES_CONFIG_DIRECTORY_NAME),
 			join(workspacePath, ".clinerules"),
 			join(workspacePath, ".cline", RULES_CONFIG_DIRECTORY_NAME),
 		]);
@@ -299,13 +377,17 @@ describe("storage path resolution", () => {
 	it("resolves legacy and new workflow paths, with .cline paths later for duplicate-name precedence", () => {
 		snapshot = captureEnv();
 		process.env.CLINE_DIR = "/tmp/home/.cline";
+		process.env.MAKERRR_DIR = "/tmp/home/.makerrr";
 		const workspacePath = "/repo/demo";
 
 		const paths = resolveWorkflowsConfigSearchPaths(workspacePath);
 
 		expect(paths).toEqual([
+			join(workspacePath, ".makerrr", "workflows"),
 			join(workspacePath, ".clinerules", "workflows"),
+			expect.stringContaining(join("Documents", "Makerrr", "Workflows")),
 			expect.stringContaining(join("Documents", "Cline", "Workflows")),
+			join("/tmp/home", ".makerrr", "workflows"),
 			join("/tmp/home", ".cline", "workflows"),
 			join(workspacePath, ".cline", "workflows"),
 		]);
@@ -324,7 +406,7 @@ describe("chat workspace paths", () => {
 		expect(CLINE_CHAT_WORKSPACE_DIRECTORY_NAME).toBe("chat");
 	});
 
-	it("resolves the shared chat workspace under the cline data dir", () => {
+	it("resolves the shared chat workspace under the configured data dir", () => {
 		snapshot = captureEnv();
 		delete process.env.CLINE_DATA_DIR;
 		process.env.CLINE_DIR = "/tmp/home/.cline";
@@ -334,7 +416,7 @@ describe("chat workspace paths", () => {
 		);
 	});
 
-	it("honors the CLINE_DATA_DIR override", () => {
+	it("honors the CLINE_DATA_DIR compatibility override", () => {
 		snapshot = captureEnv();
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
 
@@ -344,6 +426,7 @@ describe("chat workspace paths", () => {
 	});
 
 	it.each([
+		"/home/user/.makerrr/data/workspaces/chat",
 		"/home/user/.cline/data/workspaces/chat",
 		"//home//user//.cline//data//workspaces//chat//",
 		"C:\\Users\\dev\\.cline\\data\\workspaces\\chat\\",
@@ -616,4 +699,32 @@ describe("Cline plugin discovery boundary", () => {
 		writeFileSync(join(root, "plugin.json"), "{}");
 		expect(isAgentPluginDirectory(root)).toBe(true);
 	});
+
+	it("prefers Makerrr workspace rules while retaining both legacy layouts", () => {
+		const workspace = "/tmp/workspace";
+		expect(resolveWorkspaceRulesConfigPaths(workspace)).toEqual([
+			join(workspace, ".makerrr", RULES_CONFIG_DIRECTORY_NAME),
+			join(workspace, ".clinerules"),
+			join(workspace, ".cline", RULES_CONFIG_DIRECTORY_NAME),
+		]);
+	});
+
+
+	it("uses Makerrr Documents folders for new context files and retains Cline folders", () => {
+		const homeRoot = mkdtempSync(join(tmpdir(), "makerrr-documents-paths-"));
+		const previousHome = process.env.HOME ?? "~";
+		try {
+			setHomeDir(homeRoot);
+			expect(resolveDocumentsExtensionPath("Rules")).toBe(
+				join(homeRoot, "Documents", "Makerrr", "Rules"),
+			);
+			expect(resolveLegacyDocumentsExtensionPath("Rules")).toBe(
+				join(homeRoot, "Documents", "Cline", "Rules"),
+			);
+		} finally {
+			setHomeDir(previousHome);
+			rmSync(homeRoot, { recursive: true, force: true });
+		}
+	});
+
 });

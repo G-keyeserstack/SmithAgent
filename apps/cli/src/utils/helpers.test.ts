@@ -14,6 +14,14 @@ import {
 } from "./helpers";
 
 type EnvSnapshot = {
+	MAKERRR_DATA_DIR: string | undefined;
+	MAKERRR_DB_DATA_DIR: string | undefined;
+	MAKERRR_HOOKS_LOG_PATH: string | undefined;
+	MAKERRR_SESSION_DATA_DIR: string | undefined;
+	MAKERRR_TEAM_DATA_DIR: string | undefined;
+	MAKERRR_PROVIDER_SETTINGS_PATH: string | undefined;
+	MAKERRR_SANDBOX: string | undefined;
+	MAKERRR_SANDBOX_DATA_DIR: string | undefined;
 	CLINE_DATA_DIR: string | undefined;
 	CLINE_DB_DATA_DIR: string | undefined;
 	CLINE_HOOKS_LOG_PATH: string | undefined;
@@ -23,6 +31,14 @@ type EnvSnapshot = {
 
 function captureEnv(): EnvSnapshot {
 	return {
+		MAKERRR_DATA_DIR: process.env.MAKERRR_DATA_DIR,
+		MAKERRR_DB_DATA_DIR: process.env.MAKERRR_DB_DATA_DIR,
+		MAKERRR_HOOKS_LOG_PATH: process.env.MAKERRR_HOOKS_LOG_PATH,
+		MAKERRR_SESSION_DATA_DIR: process.env.MAKERRR_SESSION_DATA_DIR,
+		MAKERRR_TEAM_DATA_DIR: process.env.MAKERRR_TEAM_DATA_DIR,
+		MAKERRR_PROVIDER_SETTINGS_PATH: process.env.MAKERRR_PROVIDER_SETTINGS_PATH,
+		MAKERRR_SANDBOX: process.env.MAKERRR_SANDBOX,
+		MAKERRR_SANDBOX_DATA_DIR: process.env.MAKERRR_SANDBOX_DATA_DIR,
 		CLINE_DATA_DIR: process.env.CLINE_DATA_DIR,
 		CLINE_DB_DATA_DIR: process.env.CLINE_DB_DATA_DIR,
 		CLINE_HOOKS_LOG_PATH: process.env.CLINE_HOOKS_LOG_PATH,
@@ -32,6 +48,14 @@ function captureEnv(): EnvSnapshot {
 }
 
 function restoreEnv(snapshot: EnvSnapshot): void {
+	process.env.MAKERRR_DATA_DIR = snapshot.MAKERRR_DATA_DIR;
+	process.env.MAKERRR_DB_DATA_DIR = snapshot.MAKERRR_DB_DATA_DIR;
+	process.env.MAKERRR_HOOKS_LOG_PATH = snapshot.MAKERRR_HOOKS_LOG_PATH;
+	process.env.MAKERRR_SESSION_DATA_DIR = snapshot.MAKERRR_SESSION_DATA_DIR;
+	process.env.MAKERRR_TEAM_DATA_DIR = snapshot.MAKERRR_TEAM_DATA_DIR;
+	process.env.MAKERRR_PROVIDER_SETTINGS_PATH = snapshot.MAKERRR_PROVIDER_SETTINGS_PATH;
+	process.env.MAKERRR_SANDBOX = snapshot.MAKERRR_SANDBOX;
+	process.env.MAKERRR_SANDBOX_DATA_DIR = snapshot.MAKERRR_SANDBOX_DATA_DIR;
 	process.env.CLINE_DATA_DIR = snapshot.CLINE_DATA_DIR;
 	process.env.CLINE_DB_DATA_DIR = snapshot.CLINE_DB_DATA_DIR;
 	process.env.CLINE_HOOKS_LOG_PATH = snapshot.CLINE_HOOKS_LOG_PATH;
@@ -482,6 +506,8 @@ describe("hook payload validation and audit logging", () => {
 		const expectedPath = path.join(tempDir, "logs", "hooks.jsonl");
 		const env = captureEnv();
 		process.env.CLINE_DATA_DIR = tempDir;
+		process.env.MAKERRR_DATA_DIR = tempDir;
+		delete process.env.MAKERRR_HOOKS_LOG_PATH;
 		delete process.env.CLINE_HOOKS_LOG_PATH;
 		delete process.env.CLINE_SESSION_ID;
 		delete process.env.CLINE_SESSION_DATA_DIR;
@@ -516,7 +542,9 @@ describe("hook payload validation and audit logging", () => {
 		const expectedPath = path.join(tempDir, "hooks", "from-env.jsonl");
 		const env = captureEnv();
 		process.env.CLINE_HOOKS_LOG_PATH = expectedPath;
+		delete process.env.MAKERRR_HOOKS_LOG_PATH;
 		delete process.env.CLINE_DATA_DIR;
+		delete process.env.MAKERRR_DATA_DIR;
 		delete process.env.CLINE_SESSION_ID;
 		delete process.env.CLINE_SESSION_DATA_DIR;
 
@@ -552,6 +580,14 @@ describe("sandbox environment", () => {
 	it("sets sandbox-specific storage paths", () => {
 		const root = mkdtempSync(path.join(os.tmpdir(), "cli-helper-sandbox-"));
 		const previous = {
+			MAKERRR_SANDBOX: process.env.MAKERRR_SANDBOX,
+			MAKERRR_SANDBOX_DATA_DIR: process.env.MAKERRR_SANDBOX_DATA_DIR,
+			MAKERRR_DATA_DIR: process.env.MAKERRR_DATA_DIR,
+			MAKERRR_DB_DATA_DIR: process.env.MAKERRR_DB_DATA_DIR,
+			MAKERRR_SESSION_DATA_DIR: process.env.MAKERRR_SESSION_DATA_DIR,
+			MAKERRR_TEAM_DATA_DIR: process.env.MAKERRR_TEAM_DATA_DIR,
+			MAKERRR_PROVIDER_SETTINGS_PATH: process.env.MAKERRR_PROVIDER_SETTINGS_PATH,
+			MAKERRR_HOOKS_LOG_PATH: process.env.MAKERRR_HOOKS_LOG_PATH,
 			CLINE_SANDBOX: process.env.CLINE_SANDBOX,
 			CLINE_SANDBOX_DATA_DIR: process.env.CLINE_SANDBOX_DATA_DIR,
 			CLINE_DATA_DIR: process.env.CLINE_DATA_DIR,
@@ -568,6 +604,14 @@ describe("sandbox environment", () => {
 				explicitDir: "./sandbox-state",
 			});
 			expect(resolved).toBe(path.join(root, "sandbox-state"));
+			expect(process.env.MAKERRR_SANDBOX).toBe("1");
+			expect(process.env.MAKERRR_SANDBOX_DATA_DIR).toBe(
+				path.join(root, "sandbox-state"),
+			);
+			expect(process.env.MAKERRR_DATA_DIR).toBe(path.join(root, "sandbox-state"));
+			expect(process.env.MAKERRR_DB_DATA_DIR).toBe(
+				path.join(root, "sandbox-state", "db"),
+			);
 			expect(process.env.CLINE_SANDBOX).toBe("1");
 			expect(process.env.CLINE_SANDBOX_DATA_DIR).toBe(
 				path.join(root, "sandbox-state"),
@@ -589,6 +633,14 @@ describe("sandbox environment", () => {
 				path.join(root, "sandbox-state", "logs", "hooks.jsonl"),
 			);
 		} finally {
+			process.env.MAKERRR_SANDBOX = previous.MAKERRR_SANDBOX;
+			process.env.MAKERRR_SANDBOX_DATA_DIR = previous.MAKERRR_SANDBOX_DATA_DIR;
+			process.env.MAKERRR_DATA_DIR = previous.MAKERRR_DATA_DIR;
+			process.env.MAKERRR_DB_DATA_DIR = previous.MAKERRR_DB_DATA_DIR;
+			process.env.MAKERRR_SESSION_DATA_DIR = previous.MAKERRR_SESSION_DATA_DIR;
+			process.env.MAKERRR_TEAM_DATA_DIR = previous.MAKERRR_TEAM_DATA_DIR;
+			process.env.MAKERRR_PROVIDER_SETTINGS_PATH = previous.MAKERRR_PROVIDER_SETTINGS_PATH;
+			process.env.MAKERRR_HOOKS_LOG_PATH = previous.MAKERRR_HOOKS_LOG_PATH;
 			process.env.CLINE_SANDBOX = previous.CLINE_SANDBOX;
 			process.env.CLINE_SANDBOX_DATA_DIR = previous.CLINE_SANDBOX_DATA_DIR;
 			process.env.CLINE_DATA_DIR = previous.CLINE_DATA_DIR;

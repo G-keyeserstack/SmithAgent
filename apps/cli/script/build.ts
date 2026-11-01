@@ -187,11 +187,12 @@ for (const item of targets) {
 			{
 				name,
 				version,
-				description: `Cline CLI binary for ${displayOs} ${item.arch}`,
+				description: `Makerrr CLI binary for ${displayOs} ${item.arch}`,
 				os: [item.os],
 				cpu: [item.arch],
 				...(repository ? { repository } : {}),
 				bin: {
+					makerrr: `bin/${binaryName}`,
 					cline: `bin/${binaryName}`,
 				},
 			},

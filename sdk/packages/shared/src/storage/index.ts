@@ -6,6 +6,7 @@ export {
 	CLINE_CHAT_WORKSPACE_DIRECTORY_NAME,
 	CLINE_CONNECTOR_SETTINGS_FILE_NAME,
 	CLINE_MCP_SETTINGS_FILE_NAME,
+	MAKERRR_MCP_SETTINGS_FILE_NAME,
 	CLINE_WORKSPACES_DIRECTORY_NAME,
 	type CronSpecsScope,
 	discoverPluginModulePaths,
@@ -38,7 +39,9 @@ export {
 	resolveCronSpecsDir,
 	resolveDbDataDir,
 	resolveDocumentsClineDirectoryPath,
+	resolveDocumentsMakerrrDirectoryPath,
 	resolveDocumentsExtensionPath,
+	resolveLegacyDocumentsExtensionPath,
 	resolveGlobalAgentsRulesPath,
 	resolveGlobalCronSpecsDir,
 	resolveGlobalRulesConfigPaths,
@@ -67,3 +70,17 @@ export {
 	type TaskSpecsScope,
 	WORKFLOWS_CONFIG_DIRECTORY_NAME,
 } from "./paths";
+
+export {
+	migrateLegacyClineSettings,
+	resolveLegacyClineDataDir,
+	resolveLegacyClineDir,
+	resolveMakerrrDataDir,
+	resolveMakerrrDir,
+	resolveMakerrrGlobalSettingsPath,
+	resolveMakerrrMcpSettingsPath,
+	resolveMakerrrProviderSettingsPath,
+	resolveMakerrrSettingsDir,
+	type LegacySettingsMigrationItem,
+	type LegacySettingsMigrationResult,
+} from "./makerrr-paths";

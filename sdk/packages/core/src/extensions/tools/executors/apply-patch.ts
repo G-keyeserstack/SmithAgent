@@ -76,6 +76,35 @@ function resolveFilePath(
 	return resolved;
 }
 
+async function assertWorkspacePath(
+	cwd: string,
+	absolutePath: string,
+	inputPath: string,
+	restrictToCwd: boolean,
+): Promise<void> {
+	if (!restrictToCwd || path.isAbsolute(inputPath)) {
+		return;
+	}
+	const realCwd = await fs.realpath(cwd);
+	let candidate = absolutePath;
+	for (;;) {
+		try {
+			const realCandidate = await fs.realpath(candidate);
+			const relativePath = path.relative(realCwd, realCandidate);
+			if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+				throw new DiffError("Path resolves outside cwd through a symbolic link: " + inputPath);
+			}
+			return;
+		} catch (error) {
+			if (error instanceof DiffError) throw error;
+			if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+			const parent = path.dirname(candidate);
+			if (parent === candidate) throw error;
+			candidate = parent;
+		}
+	}
+}
+
 function splitPatchInputLines(input: string): string[] {
 	return input.split("\n").map((line) => line.replace(/\r$/, ""));
 }
@@ -217,6 +246,7 @@ async function loadFiles(
 
 	for (const filePath of filesToLoad) {
 		const absolutePath = resolveFilePath(cwd, filePath, restrictToCwd);
+		await assertWorkspacePath(cwd, absolutePath, filePath, restrictToCwd);
 		let fileContent: string;
 		try {
 			fileContent = await fs.readFile(absolutePath, encoding);
@@ -234,6 +264,7 @@ async function loadFiles(
 		PATCH_MARKERS.ADD,
 	])) {
 		const absolutePath = resolveFilePath(cwd, filePath, restrictToCwd);
+		await assertWorkspacePath(cwd, absolutePath, filePath, restrictToCwd);
 		try {
 			files[filePath] = await fs.readFile(absolutePath, encoding);
 		} catch {
@@ -313,13 +344,51 @@ function formatSkippedHunkFailure(warnings: readonly PatchWarning[]): string {
 	return lines.join("\n");
 }
 
-async function applyChanges(
+export async function applyPatchChanges(
 	changes: Record<string, PatchFileChange>,
 	cwd: string,
 	encoding: BufferEncoding,
 	restrictToCwd: boolean,
 ): Promise<string[]> {
 	const touched: string[] = [];
+
+	// Preflight every touched path before the first write. This prevents a
+	// concurrent editor change or an unexpectedly-created destination from
+	// causing a patch to partially apply across multiple files.
+	for (const [filePath, change] of Object.entries(changes)) {
+		const sourceAbsPath = resolveFilePath(cwd, filePath, restrictToCwd);
+		await assertWorkspacePath(cwd, sourceAbsPath, filePath, restrictToCwd);
+		if (change.type === PatchActionType.ADD) {
+			try {
+				await fs.lstat(sourceAbsPath);
+				throw new DiffError("Add File Error: File already exists: " + filePath);
+			} catch (error) {
+				if (error instanceof DiffError) throw error;
+				if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+			}
+		} else {
+			let currentContent: string;
+			try {
+				currentContent = await fs.readFile(sourceAbsPath, encoding);
+			} catch {
+				throw new DiffError("File changed or disappeared after patch preview: " + filePath);
+			}
+			if (currentContent !== change.oldContent) {
+				throw new DiffError("File changed after patch preview; refusing to overwrite newer content: " + filePath);
+			}
+		}
+		if (change.type === PatchActionType.UPDATE && change.movePath) {
+			const moveAbsPath = resolveFilePath(cwd, change.movePath, restrictToCwd);
+			await assertWorkspacePath(cwd, moveAbsPath, change.movePath, restrictToCwd);
+			try {
+				await fs.lstat(moveAbsPath);
+				throw new DiffError("Move destination already exists: " + change.movePath);
+			} catch (error) {
+				if (error instanceof DiffError) throw error;
+				if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+			}
+		}
+	}
 
 	for (const [filePath, change] of Object.entries(changes)) {
 		const sourceAbsPath = resolveFilePath(cwd, filePath, restrictToCwd);
@@ -410,7 +479,7 @@ export function createApplyPatchExecutor(
 			encoding,
 			restrictToCwd,
 		});
-		const touched = await applyChanges(changes, cwd, encoding, restrictToCwd);
+		const touched = await applyPatchChanges(changes, cwd, encoding, restrictToCwd);
 
 		const responseLines = [
 			"Successfully applied patch to the following files:",

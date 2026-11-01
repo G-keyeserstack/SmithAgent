@@ -18,6 +18,7 @@ import {
 	resolve,
 } from "node:path";
 import type { PluginManifest } from "..";
+import { resolveLegacyClineDataDir, resolveLegacyClineDir } from "./makerrr-paths";
 import {
 	CLINE_CHAT_WORKSPACE_DIRECTORY_NAME,
 	CLINE_WORKSPACES_DIRECTORY_NAME,
@@ -33,6 +34,7 @@ export {
 
 const DEPRECATED_CONFIG_DIR = ".clinerules";
 const CLINE_CONFIG_DIR = ".cline";
+const MAKERRR_CONFIG_DIR = ".makerrr";
 /**
  * Claude Code's project directory. Skills authored for Claude Code live in
  * `.claude/skills`, which is documented as a supported project skill location,
@@ -79,13 +81,13 @@ export const AGENT_PLUGIN_MANIFEST_FILE_NAME = "plugin.json";
  */
 export function resolveChatWorkspacePath(): string {
 	return join(
-		resolveClineDataDir(),
-		CLINE_WORKSPACES_DIRECTORY_NAME,
+		resolveRuntimeDataSubdirectory(CLINE_WORKSPACES_DIRECTORY_NAME),
 		CLINE_CHAT_WORKSPACE_DIRECTORY_NAME,
 	);
 }
 
 export const CLINE_MCP_SETTINGS_FILE_NAME = "cline_mcp_settings.json";
+export const MAKERRR_MCP_SETTINGS_FILE_NAME = "makerrr_mcp_settings.json";
 export const CLINE_CONNECTOR_SETTINGS_FILE_NAME = "settings.json";
 
 function resolveDefaultHomeDir(): string {
@@ -156,6 +158,13 @@ export function setClineDirIfUnset(dir: string): void {
 }
 
 export function resolveClineDir(): string {
+	if (CLINE_DIR_SET_EXPLICITLY && CLINE_DIR) {
+		return CLINE_DIR;
+	}
+	const makerrrDir = process.env.MAKERRR_DIR?.trim();
+	if (makerrrDir) {
+		return makerrrDir;
+	}
 	if (CLINE_DIR) {
 		return CLINE_DIR;
 	}
@@ -163,11 +172,15 @@ export function resolveClineDir(): string {
 	if (envDir) {
 		return envDir;
 	}
-	return join(HOME_DIR, ".cline");
+	return join(HOME_DIR, ".makerrr");
 }
 
 export function resolveDocumentsClineDirectoryPath(): string {
 	return join(HOME_DIR, "Documents", "Cline");
+}
+
+export function resolveDocumentsMakerrrDirectoryPath(): string {
+	return join(HOME_DIR, "Documents", "Makerrr");
 }
 
 type DocumentsExtensionName =
@@ -180,39 +193,65 @@ type DocumentsExtensionName =
 export function resolveDocumentsExtensionPath(
 	name: DocumentsExtensionName,
 ): string {
+	return join(resolveDocumentsMakerrrDirectoryPath(), name);
+}
+
+export function resolveLegacyDocumentsExtensionPath(
+	name: DocumentsExtensionName,
+): string {
 	return join(resolveDocumentsClineDirectoryPath(), name);
 }
 
 export function resolveClineDataDir(): string {
-	const explicitDir = process.env.CLINE_DATA_DIR?.trim();
+	const explicitDir =
+		process.env.MAKERRR_DATA_DIR?.trim() || process.env.CLINE_DATA_DIR?.trim();
 	if (explicitDir) {
 		return explicitDir;
 	}
 	return join(resolveClineDir(), "data");
 }
 
+
+/**
+ * Keep existing runtime data visible until an explicit offline migration has
+ * moved it. If the corresponding Cline directory exists, continue using that
+ * directory (including new writes) rather than splitting history between two
+ * databases or silently presenting an empty history. New users use Makerrr.
+ */
+function resolveRuntimeDataSubdirectory(name: string): string {
+	const makerrrPath = join(resolveClineDataDir(), name);
+	const legacyPath = join(resolveLegacyClineDataDir(), name);
+	return existsSync(legacyPath) ? legacyPath : makerrrPath;
+}
+
 export function resolveSessionDataDir(): string {
-	const explicitDir = process.env.CLINE_SESSION_DATA_DIR?.trim();
+	const explicitDir =
+		process.env.MAKERRR_SESSION_DATA_DIR?.trim() ||
+		process.env.CLINE_SESSION_DATA_DIR?.trim();
 	if (explicitDir) {
 		return explicitDir;
 	}
-	return join(resolveClineDataDir(), "sessions");
+	return resolveRuntimeDataSubdirectory("sessions");
 }
 
 export function resolveTeamDataDir(): string {
-	const explicitDir = process.env.CLINE_TEAM_DATA_DIR?.trim();
+	const explicitDir =
+		process.env.MAKERRR_TEAM_DATA_DIR?.trim() ||
+		process.env.CLINE_TEAM_DATA_DIR?.trim();
 	if (explicitDir) {
 		return explicitDir;
 	}
-	return join(resolveClineDataDir(), "teams");
+	return resolveRuntimeDataSubdirectory("teams");
 }
 
 export function resolveConnectorDataDir(): string {
-	const explicitDir = process.env.CLINE_CONNECTOR_DATA_DIR?.trim();
+	const explicitDir =
+		process.env.MAKERRR_CONNECTOR_DATA_DIR?.trim() ||
+		process.env.CLINE_CONNECTOR_DATA_DIR?.trim();
 	if (explicitDir) {
 		return explicitDir;
 	}
-	return join(resolveClineDataDir(), "connectors");
+	return resolveRuntimeDataSubdirectory("connectors");
 }
 
 /**
@@ -237,7 +276,9 @@ export function resolveConnectorLogPath(
 }
 
 export function resolveConnectorSettingsPath(): string {
-	const explicitPath = process.env.CLINE_CONNECTOR_SETTINGS_PATH?.trim();
+	const explicitPath =
+		process.env.MAKERRR_CONNECTOR_SETTINGS_PATH?.trim() ||
+		process.env.CLINE_CONNECTOR_SETTINGS_PATH?.trim();
 	if (explicitPath) {
 		return explicitPath;
 	}
@@ -245,11 +286,12 @@ export function resolveConnectorSettingsPath(): string {
 }
 
 export function resolveDbDataDir(): string {
-	const explicitDir = process.env.CLINE_DB_DATA_DIR?.trim();
+	const explicitDir =
+		process.env.MAKERRR_DB_DATA_DIR?.trim() || process.env.CLINE_DB_DATA_DIR?.trim();
 	if (explicitDir) {
 		return explicitDir;
 	}
-	return join(resolveClineDataDir(), "db");
+	return resolveRuntimeDataSubdirectory("db");
 }
 
 /**
@@ -258,7 +300,9 @@ export function resolveDbDataDir(): string {
  * credentials/config stay decoupled from session storage.
  */
 export function resolveConnectorsDbPath(): string {
-	const explicitPath = process.env.CLINE_CONNECTORS_DB_PATH?.trim();
+	const explicitPath =
+		process.env.MAKERRR_CONNECTORS_DB_PATH?.trim() ||
+		process.env.CLINE_CONNECTORS_DB_PATH?.trim();
 	if (explicitPath) {
 		return explicitPath;
 	}
@@ -271,7 +315,8 @@ export function resolveConnectorsDbPath(): string {
  * retention, and query patterns stay decoupled from session storage.
  */
 export function resolveCronDbPath(): string {
-	const explicitPath = process.env.CLINE_CRON_DB_PATH?.trim();
+	const explicitPath =
+		process.env.MAKERRR_CRON_DB_PATH?.trim() || process.env.CLINE_CRON_DB_PATH?.trim();
 	if (explicitPath) {
 		return explicitPath;
 	}
@@ -280,7 +325,8 @@ export function resolveCronDbPath(): string {
 
 /** Path to the dedicated agenda task queue database. */
 export function resolveTasksDbPath(): string {
-	const explicitPath = process.env.CLINE_TASKS_DB_PATH?.trim();
+	const explicitPath =
+		process.env.MAKERRR_TASKS_DB_PATH?.trim() || process.env.CLINE_TASKS_DB_PATH?.trim();
 	if (explicitPath) {
 		return explicitPath;
 	}
@@ -303,13 +349,29 @@ export interface ResolveTaskSpecsDirOptions {
  * their unattended sessions run here) instead of inheriting whichever chat
  * workspace happened to create them.
  */
+
+function resolveConfigSubdirectory(name: string): string {
+	const makerrrPath = join(resolveClineDir(), name);
+	const legacyPath = join(resolveLegacyClineDir(), name);
+	return existsSync(legacyPath) ? legacyPath : makerrrPath;
+}
+
+function resolveWorkspaceConfigSubdirectory(
+	workspaceRoot: string,
+	name: string,
+): string {
+	const makerrrPath = join(workspaceRoot, MAKERRR_CONFIG_DIR, name);
+	const legacyPath = join(workspaceRoot, CLINE_CONFIG_DIR, name);
+	return existsSync(legacyPath) ? legacyPath : makerrrPath;
+}
+
 export function resolveAgentSchedulesDir(): string {
-	return join(resolveClineDir(), "schedules");
+	return resolveConfigSubdirectory("schedules");
 }
 
 /** Global file-backed agenda tasks: `~/.cline/tasks/`. */
 export function resolveGlobalTaskSpecsDir(): string {
-	return join(resolveClineDir(), "tasks");
+	return resolveConfigSubdirectory("tasks");
 }
 
 /** Workspace file-backed agenda tasks: `<workspace>/.cline/tasks/`. */
@@ -318,7 +380,7 @@ export function resolveWorkspaceTaskSpecsDir(workspaceRoot: string): string {
 	if (!normalized) {
 		throw new Error("workspaceRoot is required for workspace task scope");
 	}
-	return join(normalized, ".cline", "tasks");
+	return resolveWorkspaceConfigSubdirectory(normalized, "tasks");
 }
 
 export function resolveTaskSpecsDir(
@@ -353,7 +415,7 @@ export interface ResolveCronSpecsDirOptions {
  *   `~/.cline/cron/`
  */
 export function resolveGlobalCronSpecsDir(): string {
-	return join(resolveClineDir(), "cron");
+	return resolveConfigSubdirectory("cron");
 }
 
 /**
@@ -362,7 +424,7 @@ export function resolveGlobalCronSpecsDir(): string {
  *   `${workspaceRoot}/.cline/cron/`
  */
 export function resolveWorkspaceCronSpecsDir(workspaceRoot: string): string {
-	return join(workspaceRoot, ".cline", "cron");
+	return resolveWorkspaceConfigSubdirectory(workspaceRoot, "cron");
 }
 
 /**
@@ -429,7 +491,9 @@ export function resolveCronEventsDir(
 }
 
 export function resolveProviderSettingsPath(): string {
-	const explicitPath = process.env.CLINE_PROVIDER_SETTINGS_PATH?.trim();
+	const explicitPath =
+		process.env.MAKERRR_PROVIDER_SETTINGS_PATH?.trim() ||
+		process.env.CLINE_PROVIDER_SETTINGS_PATH?.trim();
 	if (explicitPath) {
 		return explicitPath;
 	}
@@ -437,7 +501,9 @@ export function resolveProviderSettingsPath(): string {
 }
 
 export function resolveGlobalSettingsPath(): string {
-	const explicitPath = process.env.CLINE_GLOBAL_SETTINGS_PATH?.trim();
+	const explicitPath =
+		process.env.MAKERRR_GLOBAL_SETTINGS_PATH?.trim() ||
+		process.env.CLINE_GLOBAL_SETTINGS_PATH?.trim();
 	if (explicitPath) {
 		return explicitPath;
 	}
@@ -445,11 +511,13 @@ export function resolveGlobalSettingsPath(): string {
 }
 
 export function resolveMcpSettingsPath(): string {
-	const explicitPath = process.env.CLINE_MCP_SETTINGS_PATH?.trim();
+	const explicitPath =
+		process.env.MAKERRR_MCP_SETTINGS_PATH?.trim() ||
+		process.env.CLINE_MCP_SETTINGS_PATH?.trim();
 	if (explicitPath) {
 		return explicitPath;
 	}
-	return join(resolveClineDataDir(), "settings", CLINE_MCP_SETTINGS_FILE_NAME);
+	return join(resolveClineDataDir(), "settings", MAKERRR_MCP_SETTINGS_FILE_NAME);
 }
 
 function dedupePaths(paths: ReadonlyArray<string>): string[] {
@@ -471,6 +539,7 @@ function getWorkspaceSkillDirectories(workspacePath?: string): string[] {
 	}
 	return [
 		DEPRECATED_CONFIG_DIR,
+		MAKERRR_CONFIG_DIR,
 		CLINE_CONFIG_DIR,
 		CLAUDE_CONFIG_DIR,
 		LEGACY_AGENT_SKILLS_CONFIG_DIR,
@@ -486,9 +555,15 @@ export function resolveAgentConfigSearchPaths(
 ): string[] {
 	return dedupePaths([
 		workspacePath
+			? join(workspacePath, MAKERRR_CONFIG_DIR, AGENT_CONFIG_DIRECTORY_NAME)
+			: "",
+		workspacePath
 			? join(workspacePath, CLINE_CONFIG_DIR, AGENT_CONFIG_DIRECTORY_NAME)
 			: "",
+		resolveDocumentsExtensionPath("Agents"),
+		resolveLegacyDocumentsExtensionPath("Agents"),
 		resolveAgentsConfigDirPath(),
+		join(resolveLegacyClineDir(), AGENT_CONFIG_DIRECTORY_NAME),
 	]);
 }
 
@@ -497,10 +572,13 @@ export function resolveHooksConfigSearchPaths(
 ): string[] {
 	const hooks = [
 		resolveDocumentsExtensionPath("Hooks"),
+		resolveLegacyDocumentsExtensionPath("Hooks"),
 		join(resolveClineDir(), HOOKS_CONFIG_DIRECTORY_NAME),
+		join(resolveLegacyClineDir(), HOOKS_CONFIG_DIRECTORY_NAME),
 	];
 	if (workspacePath) {
 		hooks.push(
+			join(workspacePath, MAKERRR_CONFIG_DIR, HOOKS_CONFIG_DIRECTORY_NAME),
 			join(workspacePath, DEPRECATED_CONFIG_DIR, HOOKS_CONFIG_DIRECTORY_NAME),
 			join(workspacePath, CLINE_CONFIG_DIR, HOOKS_CONFIG_DIRECTORY_NAME),
 		);
@@ -514,6 +592,7 @@ export function resolveSkillsConfigSearchPaths(
 	return dedupePaths([
 		...getWorkspaceSkillDirectories(workspacePath),
 		join(resolveClineDir(), SKILLS_CONFIG_DIRECTORY_NAME),
+		join(resolveLegacyClineDir(), SKILLS_CONFIG_DIRECTORY_NAME),
 		join(
 			HOME_DIR,
 			LEGACY_AGENT_SKILLS_CONFIG_DIR,
@@ -537,6 +616,7 @@ export function resolveWorkspaceRulesConfigPaths(
 	workspacePath: string,
 ): string[] {
 	return [
+		join(workspacePath, MAKERRR_CONFIG_DIR, RULES_CONFIG_DIRECTORY_NAME),
 		join(workspacePath, DEPRECATED_CONFIG_DIR),
 		join(workspacePath, CLINE_CONFIG_DIR, RULES_CONFIG_DIRECTORY_NAME),
 	];
@@ -571,15 +651,18 @@ function resolveRedirectedDocumentsPaths(): string[] {
 export function resolveGlobalRulesConfigPaths(): string[] {
 	return dedupePaths([
 		join(resolveClineDir(), RULES_CONFIG_DIRECTORY_NAME),
+		join(resolveLegacyClineDir(), RULES_CONFIG_DIRECTORY_NAME),
 		// The VS Code Rules tab resolves Documents via `xdg-user-dir DOCUMENTS`,
 		// which prints bare $HOME when unconfigured (WSL/headless), putting
 		// global rules at ~/Cline/Rules instead of ~/Documents/Cline/Rules
 		// (cline/cline#13542).
 		join(HOME_DIR, "Cline", "Rules"),
 		resolveDocumentsExtensionPath("Rules"),
-		...resolveRedirectedDocumentsPaths().map((documentsPath) =>
+		resolveLegacyDocumentsExtensionPath("Rules"),
+		...resolveRedirectedDocumentsPaths().flatMap((documentsPath) => [
+			join(documentsPath, "Makerrr", "Rules"),
 			join(documentsPath, "Cline", "Rules"),
-		),
+		]),
 	]);
 }
 
@@ -605,10 +688,15 @@ export function resolveWorkflowsConfigSearchPaths(
 ): string[] {
 	return dedupePaths([
 		workspacePath
+			? join(workspacePath, MAKERRR_CONFIG_DIR, WORKFLOWS_CONFIG_DIRECTORY_NAME)
+			: "",
+		workspacePath
 			? join(workspacePath, ".clinerules", WORKFLOWS_CONFIG_DIRECTORY_NAME)
 			: "",
 		resolveDocumentsExtensionPath("Workflows"),
+		resolveLegacyDocumentsExtensionPath("Workflows"),
 		join(resolveClineDir(), WORKFLOWS_CONFIG_DIRECTORY_NAME),
+		join(resolveLegacyClineDir(), WORKFLOWS_CONFIG_DIRECTORY_NAME),
 		workspacePath
 			? join(workspacePath, ".cline", WORKFLOWS_CONFIG_DIRECTORY_NAME)
 			: "",
@@ -619,9 +707,12 @@ export function resolvePluginConfigSearchPaths(
 	workspacePath?: string,
 ): string[] {
 	return dedupePaths([
+		workspacePath ? join(workspacePath, MAKERRR_CONFIG_DIR, PLUGINS_DIRECTORY_NAME) : "",
 		workspacePath ? join(workspacePath, ".cline", PLUGINS_DIRECTORY_NAME) : "",
 		join(resolveClineDir(), PLUGINS_DIRECTORY_NAME),
+		join(resolveLegacyClineDir(), PLUGINS_DIRECTORY_NAME),
 		resolveDocumentsExtensionPath("Plugins"),
+		resolveLegacyDocumentsExtensionPath("Plugins"),
 	]);
 }
 

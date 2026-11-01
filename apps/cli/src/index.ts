@@ -24,8 +24,8 @@ import { resolveCliLaunchSpec } from "./utils/internal-launch";
 import { writeErr } from "./utils/output";
 
 // Initialize VCR before any HTTP requests are made.
-// Set CLINE_VCR=record|playback and CLINE_VCR_CASSETTE=<path> to enable.
-initVcr(process.env.CLINE_VCR);
+// Set MAKERRR_VCR=record|playback and MAKERRR_VCR_CASSETTE=<path> to enable (legacy CLINE_VCR variables are also accepted).
+initVcr(process.env.MAKERRR_VCR ?? process.env.CLINE_VCR);
 
 // Before any personality below can spawn a child with the workspace as cwd.
 disableCurrentDirectoryExecutableSearch();
@@ -58,7 +58,7 @@ if (!isMainThread) {
 	// daemon-hosted session spawns do not inherit it and try to become daemons.
 	// The hub daemon owns its process-level abort handling. Installing the CLI's
 	// fatal rejection handler first would make expected abort rejections exit it.
-	registerClineClientIdentity("cline-cli");
+	registerClineClientIdentity("makerrr-cli");
 	void import("@cline/core/hub/daemon-entry");
 } else {
 	// Same reasoning as the daemon sentinel above: consume the supervised-connector

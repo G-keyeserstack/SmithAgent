@@ -29,8 +29,12 @@ type ConfigIo = {
 };
 
 function resolveCliAgentConfigSearchPaths(cwd: string): string[] {
-	const clineDir = process.env.CLINE_DIR?.trim() || join(homedir(), ".cline");
-	return [join(cwd, ".cline", "agents"), join(clineDir, "agents")];
+	const configDir = process.env.CLINE_DIR?.trim() || join(homedir(), ".makerrr");
+	return [
+		join(cwd, ".makerrr", "agents"),
+		join(cwd, ".cline", "agents"),
+		join(configDir, "agents"),
+	];
 }
 
 function createConfigUserInstructionService(cwd: string) {

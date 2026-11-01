@@ -574,9 +574,11 @@ export function resolveSandboxDataDir(
 	cwd: string,
 	explicitDir?: string,
 ): string {
-	const envDir = process.env.CLINE_SANDBOX_DATA_DIR?.trim();
+	const envDir =
+		process.env.MAKERRR_SANDBOX_DATA_DIR?.trim() ||
+		process.env.CLINE_SANDBOX_DATA_DIR?.trim();
 	const baseDir =
-		explicitDir?.trim() || envDir || join(tmpdir(), "cline-sandbox");
+		explicitDir?.trim() || envDir || join(tmpdir(), "makerrr-sandbox");
 	return resolve(cwd, baseDir);
 }
 
@@ -589,6 +591,19 @@ export function configureSandboxEnvironment(options: {
 		return undefined;
 	}
 	const dataDir = resolveSandboxDataDir(options.cwd, options.explicitDir);
+	process.env.MAKERRR_SANDBOX = "1";
+	process.env.MAKERRR_SANDBOX_DATA_DIR = dataDir;
+	process.env.MAKERRR_DATA_DIR = dataDir;
+	process.env.MAKERRR_DB_DATA_DIR = join(dataDir, "db");
+	process.env.MAKERRR_SESSION_DATA_DIR = join(dataDir, "sessions");
+	process.env.MAKERRR_TEAM_DATA_DIR = join(dataDir, "teams");
+	process.env.MAKERRR_PROVIDER_SETTINGS_PATH = join(
+		dataDir,
+		"settings",
+		"providers.json",
+	);
+	process.env.MAKERRR_HOOKS_LOG_PATH = join(dataDir, "logs", "hooks.jsonl");
+	// Internal Cline-derived runtime modules continue to consume these compatibility variables.
 	process.env.CLINE_SANDBOX = "1";
 	process.env.CLINE_SANDBOX_DATA_DIR = dataDir;
 	process.env.CLINE_DATA_DIR = dataDir;

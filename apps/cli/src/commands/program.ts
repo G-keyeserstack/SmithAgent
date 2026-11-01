@@ -72,18 +72,18 @@ export function addRootOptions(cmd: Command): Command {
 				"--acp",
 				"Run in Agent Client Protocol (ACP) mode for editor integration",
 			)
-			.option("--config <path>", "Configuration directory (default: ~/.cline)")
+			.option("--config <path>", "Configuration directory (default: ~/.makerrr)")
 			.option(
 				"--data-dir <path>",
-				"Use isolated local state at this directory path (default: ~/.cline/data)",
+				"Use isolated local state at this directory path (default: ~/.makerrr/data)",
 			)
 			.option(
 				"--hooks-dir <path>",
-				"Directory path to additional hooks for runtime hook injection (default: ~/.cline/hooks)",
+				"Directory path to additional hooks for runtime hook injection (default: ~/.makerrr/hooks)",
 			)
 			.option(
 				"--worktree",
-				"Auto-create a detached git worktree under ~/.cline/worktrees/ and run the task there",
+				"Auto-create a detached git worktree under ~/.makerrr/worktrees/ and run the task there",
 			)
 			.option("--update", "Check for updates and install if available")
 			.option("--kanban", "Run the kanban app")
@@ -105,8 +105,8 @@ export function addRootOptions(cmd: Command): Command {
 }
 
 export function createProgram(): Command {
-	const program = new Command("cline")
-		.description("Cline CLI - AI coding assistant in your terminal")
+	const program = new Command("makerrr")
+		.description("Makerrr CLI - open AI development agent in your terminal")
 		.version(version, "-V, --version", "Output the version number")
 		.exitOverride() // don't call process.exit
 		.configureOutput({

@@ -1,7 +1,7 @@
 import { fstatSync } from "node:fs";
 import { homedir } from "node:os";
-import { basename } from "node:path";
-import type { ToolPolicy } from "@cline/core";
+import { basename, join } from "node:path";
+import { createSearchExecutor, type ToolPolicy } from "@cline/core";
 
 import { CLINE_DEFAULT_MODEL_ID, registerDisposable } from "@cline/shared";
 import type { Command } from "commander";
@@ -137,7 +137,7 @@ function promptArgLooksQuoted(arg: string | undefined): boolean {
 function writePromptArgError(args: string[]): void {
 	const renderedArgs = args.join(" ");
 	writeErr(
-		`Unknown command or unquoted prompt: ${renderedArgs}\nPrompt text must be passed as a single quoted argument, for example: cline "fix the tests". Use "cline --help" to see available commands and flags.`,
+		`Unknown command or unquoted prompt: ${renderedArgs}\nPrompt text must be passed as a single quoted argument, for example: makerrr "fix the tests". Use "makerrr --help" to see available commands and flags.`,
 	);
 }
 
@@ -148,7 +148,7 @@ function startupTargetTakesPrecedenceOverMigrationNotice(
 }
 
 export async function runCli(): Promise<void> {
-	registerClineClientIdentity("cline-cli");
+	registerClineClientIdentity("makerrr-cli");
 	installStreamErrorGuards();
 	autoUpdateOnStartup();
 
@@ -156,11 +156,35 @@ export async function runCli(): Promise<void> {
 	const isFullTTY =
 		process.stdin.isTTY === true && process.stdout.isTTY === true;
 	const configDir = resolveConfigDirArg(cliArgs);
-	const { setClineDir, setHomeDir } = await import("@cline/shared/storage");
-	if (configDir) {
-		setClineDir(configDir);
-	}
+	const {
+		migrateLegacyClineSettings,
+		resolveLegacyClineDataDir,
+		resolveLegacyClineDir,
+		resolveMakerrrDataDir,
+		resolveMakerrrDir,
+		setClineDir,
+		setHomeDir,
+	} = await import("@cline/shared/storage");
 	setHomeDir(homedir());
+	// Capture the old data root before redirecting the compatibility runtime
+	// to Makerrr's canonical paths. The migration command uses this read-only
+	// source and never removes it.
+	const legacyClineDir = resolveLegacyClineDir();
+	const legacyClineDataDir = resolveLegacyClineDataDir();
+	process.env.MAKERRR_LEGACY_CLINE_DIR = legacyClineDir;
+	process.env.MAKERRR_LEGACY_CLINE_DATA_DIR = legacyClineDataDir;
+	const effectiveConfigDir = configDir?.trim() || resolveMakerrrDir();
+	const effectiveDataDir = process.env.MAKERRR_DATA_DIR?.trim()
+		? resolveMakerrrDataDir()
+		: join(effectiveConfigDir, "data");
+	setClineDir(effectiveConfigDir);
+	process.env.CLINE_DIR = effectiveConfigDir;
+	if (process.env.MAKERRR_DATA_DIR?.trim()) {
+		process.env.CLINE_DATA_DIR = effectiveDataDir;
+	} else {
+		// Let the legacy runtime's existing resolver derive <config>/data.
+		delete process.env.CLINE_DATA_DIR;
+	}
 
 	// Capture activation telemetry only after config/home directory selection
 	// has been applied, so the telemetry singleton's persisted distinct-id
@@ -169,7 +193,7 @@ export async function runCli(): Promise<void> {
 	// `cline hub ...` is plumbing other clients invoke (the desktop app on
 	// every launch, the SSH remote flow on every connect), not a user
 	// activation, so it must not count as one.
-	if (cliArgs[0] !== "hub") {
+	if (cliArgs[0] !== "hub" && cliArgs[0] !== "migrate") {
 		captureCliExtensionActivated();
 	}
 
@@ -190,6 +214,73 @@ export async function runCli(): Promise<void> {
 	// Default action handles non-subcommand args (e.g. prompt text)
 	program.action(() => {});
 
+	// Migration is an explicit, two-step operation. The default invocation is
+	// a dry-run; copying credentials/settings requires the user's --yes flag.
+	program
+		.command("migrate")
+		.description("Preview or copy your existing Cline settings into Makerrr")
+		.option("--yes", "Copy settings that do not already exist in Makerrr")
+		.action((options: { yes?: boolean }) => {
+			const result = migrateLegacyClineSettings({
+				sourceDataDir: legacyClineDataDir,
+				destinationSettingsDir: join(effectiveDataDir, "settings"),
+				dryRun: !options.yes,
+			});
+			for (const item of result.items) {
+				writeln(`${item.status}: ${item.source} -> ${item.destination}`);
+				if (item.error) writeErr(item.error);
+			}
+			if (!options.yes) {
+				writeln("Preview only. Review the files above, then run 'makerrr migrate --yes' to copy settings.");
+			} else {
+				writeln("Settings migration finished. Original Cline files were left untouched.");
+				writeln(
+				"This phase copies global settings, provider settings and MCP settings only. Session databases, workspaces and other runtime data remain in their original locations pending an offline-aware migration.",
+			);
+			}
+		});
+
+	// Reuse the SDK's bounded, ripgrep-first search executor so CLI searches
+	// and agent codebase searches share the same implementation.
+	program
+		.command("search")
+		.description("Search code and text in a local workspace using regex")
+		.argument("<pattern>", "Regular-expression search pattern")
+		.option("-c, --cwd <path>", "Workspace directory")
+		.option(
+			"--max-results <count>",
+			"Maximum matches to return",
+			(value) => Math.max(1, Number.parseInt(value, 10) || 100),
+			100,
+		)
+		.option(
+			"--context-lines <count>",
+			"Context lines around each match",
+			(value) => Math.max(0, Number.parseInt(value, 10) || 0),
+			2,
+		)
+		.action(
+			async (
+				pattern: string,
+				options: { cwd?: string; maxResults: number; contextLines: number },
+			) => {
+				const search = createSearchExecutor({
+					maxResults: options.maxResults,
+					contextLines: options.contextLines,
+				});
+				const result = await search(
+					pattern,
+					resolveWorkspaceRoot(options.cwd ?? process.cwd()),
+					{
+						agentId: "makerrr-cli-search",
+						conversationId: "makerrr-local-search",
+						iteration: 1,
+					},
+				);
+				writeln(result);
+			},
+		);
+
 	// Auth subcommand: defines its own options so commander parses them
 	// directly. The short flags -p/-m intentionally shadow the root's -p (plan)
 	// and -m (model); commander scopes options per-command so there is no
@@ -207,7 +298,7 @@ export async function runCli(): Promise<void> {
 		.option("-c, --cwd <path>", "Working directory")
 		.option(
 			"--data-dir <dir>",
-			"Use isolated local state at <dir> instead of ~/.cline (enables sandbox mode)",
+			"Use isolated local state at <dir> instead of ~/.makerrr (enables sandbox mode)",
 		)
 		.option("-v, --verbose", "Show verbose output")
 		.action(async (positionalProvider: string | undefined) => {
@@ -278,7 +369,8 @@ export async function runCli(): Promise<void> {
 
 	program
 		.command("config")
-		.description("Show current configuration")
+		.alias("context")
+		.description("Inspect configured context sources: rules, skills, workflows, agents, plugins and MCP")
 		.option("--json", "Output as JSON")
 		.option("--config <dir>", "configuration directory")
 		.allowUnknownOption()
@@ -292,7 +384,7 @@ export async function runCli(): Promise<void> {
 
 	const pluginCmd = program
 		.command("plugin")
-		.description("Manage Cline Plugins")
+		.description("Manage Makerrr Plugins")
 		.action(() => {
 			pluginCmd.help();
 		});
@@ -300,7 +392,7 @@ export async function runCli(): Promise<void> {
 		.command("install")
 		.alias("i")
 		.description(
-			"Install a Cline Plugin from an official keyword, npm, git, URL, or a local path",
+			"Install a Makerrr Plugin from an official keyword, npm, git, URL, or a local path",
 		)
 		.argument(
 			"<source>",
@@ -310,7 +402,7 @@ export async function runCli(): Promise<void> {
 		.option("--git", "Treat source as a git repository")
 		.option("--force", "Replace an existing install for the same source")
 		.option("--json", "Output as JSON")
-		.option("--cwd <path>", "Install to <path>/.cline/plugins")
+		.option("--cwd <path>", "Install to <path>/.makerrr/plugins")
 		.action(async (source: string) => {
 			const opts = pluginInstallCmd.opts<{
 				npm?: boolean;
@@ -342,12 +434,12 @@ export async function runCli(): Promise<void> {
 		.command("uninstall")
 		.alias("remove")
 		.alias("rm")
-		.description("Uninstall a Cline Plugin by name or path")
+		.description("Uninstall a Makerrr Plugin by name or path")
 		.argument("<name>", "plugin package name, installed slug, or plugin path")
 		.option("--json", "Output as JSON")
 		.option(
 			"--cwd <path>",
-			"Search <path>/.cline/plugins before global plugins",
+			"Search <path>/.makerrr/plugins before global plugins",
 		)
 		.action(async (name: string) => {
 			const opts = pluginUninstallCmd.opts<{
@@ -387,7 +479,7 @@ export async function runCli(): Promise<void> {
 	const connectCmd = program
 		.command("connect")
 		.description("Connect to an external channel")
-		.argument("[channel]", "Channel to connect Cline CLI to")
+		.argument("[channel]", "Channel to connect Makerrr CLI to")
 		.option("--stop", "Kill all current channel connections")
 		.option("--restart", "Restart a channel connection")
 		.option(
@@ -479,7 +571,7 @@ export async function runCli(): Promise<void> {
 				ctx.exitCode = await runMcpWizard();
 			} else {
 				writeln(
-					"MCP wizard requires a TTY. Use cline config mcp to list servers.",
+					"MCP wizard requires a TTY. Use makerrr context mcp to list servers.",
 				);
 			}
 		});
@@ -648,7 +740,7 @@ export async function runCli(): Promise<void> {
 
 	program
 		.command("version")
-		.description("Show Cline CLI version number")
+		.description("Show Makerrr CLI version number")
 		.action(async () => {
 			const { showVersion } = await import("./commands/help");
 			showVersion();
@@ -1095,7 +1187,7 @@ export async function runCli(): Promise<void> {
 			workspaceRoot,
 			extensionContext: {
 				client: {
-					name: "cline-cli",
+					name: "makerrr-cli",
 					version: cliBuildInfo.version,
 					platform: "cli",
 					platformVersion: cliBuildInfo.version,
