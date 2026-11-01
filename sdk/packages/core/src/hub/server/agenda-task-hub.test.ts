@@ -36,19 +36,19 @@ describe("Hub agenda task vertical slice", () => {
 		const chatWorkspace = join(root, "chat-workspace");
 		mkdirSync(chatWorkspace);
 		const canonicalChatWorkspace = realpathSync.native(chatWorkspace);
-		// Agent-created schedules anchor in the ~/.cline/schedules home; point
+		// Agent-created schedules anchor in the ~/.makerrr/schedules home; point
 		// the Cline dir at the test root so that home stays inside this test.
 		// Restore via onTestFinished so an early throw (before the try below)
 		// cannot leave the override behind for later tests in this worker.
-		const clineHome = join(root, "cline-home");
+		const makerrrHome = join(root, "cline-home");
 		mkdirSync(clineHome);
-		const previousClineDir = process.env.CLINE_DIR;
-		process.env.CLINE_DIR = clineHome;
+		const previousMakerrrDir = process.env.MAKERRR_DIR;
+		process.env.MAKERRR_DIR = makerrrHome;
 		onTestFinished(() => {
-			if (previousClineDir === undefined) {
-				delete process.env.CLINE_DIR;
+			if (previousMakerrrDir === undefined) {
+				delete process.env.MAKERRR_DIR;
 			} else {
-				process.env.CLINE_DIR = previousClineDir;
+				process.env.MAKERRR_DIR = previousMakerrrDir;
 			}
 		});
 		const sessions = new Map<string, Record<string, unknown>>();
@@ -265,7 +265,7 @@ describe("Hub agenda task vertical slice", () => {
 			// the chat workspace that created them.
 			expect((scheduled as { error?: unknown })?.error).toBeUndefined();
 			const canonicalSchedulesHome = realpathSync.native(
-				join(clineHome, "schedules"),
+				join(makerrrHome, "schedules"),
 			);
 			expect(scheduled).toMatchObject({
 				ok: true,
