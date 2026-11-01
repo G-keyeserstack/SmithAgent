@@ -41,6 +41,14 @@ import {
 } from "./paths";
 
 type EnvSnapshot = {
+	MAKERRR_CONNECTOR_DATA_DIR: string | undefined;
+	MAKERRR_CONNECTOR_SETTINGS_PATH: string | undefined;
+	MAKERRR_CONNECTORS_DB_PATH: string | undefined;
+	MAKERRR_CRON_DB_PATH: string | undefined;
+	MAKERRR_DB_DATA_DIR: string | undefined;
+	MAKERRR_SESSION_DATA_DIR: string | undefined;
+	MAKERRR_TEAM_DATA_DIR: string | undefined;
+	MAKERRR_TASKS_DB_PATH: string | undefined;
 	MAKERRR_DIR: string | undefined;
 	MAKERRR_DATA_DIR: string | undefined;
 	CLINE_DIR: string | undefined;
@@ -62,6 +70,14 @@ type EnvSnapshot = {
 
 function captureEnv(): EnvSnapshot {
 	return {
+		MAKERRR_CONNECTOR_DATA_DIR: process.env.MAKERRR_CONNECTOR_DATA_DIR,
+		MAKERRR_CONNECTOR_SETTINGS_PATH: process.env.MAKERRR_CONNECTOR_SETTINGS_PATH,
+		MAKERRR_CONNECTORS_DB_PATH: process.env.MAKERRR_CONNECTORS_DB_PATH,
+		MAKERRR_CRON_DB_PATH: process.env.MAKERRR_CRON_DB_PATH,
+		MAKERRR_DB_DATA_DIR: process.env.MAKERRR_DB_DATA_DIR,
+		MAKERRR_SESSION_DATA_DIR: process.env.MAKERRR_SESSION_DATA_DIR,
+		MAKERRR_TEAM_DATA_DIR: process.env.MAKERRR_TEAM_DATA_DIR,
+		MAKERRR_TASKS_DB_PATH: process.env.MAKERRR_TASKS_DB_PATH,
 		MAKERRR_DIR: process.env.MAKERRR_DIR,
 		MAKERRR_DATA_DIR: process.env.MAKERRR_DATA_DIR,
 		CLINE_DIR: process.env.CLINE_DIR,
@@ -83,6 +99,14 @@ function captureEnv(): EnvSnapshot {
 }
 
 function restoreEnv(snapshot: EnvSnapshot): void {
+	process.env.MAKERRR_CONNECTOR_DATA_DIR = snapshot.MAKERRR_CONNECTOR_DATA_DIR;
+	process.env.MAKERRR_CONNECTOR_SETTINGS_PATH = snapshot.MAKERRR_CONNECTOR_SETTINGS_PATH;
+	process.env.MAKERRR_CONNECTORS_DB_PATH = snapshot.MAKERRR_CONNECTORS_DB_PATH;
+	process.env.MAKERRR_CRON_DB_PATH = snapshot.MAKERRR_CRON_DB_PATH;
+	process.env.MAKERRR_DB_DATA_DIR = snapshot.MAKERRR_DB_DATA_DIR;
+	process.env.MAKERRR_SESSION_DATA_DIR = snapshot.MAKERRR_SESSION_DATA_DIR;
+	process.env.MAKERRR_TEAM_DATA_DIR = snapshot.MAKERRR_TEAM_DATA_DIR;
+	process.env.MAKERRR_TASKS_DB_PATH = snapshot.MAKERRR_TASKS_DB_PATH;
 	process.env.MAKERRR_DIR = snapshot.MAKERRR_DIR;
 	process.env.MAKERRR_DATA_DIR = snapshot.MAKERRR_DATA_DIR;
 	process.env.CLINE_DATA_DIR = snapshot.CLINE_DATA_DIR;
@@ -177,6 +201,7 @@ describe("storage path resolution", () => {
 
 	it("uses CLINE_DATA_DIR as-is when set", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
 
 		expect(resolveClineDataDir()).toBe("/tmp/cline-data");
@@ -417,6 +442,7 @@ describe("chat workspace paths", () => {
 
 	it("resolves the shared chat workspace under the configured data dir", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		delete process.env.CLINE_DATA_DIR;
 		process.env.CLINE_DIR = "/tmp/home/.cline";
 
