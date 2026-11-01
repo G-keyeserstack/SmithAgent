@@ -5,6 +5,7 @@ import {
 	mkdirSync,
 	openSync,
 	readdirSync,
+	readFileSync,
 	renameSync,
 	rmSync,
 	lstatSync,
@@ -194,7 +195,7 @@ export function recoverInterruptedRuntimeMigration(
 	const journalPath = journalPathFor(destination);
 	if (!existsSync(journalPath)) return undefined;
 	const journal = JSON.parse(
-		require("node:fs").readFileSync(journalPath, "utf8"),
+		readFileSync(journalPath, "utf8"),
 	) as RuntimeMigrationJournal;
 	if (journal.phase === "committed" || journal.phase === "rolled-back") return journal;
 
@@ -226,7 +227,13 @@ export function migrateLegacyRuntimeData(options: {
 }): RuntimeMigrationResult {
 	const source = resolve(options.sourceDataDir);
 	const destination = resolve(options.destinationDataDir);
-	if (source === destination || destination.startsWith(source + "/") || source.startsWith(destination + "/")) {
+	const sourceFromDestination = relative(destination, source);
+	const destinationFromSource = relative(source, destination);
+	if (
+		source === destination ||
+		(sourceFromDestination !== "" && !sourceFromDestination.startsWith("..") && !sourceFromDestination.startsWith("/")) ||
+		(destinationFromSource !== "" && !destinationFromSource.startsWith("..") && !destinationFromSource.startsWith("/"))
+	) {
 		throw new Error("Source and destination data directories must be separate, non-nested paths");
 	}
 	if (!existsSync(source)) {
@@ -363,6 +370,9 @@ export function rollbackLegacyRuntimeMigration(
 		lockFd = openSync(lockPath, "wx", 0o600);
 	} catch {
 		throw new Error("Cannot roll back while another migration holds the lock: " + lockPath);
+	}
+	if (journal.hadDestination && (!journal.backupDir || !existsSync(journal.backupDir))) {
+		throw new Error("The pre-migration backup is missing; refusing destructive rollback");
 	}
 	const rollbackDir = destination + ".rollback-" + journal.id;
 	try {
