@@ -24,7 +24,7 @@ import {
 
 describe("marketplace installer", () => {
 	const originalWrapperPath = process.env.CLINE_WRAPPER_PATH;
-	const originalClineDir = process.env.CLINE_DIR;
+	const originalMakerrrDir = process.env.MAKERRR_DIR;
 	const originalHome = process.env.HOME;
 	const originalMcpSettingsPath = process.env.CLINE_MCP_SETTINGS_PATH;
 
@@ -35,9 +35,9 @@ describe("marketplace installer", () => {
 			process.env.CLINE_WRAPPER_PATH = originalWrapperPath;
 		}
 		if (originalClineDir === undefined) {
-			delete process.env.CLINE_DIR;
+			delete process.env.MAKERRR_DIR;
 		} else {
-			process.env.CLINE_DIR = originalClineDir;
+			process.env.MAKERRR_DIR = originalClineDir;
 		}
 		if (originalHome === undefined) {
 			delete process.env.HOME;
@@ -219,9 +219,9 @@ describe("marketplace installer", () => {
 		expect(spawnCommand).not.toHaveBeenCalled();
 	});
 
-	it("reports Cline global skills as marketplace-installed", () => {
+	it("reports Makerrr global skills as marketplace-installed", () => {
 		const clineDir = mkdtempSync(join(tmpdir(), "cline-marketplace-cline-"));
-		process.env.CLINE_DIR = clineDir;
+		process.env.MAKERRR_DIR = clineDir;
 		mkdirSync(join(clineDir, "skills", "cline-sdk"), {
 			recursive: true,
 		});
@@ -244,11 +244,11 @@ describe("marketplace installer", () => {
 		).toEqual({ installedKeys: ["skill:cline-sdk"] });
 	});
 
-	it("accepts skill installs that create Cline global skills", async () => {
+	it("accepts skill installs that create Makerrr global skills", async () => {
 		const homeDir = mkdtempSync(join(tmpdir(), "cline-marketplace-home-"));
-		const clineDir = join(homeDir, ".cline");
+		const clineDir = join(homeDir, ".makerrr");
 		process.env.HOME = homeDir;
-		process.env.CLINE_DIR = clineDir;
+		process.env.MAKERRR_DIR = clineDir;
 		const spawnCommand = vi.fn(async () => {
 			mkdirSync(join(clineDir, "skills", "cline-sdk"), {
 				recursive: true,
@@ -282,7 +282,7 @@ describe("marketplace installer", () => {
 		});
 	});
 
-	it("removes Cline global marketplace skills without prompts", async () => {
+	it("removes Makerrr global marketplace skills without prompts", async () => {
 		const homeDir = mkdtempSync(join(tmpdir(), "cline-marketplace-home-"));
 		process.env.HOME = homeDir;
 		const skillDir = join(homeDir, ".agents", "skills", "cline-sdk");
@@ -566,7 +566,7 @@ describe("marketplace installer", () => {
 
 	it("uninstalls official marketplace plugins through the shared core service", async () => {
 		const clineDir = mkdtempSync(join(tmpdir(), "cline-marketplace-plugin-"));
-		process.env.CLINE_DIR = clineDir;
+		process.env.MAKERRR_DIR = clineDir;
 		const installPath = createInstalledOfficialPlugin(clineDir, "goal");
 		const spawnCommand = vi.fn(async () => ({
 			exitCode: 0,
@@ -637,7 +637,7 @@ describe("marketplace installer", () => {
 
 	it("resolves desktop uninstalls from the server catalog instead of browser-sent args", async () => {
 		const clineDir = mkdtempSync(join(tmpdir(), "cline-marketplace-plugin-"));
-		process.env.CLINE_DIR = clineDir;
+		process.env.MAKERRR_DIR = clineDir;
 		const installPath = createInstalledOfficialPlugin(clineDir, "goal");
 		const spawnCommand = vi.fn(async () => ({
 			exitCode: 0,
@@ -799,9 +799,9 @@ describe("marketplace installer", () => {
 		expect(existsSync(skillDir)).toBe(false);
 	});
 
-	it("reports official plugin marketplace entries installed from Cline home", () => {
+	it("reports official plugin marketplace entries installed from Makerrr home", () => {
 		const clineDir = mkdtempSync(join(tmpdir(), "cline-marketplace-test-"));
-		process.env.CLINE_DIR = clineDir;
+		process.env.MAKERRR_DIR = clineDir;
 		const sourceKey =
 			"official:https://github.com/cline/plugins.git#plugins/goal";
 		const hash = createHash("sha256")
@@ -830,7 +830,7 @@ describe("marketplace installer", () => {
 	});
 
 	it("does not report plugin inventory substring matches as installed", () => {
-		process.env.CLINE_DIR = mkdtempSync(
+		process.env.MAKERRR_DIR = mkdtempSync(
 			join(tmpdir(), "cline-marketplace-test-"),
 		);
 
@@ -860,7 +860,7 @@ describe("marketplace installer", () => {
 
 	it("skips invalid marketplace entries during installed-status checks", () => {
 		const clineDir = mkdtempSync(join(tmpdir(), "cline-marketplace-test-"));
-		process.env.CLINE_DIR = clineDir;
+		process.env.MAKERRR_DIR = clineDir;
 		const sourceKey =
 			"official:https://github.com/cline/plugins.git#plugins/goal";
 		const hash = createHash("sha256")
