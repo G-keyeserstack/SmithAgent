@@ -150,6 +150,34 @@ describe("Makerrr runtime migration", () => {
 		expect(existsSync(destination + ".migration.lock")).toBe(false);
 	});
 
+	it("recognizes a promoted staging directory when the process stops before the commit journal update", () => {
+		const root = makeRoot();
+		const destination = join(root, "makerrr-data");
+		const staging = destination + ".staging-test";
+		const journalPath = destination + ".migration-journal.json";
+		mkdirSync(destination, { recursive: true });
+		writeFileSync(join(destination, "promoted.txt"), "new-data");
+		const now = new Date().toISOString();
+		const journal: RuntimeMigrationJournal = {
+			version: 1,
+			id: "promoted",
+			phase: "staged",
+			sourceDataDir: join(root, "cline-data"),
+			destinationDataDir: destination,
+			stagingDir: staging,
+			hadDestination: false,
+			createdAt: now,
+			updatedAt: now,
+			copiedFiles: ["promoted.txt"],
+			snapshottedDatabases: [],
+		};
+		writeFileSync(journalPath, JSON.stringify(journal));
+
+		const recovered = recoverInterruptedRuntimeMigration(destination);
+		expect(recovered?.phase).toBe("committed");
+		expect(readFileSync(join(destination, "promoted.txt"), "utf8")).toBe("new-data");
+	});
+
 	it("refuses to overwrite a database when both stores contain the same relative path", () => {
 		const root = makeRoot();
 		const source = join(root, "cline-data");
