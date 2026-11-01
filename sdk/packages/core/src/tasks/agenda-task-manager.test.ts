@@ -504,7 +504,7 @@ describe("AgendaTaskManager", () => {
 				},
 			);
 			const badSpecsDir = join(badWorkspace, ".makerrr", "tasks");
-			const badSpecsBackup = join(badWorkspace, ".cline", "tasks-real");
+			const badSpecsBackup = join(badWorkspace, ".makerrr", "tasks-real");
 			renameSync(badSpecsDir, badSpecsBackup);
 			symlinkSync(badSpecsBackup, badSpecsDir, "dir");
 
