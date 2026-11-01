@@ -631,4 +631,14 @@ describe("Cline plugin discovery boundary", () => {
 		writeFileSync(join(root, "plugin.json"), "{}");
 		expect(isAgentPluginDirectory(root)).toBe(true);
 	});
+
+	it("prefers Makerrr workspace rules while retaining both legacy layouts", () => {
+		const workspace = "/tmp/workspace";
+		expect(resolveWorkspaceRulesConfigPaths(workspace)).toEqual([
+			join(workspace, ".makerrr", RULES_CONFIG_DIRECTORY_NAME),
+			join(workspace, ".clinerules"),
+			join(workspace, ".cline", RULES_CONFIG_DIRECTORY_NAME),
+		]);
+	});
+
 });
