@@ -44,7 +44,7 @@ makerrr context --json
 
 ## Configuration and migration
 
-New global configuration is stored under `~/.makerrr/`, with runtime data under `~/.makerrr/data/`. Project configuration uses `.makerrr/`. New product-specific environment variables use the `MAKERRR_` prefix.
+New global configuration is stored under `~/.makerrr/`, with new runtime data under `~/.makerrr/data/`. Project configuration uses `.makerrr/`. New product-specific environment variables use the `MAKERRR_` prefix. If an existing Cline session, team, connector or database store is present, Makerrr continues using that legacy store until an offline-aware migration is available, so existing history is not silently hidden or split.
 
 Makerrr retains compatibility discovery for existing Cline rules, skills, hooks, workflows, agents and plugins. It does not delete or silently rename legacy files.
 
