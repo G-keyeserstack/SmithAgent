@@ -14,7 +14,9 @@ import { ClineFileStorage } from "../ClineFileStorage"
 const roots: string[] = []
 
 afterEach(() => {
-	for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true })
+	for (const root of roots.splice(0)) {
+		rmSync(root, { recursive: true, force: true })
+	}
 })
 
 describe("ClineFileStorage secret-file permissions", () => {
@@ -38,9 +40,11 @@ describe("ClineFileStorage secret-file permissions", () => {
 		roots.push(root)
 		const blocker = join(root, "not-a-directory")
 		writeFileSync(blocker, "block")
-		const storage = new ClineFileStorage<string>(join(blocker, "secrets.json"), "Secrets", {
-			fileMode: 0o600,
-		})
+		const storage = new ClineFileStorage<string>(
+			join(blocker, "secrets.json"),
+			"Secrets",
+			{ fileMode: 0o600 },
+		)
 
 		expect(() => storage.set("apiKey", "secret")).toThrow()
 		expect(storage.get("apiKey")).toBeUndefined()
