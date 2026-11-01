@@ -37,7 +37,7 @@ describe("marketplace installer", () => {
 		if (originalMakerrrDir === undefined) {
 			delete process.env.MAKERRR_DIR;
 		} else {
-			process.env.MAKERRR_DIR = originalClineDir;
+			process.env.MAKERRR_DIR = originalMakerrrDir;
 		}
 		if (originalHome === undefined) {
 			delete process.env.HOME;
