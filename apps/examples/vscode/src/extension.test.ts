@@ -175,7 +175,6 @@ describe("VS Code migrated runtime storage", () => {
 				}),
 			);
 			expect(resolveSessionDataDir()).toBe(join(makerrrData, "sessions"));
-			expect(mkdirSync).toBeDefined();
 		} finally {
 			for (const key of Object.keys(previous) as Array<keyof typeof previous>) {
 				const value = previous[key];
