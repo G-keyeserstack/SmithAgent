@@ -1,0 +1,48 @@
+---
+title: "Makerrr overview"
+description: "The Makerrr developer platform, its current capabilities and development status."
+---
+
+# Build with Makerrr
+
+Makerrr is a developer-first AI coding agent for the editor, terminal and desktop, built around a shared agent SDK.
+
+**Based on Cline (Apache-2.0).** The upstream licence and attribution notices are retained in this repository.
+
+## One agent across developer workflows
+
+Makerrr is being developed across five connected surfaces:
+
+- **VS Code extension:** work in the editor, inspect diffs and approve file or command actions.
+- **CLI:** run interactive, scripted and headless development workflows.
+- **Desktop:** manage projects, long-running tasks and local workflows.
+- **SDK:** build custom agents, tools and integrations on the shared runtime.
+- **Cloud Agents / Hub:** run explicitly selected remote tasks in isolated workspaces.
+
+## Local-first by design
+
+The intended default is local execution. Source code and workspace data should remain on the developer's machine unless the developer explicitly chooses a cloud workflow or another integration that transfers data.
+
+Before a cloud task starts, Makerrr should identify the execution location, workspace boundary, credential scope and data-retention policy.
+
+## Models and integrations
+
+The repository contains provider adapters for multiple hosted and local model providers, BYOK configuration, MCP integrations, plugins, skills, hooks and configured agents. Developers can select the model and tool access appropriate to each workflow.
+
+Provider credentials are distinct from a Makerrr customer account. The current authentication implementation and its limitations are described in [Authentication and credential handling](/security/authentication).
+
+## Human control
+
+Makerrr builds on agent workflows that include planning, file diffs, command approval and checkpoints. The product direction is to make task state, agent activity, cost and permissions clear across every surface.
+
+## Development status
+
+Makerrr is under active development. The repository is Cline-derived and still contains upstream internal package names and identifiers while the migration is completed carefully.
+
+The current codebase includes CLI, VS Code, desktop, SDK, provider and Hub foundations. A production Makerrr identity service, OS-native credential vault, complete hosted billing service, fully operational multi-region cloud platform and verified 100,000-developer capacity are not yet established. The presence of code or documentation for a feature is not proof of commercial readiness.
+
+## Architecture and implementation
+
+The target architecture separates local execution, provider access, optional cloud workers, durable task state and Makerrr identity. See the repository's `product/makerrr/` specifications for the implementation plan and current security gaps.
+
+**Based on Cline (Apache-2.0).**
