@@ -85,7 +85,7 @@ describe("desktop MCP settings", () => {
 			const expectedPath = join(
 				tempRoot,
 				"settings",
-				"cline_mcp_settings.json",
+				"makerrr_mcp_settings.json",
 			);
 			const ensuredPath = (await handleCommand(
 				createContext(tempRoot),
@@ -118,7 +118,7 @@ describe("desktop MCP settings", () => {
 
 	it("keeps an unchanged enabled remote server enabled when saving metadata", async () => {
 		const tempRoot = await mkdtemp(join(tmpdir(), "desktop-mcp-settings-"));
-		const settingsPath = join(tempRoot, "cline_mcp_settings.json");
+		const settingsPath = join(tempRoot, "makerrr_mcp_settings.json");
 		const previousSettingsPath = process.env.CLINE_MCP_SETTINGS_PATH;
 		process.env.CLINE_MCP_SETTINGS_PATH = settingsPath;
 		try {
