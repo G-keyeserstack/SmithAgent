@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { resolveDbDataDir, resolveSessionDataDir } from "./paths";
+import { resolveClineDataDir, resolveDbDataDir, resolveSessionDataDir } from "./paths";
 
 const keys = [
 	"MAKERRR_DIR",
@@ -39,16 +39,18 @@ describe("runtime migration path activation", () => {
 		mkdirSync(join(legacyData, "db"), { recursive: true });
 
 		process.env.MAKERRR_DIR = makerrrRoot;
-		process.env.MAKERRR_DATA_DIR = makerrrData;
-		process.env.MAKERRR_LEGACY_CLINE_DATA_DIR = legacyData;
+		delete process.env.MAKERRR_DATA_DIR;
+		delete process.env.MAKERRR_LEGACY_CLINE_DATA_DIR;
+		process.env.CLINE_DATA_DIR = legacyData;
 		for (const key of [
 			"MAKERRR_SESSION_DATA_DIR",
 			"MAKERRR_DB_DATA_DIR",
-			"CLINE_DATA_DIR",
 			"CLINE_SESSION_DATA_DIR",
 			"CLINE_DB_DATA_DIR",
 		]) delete process.env[key];
 
+		expect(resolveClineDataDir()).toBe(legacyData);
+		expect(resolveClineDataDir()).toBe(legacyData);
 		expect(resolveSessionDataDir()).toBe(join(legacyData, "sessions"));
 		expect(resolveDbDataDir()).toBe(join(legacyData, "db"));
 
@@ -60,6 +62,7 @@ describe("runtime migration path activation", () => {
 		};
 		writeFileSync(journalPath, JSON.stringify(journal));
 
+		expect(resolveClineDataDir()).toBe(makerrrData);
 		expect(resolveSessionDataDir()).toBe(join(makerrrData, "sessions"));
 		expect(resolveDbDataDir()).toBe(join(makerrrData, "db"));
 
