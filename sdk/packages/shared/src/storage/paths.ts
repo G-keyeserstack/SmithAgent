@@ -834,12 +834,21 @@ function readPluginPackageManifest(
 ): PluginPackageManifest | null {
 	try {
 		const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as {
+			makerrr?: PluginPackageManifest;
 			cline?: PluginPackageManifest;
 		};
-		if (!packageJson.cline || typeof packageJson.cline !== "object") {
+		const makerrrManifest = packageJson.makerrr;
+		const clineManifest = packageJson.cline;
+		const manifests = [makerrrManifest, clineManifest].filter(
+			(manifest): manifest is PluginPackageManifest =>
+				!!manifest && typeof manifest === "object",
+		);
+		if (manifests.length === 0) {
 			return null;
 		}
-		return packageJson.cline;
+		return {
+			plugins: manifests.flatMap((manifest) => manifest.plugins ?? []),
+		};
 	} catch {
 		return null;
 	}
