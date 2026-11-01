@@ -297,29 +297,32 @@ describe("storage path resolution", () => {
 	it("resolves Makerrr and legacy global rules locations", () => {
 		snapshot = captureEnv();
 		const previousHome = process.env.HOME ?? "~";
-		setHomeDir("/tmp/home");
-		process.env.MAKERRR_DIR = "/tmp/home/.makerrr";
-		process.env.CLINE_DIR = "/tmp/home/.cline";
-		process.env.CLINE_DATA_DIR = "/tmp/home/.cline/data";
+		try {
+			setHomeDir("/tmp/home");
+			process.env.MAKERRR_DIR = "/tmp/home/.makerrr";
+			process.env.CLINE_DIR = "/tmp/home/.cline";
+			process.env.CLINE_DATA_DIR = "/tmp/home/.cline/data";
 
-		expect(resolveRulesConfigSearchPaths()).toEqual(
-			expect.arrayContaining([
-				resolveGlobalAgentsRulesPath(),
-				join("/tmp/home", ".makerrr", RULES_CONFIG_DIRECTORY_NAME),
-				join("/tmp/home", ".cline", RULES_CONFIG_DIRECTORY_NAME),
-				join("/tmp/home", "Makerrr", "Rules"),
-				// xdg-user-dir's unconfigured Documents fallback (cline/cline#13542)
-				join(
-					dirname(dirname(resolveGlobalAgentsRulesPath())),
-					"Cline",
-					"Rules",
-				),
-			]),
-		);
-		expect(resolveRulesConfigSearchPaths()).not.toContain(
-			join("/tmp/home", ".cline", "data", RULES_CONFIG_DIRECTORY_NAME),
-		);
-		setHomeDir(previousHome);
+			expect(resolveRulesConfigSearchPaths()).toEqual(
+				expect.arrayContaining([
+					resolveGlobalAgentsRulesPath(),
+					join("/tmp/home", ".makerrr", RULES_CONFIG_DIRECTORY_NAME),
+					join("/tmp/home", ".cline", RULES_CONFIG_DIRECTORY_NAME),
+					join("/tmp/home", "Makerrr", "Rules"),
+					// xdg-user-dir's unconfigured Documents fallback (cline/cline#13542)
+					join(
+						dirname(dirname(resolveGlobalAgentsRulesPath())),
+						"Cline",
+						"Rules",
+					),
+				]),
+			);
+			expect(resolveRulesConfigSearchPaths()).not.toContain(
+				join("/tmp/home", ".cline", "data", RULES_CONFIG_DIRECTORY_NAME),
+			);
+		} finally {
+			setHomeDir(previousHome);
+		}
 	});
 
 	it("resolves Makerrr and legacy workspace rule layouts", () => {
