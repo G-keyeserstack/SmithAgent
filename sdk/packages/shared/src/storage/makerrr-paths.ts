@@ -58,7 +58,7 @@ export function resolveLegacyClineDataDir(): string {
 export type LegacySettingsMigrationItem = {
 	source: string;
 	destination: string;
-	status: "copied" | "already-exists" | "missing" | "failed";
+	status: "would-copy" | "copied" | "already-exists" | "missing" | "failed";
 	error?: string;
 };
 
@@ -80,6 +80,7 @@ export type LegacySettingsMigrationResult = {
 export function migrateLegacyClineSettings(options?: {
 	sourceDataDir?: string;
 	destinationSettingsDir?: string;
+	dryRun?: boolean;
 }): LegacySettingsMigrationResult {
 	const sourceDir = options?.sourceDataDir || resolveLegacyClineDataDir();
 	const destinationDir =
@@ -100,6 +101,10 @@ export function migrateLegacyClineSettings(options?: {
 		}
 		if (existsSync(destination)) {
 			items.push({ source, destination, status: "already-exists" });
+			continue;
+		}
+		if (options?.dryRun) {
+			items.push({ source, destination, status: "would-copy" });
 			continue;
 		}
 		try {
