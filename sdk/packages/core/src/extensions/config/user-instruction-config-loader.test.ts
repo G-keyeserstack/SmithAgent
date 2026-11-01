@@ -621,15 +621,24 @@ Use the security review checklist.`,
 		);
 		await writeFile(
 			join(pluginRoot, "rules.md"),
-			"---\\nname: makerrr-enterprise-policy\\n---\\nFollow Makerrr enterprise policy.",
+			`---
+name: makerrr-enterprise-policy
+---
+Follow Makerrr enterprise policy.`,
 		);
 		await writeFile(
 			join(pluginRoot, "workflows", "triage.md"),
-			"---\\nname: makerrr-triage\\n---\\nFollow the Makerrr triage workflow.",
+			`---
+name: makerrr-triage
+---
+Follow the Makerrr triage workflow.`,
 		);
 		await writeFile(
 			join(pluginRoot, "skills", "security-review", "SKILL.md"),
-			"---\\nname: makerrr-security-review\\n---\\nUse the Makerrr security review checklist.",
+			`---
+name: makerrr-security-review
+---
+Use the Makerrr security review checklist.`,
 		);
 
 		const watcher = createUserInstructionConfigWatcher({
