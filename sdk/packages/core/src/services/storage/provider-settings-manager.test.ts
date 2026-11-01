@@ -1,9 +1,11 @@
 import {
+	chmodSync,
 	mkdirSync,
 	mkdtempSync,
 	readdirSync,
 	readFileSync,
 	rmSync,
+	statSync,
 	writeFileSync,
 } from "node:fs";
 import os from "node:os";
@@ -20,6 +22,27 @@ describe("ProviderSettingsManager", () => {
 		for (const dir of tempDirs.splice(0)) {
 			rmSync(dir, { recursive: true, force: true });
 		}
+	});
+
+	it("hardens an existing provider settings file before loading credentials", () => {
+		const tempDir = mkdtempSync(
+			path.join(os.tmpdir(), "core-provider-settings-permissions-"),
+		);
+		tempDirs.push(tempDir);
+		const filePath = path.join(tempDir, "provider-settings.json");
+		const manager = new ProviderSettingsManager({ filePath });
+		manager.saveProviderSettings({
+			provider: "anthropic",
+			apiKey: "permission-test-secret",
+		});
+		chmodSync(filePath, 0o644);
+
+		const reloaded = new ProviderSettingsManager({ filePath });
+
+		expect(statSync(filePath).mode & 0o777).toBe(0o600);
+		expect(reloaded.getProviderSettings("anthropic")?.apiKey).toBe(
+			"permission-test-secret",
+		);
 	});
 
 	it("persists and restores provider settings", () => {

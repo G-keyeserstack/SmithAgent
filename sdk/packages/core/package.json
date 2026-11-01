@@ -1,5 +1,6 @@
 {
 	"name": "@cline/core",
+	"x-makerrr-attribution": "Based on Cline (Apache-2.0)",
 	"description": "Cline Core SDK for Node Runtime",
 	"version": "0.2.0",
 	"repository": {

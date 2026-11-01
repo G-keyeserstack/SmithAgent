@@ -1,0 +1,67 @@
+---
+title: "Authentication and credential handling"
+description: "How the repository authenticates users and providers, routes requests and stores credentials."
+---
+
+# Authentication and credential handling
+
+Makerrr authentication has three separate security boundaries. They must not be treated as one credential system.
+
+1. **Makerrr identity:** the developer's Makerrr account, organisation, roles and plan.
+2. **Model-provider credentials:** API keys or OAuth tokens used to call model providers.
+3. **Integration credentials:** MCP and other third-party OAuth tokens and client metadata.
+
+The current repository has a provider-authentication framework and inherits Cline account authentication. A complete first-party Makerrr identity, subscription and organisation IAM service is not yet established.
+
+## Components
+
+| Component | Source path | Responsibility |
+|---|---|---|
+| CLI auth | `apps/cli/src/commands/auth.ts` | Provider selection, BYOK setup and OAuth onboarding |
+| Provider registry | `sdk/packages/core/src/auth/provider-auth-registry.ts` | Selects provider-specific login, refresh and save handlers |
+| OAuth contracts | `sdk/packages/core/src/auth/types.ts` | Access, refresh, expiry and account metadata |
+| Cline account flow | `sdk/packages/core/src/auth/cline.ts` | WorkOS device authorisation and inherited Cline account tokens |
+| OpenAI Codex flow | `sdk/packages/core/src/auth/codex.ts` | Browser OAuth, PKCE S256, state and callback exchange |
+| Oracle Code Assist | `sdk/packages/core/src/auth/oca.ts` | OCA-specific OAuth |
+| Provider settings | `sdk/packages/core/src/services/storage/provider-settings-manager.ts` | Validates and persists provider configuration |
+| Runtime refresh | `sdk/packages/core/src/runtime/orchestration/runtime-oauth-token-manager.ts` | Refreshes managed OAuth credentials |
+| Refresh lock | `sdk/packages/core/src/runtime/orchestration/oauth-refresh-lock.ts` | Coordinates refresh across processes |
+| VS Code storage | `apps/vscode/src/shared/storage/ClineFileStorage.ts` | File-backed extension state and legacy secrets |
+| MCP OAuth | `sdk/packages/core/src/extensions/mcp/oauth.ts` | Third-party MCP OAuth lifecycle |
+
+## BYOK request flow
+
+1. The developer selects a model provider and supplies an API key.
+2. The CLI validates the provider and required model configuration.
+3. `ProviderSettingsManager` validates and persists the provider settings.
+4. CLI startup resolves the explicit or persisted credential and creates the shared runtime configuration.
+5. The provider adapter applies the credential to the outgoing request.
+6. The external model provider authenticates and returns the model response.
+
+The API key is not a Makerrr access token. It authenticates the request with the selected provider.
+
+## OAuth flow
+
+The provider registry selects the relevant handler. That handler performs the provider-specific authorisation flow and saves the resulting credentials.
+
+- Cline account authentication uses WorkOS device authorisation.
+- OpenAI Codex uses browser authorisation, PKCE S256, a random state value, a local callback and token exchange.
+- Oracle Code Assist uses its provider-specific OAuth/OIDC implementation.
+
+OAuth credentials include an access token, refresh token, expiry timestamp and optional account metadata. The runtime refresh manager uses single-flight coordination and a SQLite-backed cross-process lock. Some client-specific refresh paths still need to be unified.
+
+## Current storage and security status
+
+Provider settings and some legacy VS Code/MCP stores are file-backed. The code applies restrictive file permissions and atomic writes, but file permissions are not encryption at rest. The current security work hardens existing secret files and makes failed persistence visible; an OS-native credential vault is still a commercial-release requirement.
+
+Codex credentials have historically been duplicated between provider settings and extension state. MCP OAuth also has its own persisted token/client metadata. Those stores must be migrated into one credential-management boundary.
+
+## Logout and revocation
+
+Local logout must not report success if durable deletion fails. Local sign-out is not the same as remote provider revocation. Provider disconnect, local sign-out, remote session revocation and account deletion need distinct semantics.
+
+## Source-level architecture notes
+
+The full source-grounded walkthrough, including request construction, storage, migration, logging, refresh and the target Makerrr identity architecture, is maintained in `product/makerrr/AUTHENTICATION_ARCHITECTURE.md`.
+
+**Release status:** provider authentication exists; first-party Makerrr identity, OS-native credential storage, complete cross-client refresh unification, secure legacy-secret retirement and verified remote revocation remain open work.

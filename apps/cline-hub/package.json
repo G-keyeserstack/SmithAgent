@@ -1,5 +1,6 @@
 {
 	"name": "@cline/cline-hub",
+	"x-makerrr-attribution": "Based on Cline (Apache-2.0)",
 	"version": "0.0.0",
 	"private": true,
 	"description": "Browser dashboard for the Cline hub: live clients, sessions, streaming chat, and hub restart.",

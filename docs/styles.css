@@ -1,12 +1,18 @@
-/* Custom styles for Cline documentation */
+/* Makerrr documentation brand styles */
+:root {
+	--makerrr-ink: #0c0d0b;
+	--makerrr-bone: #f3f0e7;
+}
 
-/* Import Geist Sans font from Google Fonts */
-@import url("https://fonts.googleapis.com/css2?family=Geist+Sans:wght@300;400;500;600;700&display=swap");
 
-/* Import Geist Mono font from Google Fonts */
+/* Import Manrope for body and UI typography */
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap");
+
+/* Import Geist Mono for code blocks */
 @import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600;700&display=swap");
 
-/* Apply Geist Sans to body text, but not headings or code */
+/* Apply Manrope to body text, but not headings or code */
 body,
 p,
 li,
@@ -15,7 +21,7 @@ th,
 span:not(code *),
 div:not(code *):not(pre *) {
 	font-family:
-		"Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
+		"Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
 }
 
 /* Ensure code blocks use Geist Mono */
@@ -28,22 +34,29 @@ pre * {
 	font-family: "Geist Mono", "Monaco", "Courier New", monospace !important;
 }
 
+/* Use Cormorant Garamond for editorial headings */
+h1, h2, h3 {
+	font-family: "Cormorant Garamond", Georgia, serif !important;
+}
+
 /* Make h1 titles lighter in font weight */
 h1 {
 	font-weight: 600 !important;
 }
 
-/* Keep headings and images at full opacity */
+/* Keep headings and images at full opacity; preserve the display typeface. */
 h1,
 h2,
 h3,
 h4,
 h5,
-h6,
+h6 {
+	opacity: 1 !important;
+	font-family: "Cormorant Garamond", Georgia, serif !important;
+}
+
 img {
 	opacity: 1 !important;
-	font-family:
-		"Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
 }
 
 /* Also apply to any h1 elements within content areas */

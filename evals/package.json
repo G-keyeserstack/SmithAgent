@@ -1,5 +1,6 @@
 {
 	"name": "cline-evals",
+	"x-makerrr-attribution": "Based on Cline (Apache-2.0)",
 	"version": "2.0.0",
 	"description": "Evaluation framework for Cline: smoke tests, analysis, and benchmarks",
 	"scripts": {

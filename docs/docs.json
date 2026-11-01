@@ -1,26 +1,26 @@
 {
 	"$schema": "https://mintlify.com/docs.json",
 	"theme": "mint",
-	"name": "Cline",
-	"description": "AI-powered coding agent for complex work",
+	"name": "Makerrr",
+	"description": "Local-first AI coding agent for editor, terminal and desktop",
 	"colors": {
-		"primary": "#9D4EDD",
-		"light": "#F0E6FF",
-		"dark": "#000000"
+		"primary": "#0c0d0b",
+		"light": "#f3f0e7",
+		"dark": "#0c0d0b"
 	},
 	"logo": {
-		"light": "/assets/cline-wordmark-black.svg",
-		"dark": "/assets/cline-wordmark-white.svg",
-		"href": "https://cline.bot/"
+		"light": "/assets/makerrr-wordmark-ink.svg",
+		"dark": "/assets/makerrr-wordmark-bone.svg",
+		"href": "https://makerrr.ai/"
 	},
 	"favicon": {
-		"light": "/assets/cline-icon-dark.svg",
-		"dark": "/assets/cline-icon-white.svg"
+		"light": "/assets/makerrr-mark-ink.svg",
+		"dark": "/assets/makerrr-mark-bone.svg"
 	},
 	"background": {
 		"color": {
-			"light": "#fafaf9",
-			"dark": "#0f0f0f"
+			"light": "#f3f0e7",
+			"dark": "#0c0d0b"
 		}
 	},
 	"styling": {
@@ -33,37 +33,37 @@
 		"strict": false
 	},
 	"fonts": {
-		"family": "Geist Sans"
+		"family": "Manrope"
 	},
 	"navbar": {
 		"links": [
 			{
 				"label": "GitHub",
 				"icon": "github",
-				"href": "https://github.com/cline/cline"
+				"href": "https://github.com/G-keyeserstack/SmithAgent"
 			},
 			{
-				"label": "Discord",
-				"icon": "discord",
-				"href": "https://discord.gg/cline"
+				"label": "Community",
+				"icon": "github",
+				"href": "https://github.com/G-keyeserstack/SmithAgent/discussions"
 			}
 		],
 		"primary": {
 			"type": "button",
-			"label": "Install Cline",
-			"href": "https://cline.bot/install?utm_source=website&utm_medium=header"
+			"label": "Get started",
+			"href": "/makerrr-overview"
 		}
 	},
 	"navigation": {
 		"tabs": [
 			{
-				"tab": "Cline",
+				"tab": "Makerrr",
 				"icon": "robot",
 				"groups": [
 					{
 						"group": "Getting Started",
 						"pages": [
-							"cline-overview",
+							"makerrr-overview",
 							"getting-started/installing-cline",
 							"getting-started/cline-provider",
 							"getting-started/clinepass",
@@ -103,10 +103,16 @@
 						]
 					},
 					{
+						"group": "Security & Identity",
+						"pages": [
+							"security/authentication"
+						]
+					},
+					{
 						"group": "Usage",
 						"pages": [
 							{
-								"group": "Cline Desktop",
+								"group": "Makerrr Desktop",
 								"pages": [
 									"usage/cline-desktop",
 									"usage/cline-desktop-ssh",
@@ -315,7 +321,7 @@
 								]
 							},
 							{
-								"group": "Control Other Cline Features",
+								"group": "Control Other Features",
 								"pages": [
 									"enterprise-solutions/configuration/infrastructure-configuration/control-other-cline-features/yolo-mode",
 									"enterprise-solutions/configuration/infrastructure-configuration/control-other-cline-features/mcp-server-controls"
@@ -336,49 +342,19 @@
 						]
 					}
 				]
-			},
-			{
-				"tab": "API",
-				"icon": "code",
-				"groups": [
-					{
-						"group": "Cline API",
-						"pages": [
-							"api/overview",
-							"api/getting-started",
-							"api/authentication"
-						]
-					},
-					{
-						"group": "Endpoints",
-						"pages": [
-							"api/chat-completions"
-						]
-					},
-					{
-						"group": "Reference",
-						"pages": [
-							"api/models",
-							"api/errors",
-							"api/sdk-examples"
-						]
-					}
-				]
 			}
 		]
 	},
 	"footer": {
 		"socials": {
-			"x": "https://x.com/cline",
-			"github": "https://github.com/cline/cline",
-			"discord": "https://discord.gg/cline"
+			"github": "https://github.com/G-keyeserstack/SmithAgent"
 		}
 	},
 	"anchors": [
 		{
-			"name": "Overview",
+			"name": "Makerrr",
 			"icon": "house",
-			"url": "cline-overview"
+			"url": "makerrr-overview"
 		}
 	],
 	"redirects": [
@@ -400,7 +376,7 @@
 		},
 		{
 			"source": "/getting-started/overview",
-			"destination": "/cline-overview"
+			"destination": "/makerrr-overview"
 		},
 		{
 			"source": "/getting-started/your-first-project",
@@ -408,15 +384,15 @@
 		},
 		{
 			"source": "/introduction",
-			"destination": "/cline-overview"
+			"destination": "/makerrr-overview"
 		},
 		{
 			"source": "/introduction/welcome",
-			"destination": "/cline-overview"
+			"destination": "/makerrr-overview"
 		},
 		{
 			"source": "/introduction/overview",
-			"destination": "/cline-overview"
+			"destination": "/makerrr-overview"
 		},
 		{
 			"source": "/getting-started/model-selection-guide",
@@ -992,11 +968,11 @@
 		},
 		{
 			"source": "/contributing/doc-templates",
-			"destination": "/cline-overview"
+			"destination": "/makerrr-overview"
 		},
 		{
 			"source": "/contributing/documentation-guide",
-			"destination": "/cline-overview"
+			"destination": "/makerrr-overview"
 		},
 		{
 			"source": "/customization/workflows",
@@ -1008,15 +984,15 @@
 		},
 		{
 			"source": "/getting-started/quick-start",
-			"destination": "/cline-overview"
+			"destination": "/makerrr-overview"
 		},
 		{
 			"source": "/getting-started/what-is-cline",
-			"destination": "/cline-overview"
+			"destination": "/makerrr-overview"
 		},
 		{
 			"source": "/home",
-			"destination": "/cline-overview"
+			"destination": "/makerrr-overview"
 		},
 		{
 			"source": "/provider-config/aihubmix",

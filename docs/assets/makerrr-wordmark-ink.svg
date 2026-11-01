@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 88" role="img" aria-labelledby="title">
+  <title id="title">Makerrr</title>
+  <g fill="none" stroke="#0c0d0b" stroke-width="5" stroke-linecap="square" stroke-linejoin="miter" transform="translate(2 8) scale(.55)">
+    <path d="M20 20h36v36H20z"/>
+    <path d="M72 20h36v36H72z"/>
+    <path d="M46 72h36v36H46z"/>
+    <path d="M56 38h16M38 56l12 16M90 56L78 72"/>
+  </g>
+  <text x="82" y="62" fill="#0c0d0b" font-family="Cormorant Garamond, Georgia, serif" font-size="52" font-weight="600" letter-spacing="1">Makerrr</text>
+</svg>

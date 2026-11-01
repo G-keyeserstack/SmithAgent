@@ -4,7 +4,7 @@ import {
 	getProviderOAuthCredentialsFromSettings,
 	saveProviderOAuthCredentials,
 } from "../../auth/provider-auth-registry";
-import { hashSecret, sdkDebug } from "../../logging/early-logger";
+import { sdkDebug } from "../../logging/early-logger";
 import { ProviderSettingsManager } from "../../services/storage/provider-settings-manager";
 import type { ProviderSettings } from "../../types/provider-settings";
 import { withOAuthRefreshLock } from "./oauth-refresh-lock";
@@ -160,7 +160,7 @@ export class RuntimeOAuthTokenManager {
 		}
 
 		sdkDebug(
-			`oauth.resolve.start providerId=${providerId} storageProviderId=${storageProviderId} forceRefresh=${forceRefresh} accessTokenHash=${hashSecret(currentCredentials.access)} refreshTokenHash=${hashSecret(currentCredentials.refresh)}`,
+			`oauth.resolve.start providerId=${providerId} storageProviderId=${storageProviderId} forceRefresh=${forceRefresh} credentialsPresent=true`,
 		);
 
 		const nextCredentials = await handler.refresh({
@@ -194,7 +194,7 @@ export class RuntimeOAuthTokenManager {
 		const wasRefreshed = !authSettingsEqual(settings.auth, nextSettings.auth);
 		if (wasRefreshed) {
 			sdkDebug(
-				`oauth.resolve.refreshed providerId=${providerId} newAccessTokenHash=${hashSecret(nextCredentials.access)} newRefreshTokenHash=${hashSecret(nextCredentials.refresh)} savingToDisk=true`,
+				`oauth.resolve.refreshed providerId=${providerId} savingToDisk=true`,
 			);
 			this.providerSettingsManager.saveProviderSettings(nextSettings, {
 				setLastUsed: false,
