@@ -48,6 +48,10 @@ type EnvSnapshot = {
 	CLINE_PROVIDER_SETTINGS_PATH: string | undefined;
 	CLINE_SESSION_DATA_DIR: string | undefined;
 	CLINE_TEAM_DATA_DIR: string | undefined;
+	MAKERRR_GLOBAL_SETTINGS_PATH: string | undefined;
+	MAKERRR_MCP_SETTINGS_PATH: string | undefined;
+	MAKERRR_PROVIDER_SETTINGS_PATH: string | undefined;
+	MAKERRR_LEGACY_CLINE_DIR: string | undefined;
 };
 
 function captureEnv(): EnvSnapshot {
@@ -62,6 +66,10 @@ function captureEnv(): EnvSnapshot {
 		CLINE_PROVIDER_SETTINGS_PATH: process.env.CLINE_PROVIDER_SETTINGS_PATH,
 		CLINE_SESSION_DATA_DIR: process.env.CLINE_SESSION_DATA_DIR,
 		CLINE_TEAM_DATA_DIR: process.env.CLINE_TEAM_DATA_DIR,
+		MAKERRR_GLOBAL_SETTINGS_PATH: process.env.MAKERRR_GLOBAL_SETTINGS_PATH,
+		MAKERRR_MCP_SETTINGS_PATH: process.env.MAKERRR_MCP_SETTINGS_PATH,
+		MAKERRR_PROVIDER_SETTINGS_PATH: process.env.MAKERRR_PROVIDER_SETTINGS_PATH,
+		MAKERRR_LEGACY_CLINE_DIR: process.env.MAKERRR_LEGACY_CLINE_DIR,
 	};
 }
 
@@ -78,6 +86,10 @@ function restoreEnv(snapshot: EnvSnapshot): void {
 		snapshot.CLINE_PROVIDER_SETTINGS_PATH;
 	process.env.CLINE_SESSION_DATA_DIR = snapshot.CLINE_SESSION_DATA_DIR;
 	process.env.CLINE_TEAM_DATA_DIR = snapshot.CLINE_TEAM_DATA_DIR;
+	process.env.MAKERRR_GLOBAL_SETTINGS_PATH = snapshot.MAKERRR_GLOBAL_SETTINGS_PATH;
+	process.env.MAKERRR_MCP_SETTINGS_PATH = snapshot.MAKERRR_MCP_SETTINGS_PATH;
+	process.env.MAKERRR_PROVIDER_SETTINGS_PATH = snapshot.MAKERRR_PROVIDER_SETTINGS_PATH;
+	process.env.MAKERRR_LEGACY_CLINE_DIR = snapshot.MAKERRR_LEGACY_CLINE_DIR;
 }
 
 describe("storage path resolution", () => {
@@ -166,6 +178,7 @@ describe("storage path resolution", () => {
 	it("falls back to CLINE_DATA_DIR/settings/providers.json for provider settings", () => {
 		snapshot = captureEnv();
 		delete process.env.CLINE_PROVIDER_SETTINGS_PATH;
+		delete process.env.MAKERRR_PROVIDER_SETTINGS_PATH;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
 
 		expect(resolveProviderSettingsPath()).toBe(
@@ -176,6 +189,7 @@ describe("storage path resolution", () => {
 	it("falls back to CLINE_DATA_DIR/settings/global-settings.json for global settings", () => {
 		snapshot = captureEnv();
 		delete process.env.CLINE_GLOBAL_SETTINGS_PATH;
+		delete process.env.MAKERRR_GLOBAL_SETTINGS_PATH;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
 
 		expect(resolveGlobalSettingsPath()).toBe(
@@ -186,6 +200,7 @@ describe("storage path resolution", () => {
 	it("uses the Makerrr MCP settings filename under the configured data directory", () => {
 		snapshot = captureEnv();
 		delete process.env.CLINE_MCP_SETTINGS_PATH;
+		delete process.env.MAKERRR_MCP_SETTINGS_PATH;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
 
 		expect(resolveMcpSettingsPath()).toBe(
