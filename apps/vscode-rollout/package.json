@@ -1,5 +1,6 @@
 {
 	"name": "@cline/vscode-rollout",
+	"x-makerrr-attribution": "Based on Cline (Apache-2.0)",
 	"private": true,
 	"version": "0.1.0",
 	"description": "Loader + packaging tooling for the staged (A/B) rollout of the SDK-based VS Code extension alongside the legacy extension",

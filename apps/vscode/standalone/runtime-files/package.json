@@ -1,5 +1,6 @@
 {
 	"name": "cline-core",
+	"x-makerrr-attribution": "Based on Cline (Apache-2.0)",
 	"version": "0.0.1",
 	"main": "cline-core.js",
 	"dependencies": {

@@ -1,5 +1,6 @@
 {
 	"name": "testing-infra",
+	"x-makerrr-attribution": "Based on Cline (Apache-2.0)",
 	"version": "0.1.0",
 	"main": "dist/runner.js",
 	"scripts": {
