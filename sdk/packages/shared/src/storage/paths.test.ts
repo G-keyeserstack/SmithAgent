@@ -15,6 +15,7 @@ import {
 	isChatWorkspacePath,
 	RULES_CONFIG_DIRECTORY_NAME,
 	resolveAgentPluginSearchPaths,
+	resolveAgentConfigSearchPaths,
 	resolveAgentsConfigDirPath,
 	resolveChatWorkspacePath,
 	resolveClineDataDir,
@@ -258,13 +259,20 @@ describe("storage path resolution", () => {
 		);
 	});
 
-	it("falls back to ~/.cline/.agents for agent configs", () => {
+	it("uses Makerrr as the primary global agent root and retains the legacy Cline search path", () => {
 		snapshot = captureEnv();
+		const previousHome = process.env.HOME ?? "~";
 		process.env.CLINE_DIR = "/tmp/home/.cline";
+		delete process.env.MAKERRR_DIR;
+		setHomeDir("/tmp/home");
 
 		expect(resolveAgentsConfigDirPath()).toBe(
+			join("/tmp/home", ".makerrr", AGENT_CONFIG_DIRECTORY_NAME),
+		);
+		expect(resolveAgentConfigSearchPaths()).toContain(
 			join("/tmp/home", ".cline", AGENT_CONFIG_DIRECTORY_NAME),
 		);
+		setHomeDir(previousHome);
 	});
 
 	it("resolves global hooks from ~/.cline", () => {
