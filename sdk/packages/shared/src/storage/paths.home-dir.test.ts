@@ -62,7 +62,8 @@ describe("storage home directory fallback", () => {
 		process.env.MAKERRR_DIR = join("C:\\Users\\saoud", ".makerrr-custom");
 		process.env.CLINE_DIR = join("C:\\Users\\saoud", ".cline");
 
-		const { resolveClineDir } = await import("./paths");
+		const { resolveClineDir, setClineDir } = await import("./paths");
+		setClineDir(join("C:\\Users\\saoud", ".cline"));
 		expect(resolveClineDir()).toBe(join("C:\\Users\\saoud", ".makerrr-custom"));
 	});
 
