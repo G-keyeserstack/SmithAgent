@@ -56,12 +56,18 @@
 
 ## Validation record
 
-Source changes and regression tests are committed on the feature branch. No clean Bun installation, build, typecheck or test suite has been executed in this environment. GitHub Actions currently reports no workflow runs or status checks for the branch. Do not merge or publish until the repository is checked out cleanly with Bun 1.4.2 and Node >=22 and the affected test suites pass.
+The first merged foundation commit was not built or tested before merge. A release-hardening branch corrects environment restoration in the shared storage and CLI test helpers: variables absent in the snapshot are now deleted rather than assigned the string `undefined`. The SDK workflow now installs with `bun install --frozen-lockfile`, so lockfile drift is a CI failure. These changes are awaiting CI execution; they have not yet been verified by a runner.
+
+A dedicated `LEGACY_RUNTIME_MIGRATION.md` now specifies the store inventory, quiescence, SQLite backup API, WAL/SHM handling, staged validation, atomic commit, rollback journal, cross-client compatibility matrix and security gates. This is a design specification, not a claim that live SQLite/runtime migration has been implemented.
+
+No clean checkout, local Bun install, build, typecheck or test suite has been executed in the current assistant environment. GitHub Actions reported zero runs for the original merge commit. Do not merge or publish until the PR CI matrix and the additional migration acceptance tests pass on the exact candidate commit.
 
 ## Next engineering gate
 
-1. Obtain a clean checkout and run the root install, typecheck, shared/core/CLI/VS Code tests and relevant builds.
-2. Fix every regression before extending the rebrand.
-3. Complete the storage consumer inventory and offline runtime-data migration design.
-4. Add an active-context inspector and bind edit previews to the exact file snapshots that are later applied.
-5. Only then proceed to Tab-style inline completion.
+1. Run the frozen-lockfile install, SDK/CLI builds, typechecks, lint and shared/core/CLI/VS Code unit tests on the release-hardening branch.
+2. Fix all failures and rerun the complete affected suites.
+3. Complete the concrete persistent-store inventory from actual storage consumers and implement the offline-aware database migration using the approved design.
+4. Add cross-client migration fixtures and recovery tests on Linux, macOS and Windows.
+5. Validate CLI, VS Code and Desktop startup, provider setup, session continuity, approvals, edits and checkpoint restore.
+6. Complete the security review and full CI matrix.
+7. Only then proceed to Tab-style inline completion.
