@@ -159,6 +159,9 @@ export function setClineDirIfUnset(dir: string): void {
 }
 
 export function resolveClineDir(): string {
+	if (CLINE_DIR_SET_EXPLICITLY && CLINE_DIR) {
+		return CLINE_DIR;
+	}
 	const makerrrDir = process.env.MAKERRR_DIR?.trim();
 	if (makerrrDir) {
 		return makerrrDir;
