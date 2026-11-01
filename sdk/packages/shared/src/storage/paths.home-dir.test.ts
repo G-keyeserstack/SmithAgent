@@ -22,13 +22,18 @@ function captureEnv(): EnvSnapshot {
 }
 
 function restoreEnv(snapshot: EnvSnapshot): void {
-	process.env.HOME = snapshot.HOME;
-	process.env.USERPROFILE = snapshot.USERPROFILE;
-	process.env.HOMEDRIVE = snapshot.HOMEDRIVE;
-	process.env.HOMEPATH = snapshot.HOMEPATH;
-	process.env.CLINE_DIR = snapshot.CLINE_DIR;
-	if (snapshot.MAKERRR_DIR === undefined) delete process.env.MAKERRR_DIR;
-	else process.env.MAKERRR_DIR = snapshot.MAKERRR_DIR;
+	for (const key of [
+		"HOME",
+		"USERPROFILE",
+		"HOMEDRIVE",
+		"HOMEPATH",
+		"CLINE_DIR",
+		"MAKERRR_DIR",
+	] as const) {
+		const value = snapshot[key];
+		if (value === undefined) delete process.env[key];
+		else process.env[key] = value;
+	}
 }
 
 describe("storage home directory fallback", () => {
@@ -59,6 +64,7 @@ describe("storage home directory fallback", () => {
 		delete process.env.HOMEDRIVE;
 		delete process.env.HOMEPATH;
 		delete process.env.CLINE_DIR;
+		delete process.env.MAKERRR_DIR;
 
 		const { resolveClineDir } = await import("./paths");
 		expect(resolveClineDir()).toBe(join("C:\\Users\\saoud", ".makerrr"));
