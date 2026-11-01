@@ -47,10 +47,13 @@ describe("Makerrr runtime migration", () => {
 		const destination = join(root, ".makerrr", "data");
 		mkdirSync(join(source, "settings"), { recursive: true });
 		const databasePath = join(source, "db", "sessions.db");
-		createDatabase(databasePath, "committed-in-wal");
-		// Keep a second SQLite connection open so the committed WAL remains
-		// present while the migration takes its consistent snapshot.
+		const walWriter = loadSqliteDb(databasePath);
+		walWriter.exec("PRAGMA journal_mode=WAL");
+		walWriter.exec("CREATE TABLE records (id INTEGER PRIMARY KEY, value TEXT NOT NULL)");
+		// Keep two connections open before the insert so the committed row
+		// remains in the WAL instead of being checkpointed on last-close.
 		const walKeeper = loadSqliteDb(databasePath);
+		walWriter.prepare("INSERT INTO records(value) VALUES (?)").run("committed-in-wal");
 		expect(existsSync(databasePath + "-wal")).toBe(true);
 		writeFileSync(
 			join(source, "settings", "cline_mcp_settings.json"),
@@ -70,6 +73,7 @@ describe("Makerrr runtime migration", () => {
 			sourceDataDir: source,
 			destinationDataDir: destination,
 		});
+		walWriter.close?.();
 		walKeeper.close?.();
 		expect(result.phase).toBe("committed");
 		expect(existsSync(join(destination, "settings", "makerrr_mcp_settings.json"))).toBe(true);
