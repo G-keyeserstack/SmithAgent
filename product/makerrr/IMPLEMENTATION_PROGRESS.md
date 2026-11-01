@@ -10,7 +10,8 @@
 - Runtime data root: `~/.makerrr/data/`.
 - Project configuration root: `.makerrr/`.
 - New global Documents-based context files use `Documents/Makerrr/`; `Documents/Cline/` remains discoverable.
-- Explicit overrides: `MAKERRR_DIR`, `MAKERRR_DATA_DIR`, `MAKERRR_GLOBAL_SETTINGS_PATH`, `MAKERRR_PROVIDER_SETTINGS_PATH`, `MAKERRR_MCP_SETTINGS_PATH`.
+- Explicit overrides: `MAKERRR_DIR`, `MAKERRR_DATA_DIR`, `MAKERRR_GLOBAL_SETTINGS_PATH`, `MAKERRR_PROVIDER_SETTINGS_PATH`, `MAKERRR_MCP_SETTINGS_PATH`; explicit Makerrr data roots take precedence over legacy data discovery.
+- `MAKERRR_SANDBOX` and Makerrr-prefixed sandbox data paths are honored, with Cline-prefixed fallbacks for existing integrations.
 - Explicit legacy `CLINE_DIR` and `CLINE_DATA_DIR` values are captured as compatibility/migration sources.
 - Shared SDK storage now defaults to Makerrr for CLI, VS Code, desktop and other clients using the shared path resolver.
 - Global and workspace discovery now prefers Makerrr rules, skills, hooks, workflows, agents and plugins while retaining legacy Cline locations, including the `~/Makerrr/Rules` fallback used on headless/WSL systems.
