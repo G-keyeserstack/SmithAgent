@@ -57,6 +57,7 @@ type EnvSnapshot = {
 	MAKERRR_MCP_SETTINGS_PATH: string | undefined;
 	MAKERRR_PROVIDER_SETTINGS_PATH: string | undefined;
 	MAKERRR_LEGACY_CLINE_DIR: string | undefined;
+	MAKERRR_LEGACY_CLINE_DATA_DIR: string | undefined;
 };
 
 function captureEnv(): EnvSnapshot {
@@ -77,6 +78,7 @@ function captureEnv(): EnvSnapshot {
 		MAKERRR_MCP_SETTINGS_PATH: process.env.MAKERRR_MCP_SETTINGS_PATH,
 		MAKERRR_PROVIDER_SETTINGS_PATH: process.env.MAKERRR_PROVIDER_SETTINGS_PATH,
 		MAKERRR_LEGACY_CLINE_DIR: process.env.MAKERRR_LEGACY_CLINE_DIR,
+		MAKERRR_LEGACY_CLINE_DATA_DIR: process.env.MAKERRR_LEGACY_CLINE_DATA_DIR,
 	};
 }
 
@@ -99,6 +101,7 @@ function restoreEnv(snapshot: EnvSnapshot): void {
 	process.env.MAKERRR_MCP_SETTINGS_PATH = snapshot.MAKERRR_MCP_SETTINGS_PATH;
 	process.env.MAKERRR_PROVIDER_SETTINGS_PATH = snapshot.MAKERRR_PROVIDER_SETTINGS_PATH;
 	process.env.MAKERRR_LEGACY_CLINE_DIR = snapshot.MAKERRR_LEGACY_CLINE_DIR;
+	process.env.MAKERRR_LEGACY_CLINE_DATA_DIR = snapshot.MAKERRR_LEGACY_CLINE_DATA_DIR;
 }
 
 describe("storage path resolution", () => {
@@ -137,6 +140,37 @@ describe("storage path resolution", () => {
 			expect(resolveClineDataDir()).toBe(join(homeRoot, "custom-data"));
 		} finally {
 			setHomeDir(previousHome);
+			rmSync(homeRoot, { recursive: true, force: true });
+		}
+	});
+
+
+	it("keeps existing Cline runtime stores visible until they are migrated offline", () => {
+		snapshot = captureEnv();
+		const homeRoot = mkdtempSync(join(tmpdir(), "makerrr-legacy-runtime-data-"));
+		const legacyRoot = join(homeRoot, ".cline");
+		try {
+			process.env.MAKERRR_DIR = join(homeRoot, ".makerrr");
+			process.env.MAKERRR_LEGACY_CLINE_DIR = legacyRoot;
+			delete process.env.MAKERRR_LEGACY_CLINE_DATA_DIR;
+			delete process.env.MAKERRR_DATA_DIR;
+			delete process.env.CLINE_DATA_DIR;
+			delete process.env.CLINE_DIR;
+			mkdirSync(join(legacyRoot, "data", "sessions"), { recursive: true });
+			mkdirSync(join(legacyRoot, "data", "db"), { recursive: true });
+			mkdirSync(join(legacyRoot, "data", "workspaces"), { recursive: true });
+
+			expect(resolveSessionDataDir()).toBe(join(legacyRoot, "data", "sessions"));
+			expect(resolveDbDataDir()).toBe(join(legacyRoot, "data", "db"));
+			expect(resolveChatWorkspacePath()).toBe(
+				join(legacyRoot, "data", "workspaces", "chat"),
+			);
+
+			rmSync(join(legacyRoot, "data"), { recursive: true, force: true });
+			expect(resolveSessionDataDir()).toBe(
+				join(homeRoot, ".makerrr", "data", "sessions"),
+			);
+		} finally {
 			rmSync(homeRoot, { recursive: true, force: true });
 		}
 	});
@@ -392,6 +426,7 @@ describe("chat workspace paths", () => {
 	});
 
 	it.each([
+		"/home/user/.makerrr/data/workspaces/chat",
 		"/home/user/.cline/data/workspaces/chat",
 		"//home//user//.cline//data//workspaces//chat//",
 		"C:\\Users\\dev\\.cline\\data\\workspaces\\chat\\",
