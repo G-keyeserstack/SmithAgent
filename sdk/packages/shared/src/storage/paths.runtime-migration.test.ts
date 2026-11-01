@@ -65,6 +65,8 @@ describe("runtime migration path activation", () => {
 		expect(resolveSessionDataDir()).toBe(join(makerrrData, "sessions"));
 		expect(resolveDbDataDir()).toBe(join(makerrrData, "db"));
 
+		rmSync(makerrrData, { recursive: true, force: true });
+		expect(() => resolveSessionDataDir()).toThrow(/destination data directory is missing/);
 		writeFileSync(journalPath, JSON.stringify({ ...journal, phase: "rolled-back" }));
 		expect(resolveSessionDataDir()).toBe(join(legacyData, "sessions"));
 		expect(resolveDbDataDir()).toBe(join(legacyData, "db"));
