@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -137,6 +137,8 @@ describe("desktop MCP settings", () => {
 			delete process.env.MAKERRR_DATA_DIR;
 			delete process.env.MAKERRR_LEGACY_CLINE_DATA_DIR;
 			process.env.CLINE_DATA_DIR = legacyData;
+			await mkdir(makerrrRoot, { recursive: true });
+			await mkdir(join(legacyData, "settings"), { recursive: true });
 			delete process.env.MAKERRR_MCP_SETTINGS_PATH;
 			delete process.env.CLINE_MCP_SETTINGS_PATH;
 			await writeFile(join(legacyData, "settings", "cline_mcp_settings.json"), '{"mcpServers":{}}');
