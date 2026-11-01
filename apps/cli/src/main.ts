@@ -233,7 +233,8 @@ export async function runCli(): Promise<void> {
 			if (!options.yes) {
 				writeln("Preview only. Review the files above, then run 'makerrr migrate --yes' to copy settings.");
 			} else {
-				writeln("Migration finished. Original Cline files were left untouched.");
+				writeln("Settings migration finished. Original Cline files were left untouched.");
+				writeln("This phase copies global settings, provider settings and MCP settings only. Session databases, workspaces and other runtime data remain in their original locations pending an offline-aware migration.");
 			}
 		});
 
