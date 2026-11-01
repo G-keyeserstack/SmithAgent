@@ -83,25 +83,13 @@ function captureEnv(): EnvSnapshot {
 }
 
 function restoreEnv(snapshot: EnvSnapshot): void {
-	process.env.MAKERRR_DIR = snapshot.MAKERRR_DIR;
-	process.env.MAKERRR_DATA_DIR = snapshot.MAKERRR_DATA_DIR;
-	process.env.CLINE_DATA_DIR = snapshot.CLINE_DATA_DIR;
-	process.env.CLINE_CONNECTOR_DATA_DIR = snapshot.CLINE_CONNECTOR_DATA_DIR;
-	process.env.CLINE_CONNECTOR_SETTINGS_PATH =
-		snapshot.CLINE_CONNECTOR_SETTINGS_PATH;
-	process.env.CLINE_DIR = snapshot.CLINE_DIR;
-	process.env.CLINE_DB_DATA_DIR = snapshot.CLINE_DB_DATA_DIR;
-	process.env.CLINE_GLOBAL_SETTINGS_PATH = snapshot.CLINE_GLOBAL_SETTINGS_PATH;
-	process.env.CLINE_MCP_SETTINGS_PATH = snapshot.CLINE_MCP_SETTINGS_PATH;
-	process.env.CLINE_PROVIDER_SETTINGS_PATH =
-		snapshot.CLINE_PROVIDER_SETTINGS_PATH;
-	process.env.CLINE_SESSION_DATA_DIR = snapshot.CLINE_SESSION_DATA_DIR;
-	process.env.CLINE_TEAM_DATA_DIR = snapshot.CLINE_TEAM_DATA_DIR;
-	process.env.MAKERRR_GLOBAL_SETTINGS_PATH = snapshot.MAKERRR_GLOBAL_SETTINGS_PATH;
-	process.env.MAKERRR_MCP_SETTINGS_PATH = snapshot.MAKERRR_MCP_SETTINGS_PATH;
-	process.env.MAKERRR_PROVIDER_SETTINGS_PATH = snapshot.MAKERRR_PROVIDER_SETTINGS_PATH;
-	process.env.MAKERRR_LEGACY_CLINE_DIR = snapshot.MAKERRR_LEGACY_CLINE_DIR;
-	process.env.MAKERRR_LEGACY_CLINE_DATA_DIR = snapshot.MAKERRR_LEGACY_CLINE_DATA_DIR;
+	for (const [key, value] of Object.entries(snapshot)) {
+		if (value === undefined) {
+			delete process.env[key];
+		} else {
+			process.env[key] = value;
+		}
+	}
 }
 
 describe("storage path resolution", () => {
