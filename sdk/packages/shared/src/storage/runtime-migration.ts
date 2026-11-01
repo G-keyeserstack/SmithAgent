@@ -1,6 +1,8 @@
 import {
 	closeSync,
+	fsyncSync,
 	copyFileSync,
+	chmodSync,
 	existsSync,
 	mkdirSync,
 	openSync,
@@ -157,27 +159,52 @@ function copyTree(
 						". Automatic database merging is not supported; preserve both stores and resolve the conflict before retrying.",
 				);
 			}
+			if (!readFileSync(sourcePath).equals(readFileSync(destinationPath))) {
+				throw new Error(
+					"Conflicting runtime file at " + mappedPath +
+						". Automatic merging is not supported; resolve the conflict before retrying.",
+				);
+			}
 			continue;
 		}
 		if (isSqliteFile(sourcePath)) {
 			snapshotSqliteDatabase(sourcePath, destinationPath);
+			chmodSync(destinationPath, 0o600);
 			options.snapshottedDatabases.push(mappedPath);
 		} else {
 			mkdirSync(dirname(destinationPath), { recursive: true, mode: 0o700 });
 			copyFileSync(sourcePath, destinationPath);
+			chmodSync(destinationPath, 0o600);
 			options.copiedFiles.push(mappedPath);
 		}
+	}
+}
+
+function syncDirectory(path: string): void {
+	if (process.platform === "win32") return;
+	const fd = openSync(path, "r");
+	try {
+		fsyncSync(fd);
+	} finally {
+		closeSync(fd);
 	}
 }
 
 function writeJournal(journalPath: string, journal: RuntimeMigrationJournal): void {
 	const temporaryPath = journalPath + "." + randomUUID() + ".tmp";
 	journal.updatedAt = new Date().toISOString();
-	writeFileSync(temporaryPath, JSON.stringify(journal, null, 2) + "\n", {
-		flag: "wx",
-		mode: 0o600,
-	});
+	const fd = openSync(temporaryPath, "wx", 0o600);
+	try {
+		writeFileSync(fd, JSON.stringify(journal, null, 2) + "\n");
+		fsyncSync(fd);
+	} catch (error) {
+		rmSync(temporaryPath, { force: true });
+		throw error;
+	} finally {
+		closeSync(fd);
+	}
 	renameSync(temporaryPath, journalPath);
+	syncDirectory(dirname(journalPath));
 }
 
 function journalPathFor(destinationDataDir: string): string {
@@ -348,10 +375,12 @@ export function migrateLegacyRuntimeData(options: {
 
 		if (hadDestination) {
 			renameSync(destination, backupDir);
+			syncDirectory(parent);
 			journal.phase = "destination-backed-up";
 			writeJournal(journalPath, journal);
 		}
 		renameSync(stagingDir, destination);
+		syncDirectory(parent);
 		journal.phase = "committed";
 		writeJournal(journalPath, journal);
 		return {
