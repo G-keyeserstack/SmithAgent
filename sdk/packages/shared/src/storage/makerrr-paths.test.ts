@@ -136,4 +136,23 @@ describe("legacy Cline settings migration", () => {
 		expect(existsSync(join(destination, "sessions.db"))).toBe(false);
 		expect(existsSync(join(source, "sessions.db"))).toBe(true);
 	});
+
+	it("previews migration without creating destination files", () => {
+		const root = tempRoot();
+		const source = join(root, "cline-data");
+		const destination = join(root, "makerrr-settings");
+		mkdirSync(join(source, "settings"), { recursive: true });
+		writeFileSync(join(source, "settings", "providers.json"), '{"provider":"legacy"}');
+
+		const result = migrateLegacyClineSettings({
+			sourceDataDir: source,
+			destinationSettingsDir: destination,
+			dryRun: true,
+		});
+
+		expect(result.items[1]?.status).toBe("would-copy");
+		expect(existsSync(destination)).toBe(false);
+		expect(existsSync(join(source, "settings", "providers.json"))).toBe(true);
+	});
+
 });
