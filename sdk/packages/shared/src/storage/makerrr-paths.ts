@@ -2,8 +2,8 @@ import {
 	chmodSync,
 	copyFileSync,
 	existsSync,
-	mkdirSync,
 	lstatSync,
+	mkdirSync,
 } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -12,8 +12,8 @@ import { join } from "node:path";
  * Makerrr's canonical global configuration root.
  *
  * Cline paths remain available through the legacy resolvers below. New
- * Makerrr data is always written to ~/.makerrr unless an explicit
- * MAKERRR_DIR override is supplied.
+ * Makerrr data is written to ~/.makerrr unless MAKERRR_DIR or the legacy
+ * CLINE_DIR override is explicitly supplied.
  */
 export function resolveMakerrrDir(): string {
 	const configured =
@@ -42,13 +42,15 @@ export function resolveMakerrrProviderSettingsPath(): string {
 
 export function resolveMakerrrMcpSettingsPath(): string {
 	const configured = process.env.MAKERRR_MCP_SETTINGS_PATH?.trim();
-	return configured || join(resolveMakerrrSettingsDir(), "makerrr_mcp_settings.json");
+	return configured ||
+		join(resolveMakerrrSettingsDir(), "makerrr_mcp_settings.json");
 }
 
 /** The legacy root is read-only during migration; it is never removed. */
 export function resolveLegacyClineDir(): string {
 	const configured =
-		process.env.MAKERRR_LEGACY_CLINE_DIR?.trim() || process.env.CLINE_DIR?.trim();
+		process.env.MAKERRR_LEGACY_CLINE_DIR?.trim() ||
+		process.env.CLINE_DIR?.trim();
 	return configured || join(homedir(), ".cline");
 }
 
