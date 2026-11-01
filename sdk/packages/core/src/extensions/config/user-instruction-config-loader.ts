@@ -682,9 +682,12 @@ export function createRulesConfigDefinition(
 	const directories =
 		options?.directories ??
 		resolveRulesConfigSearchPaths(options?.workspacePath);
-	const managedRoot = options?.workspacePath
-		? join(options.workspacePath, ".cline")
-		: undefined;
+	const managedRoots = options?.workspacePath
+		? [
+				join(options.workspacePath, ".makerrr"),
+					join(options.workspacePath, ".cline"),
+			]
+		: [];
 
 	return {
 		type: "rule",
@@ -709,9 +712,12 @@ export function createWorkflowsConfigDefinition(
 	const directories =
 		options?.directories ??
 		resolveWorkflowsConfigSearchPaths(options?.workspacePath);
-	const managedRoot = options?.workspacePath
-		? join(options.workspacePath, ".cline")
-		: undefined;
+	const managedRoots = options?.workspacePath
+		? [
+				join(options.workspacePath, ".makerrr"),
+					join(options.workspacePath, ".cline"),
+			]
+		: [];
 
 	return {
 		type: "workflow",
