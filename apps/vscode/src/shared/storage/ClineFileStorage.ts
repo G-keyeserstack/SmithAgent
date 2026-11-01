@@ -85,6 +85,19 @@ export class ClineFileStorage<T = any> extends ClineSyncStorage<T> {
 		return Promise.resolve()
 	}
 
+	/**
+	 * File-backed storage is used for credentials as well as ordinary state.
+	 * Do not inherit ClineSyncStorage's error-swallowing set/delete wrappers:
+	 * callers must be able to detect failed credential persistence.
+	 */
+	public override set(key: string, value: T | undefined): void {
+		this.setBatch({ [key]: value })
+	}
+
+	public override delete(key: string): void {
+		this.setBatch({ [key]: undefined })
+	}
+
 	protected _keys(): readonly string[] {
 		return Object.keys(this.data)
 	}
