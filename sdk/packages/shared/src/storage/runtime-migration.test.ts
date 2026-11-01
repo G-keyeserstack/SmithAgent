@@ -2,6 +2,7 @@ import {
 	existsSync,
 	mkdirSync,
 	mkdtempSync,
+	symlinkSync,
 	readFileSync,
 	rmSync,
 	writeFileSync,
@@ -45,7 +46,12 @@ describe("Makerrr runtime migration", () => {
 		const source = join(root, ".cline", "data");
 		const destination = join(root, ".makerrr", "data");
 		mkdirSync(join(source, "settings"), { recursive: true });
-		createDatabase(join(source, "db", "sessions.db"), "committed-in-wal");
+		const databasePath = join(source, "db", "sessions.db");
+		createDatabase(databasePath, "committed-in-wal");
+		// Keep a second SQLite connection open so the committed WAL remains
+		// present while the migration takes its consistent snapshot.
+		const walKeeper = loadSqliteDb(databasePath);
+		expect(existsSync(databasePath + "-wal")).toBe(true);
 		writeFileSync(
 			join(source, "settings", "cline_mcp_settings.json"),
 			JSON.stringify({ mcpServers: {} }),
@@ -64,6 +70,7 @@ describe("Makerrr runtime migration", () => {
 			sourceDataDir: source,
 			destinationDataDir: destination,
 		});
+		walKeeper.close?.();
 		expect(result.phase).toBe("committed");
 		expect(existsSync(join(destination, "settings", "makerrr_mcp_settings.json"))).toBe(true);
 		expect(existsSync(join(destination, "settings", "cline_mcp_settings.json"))).toBe(false);
@@ -166,7 +173,6 @@ describe("Makerrr runtime migration", () => {
 		const destination = join(root, "makerrr-data");
 		mkdirSync(source, { recursive: true });
 		writeFileSync(join(root, "outside.txt"), "private");
-		const { symlinkSync } = require("node:fs") as typeof import("node:fs");
 		symlinkSync(join(root, "outside.txt"), join(source, "linked.txt"));
 		expect(() =>
 			migrateLegacyRuntimeData({
