@@ -21,7 +21,6 @@ import type { PluginManifest } from "..";
 import {
 	resolveLegacyClineDataDir,
 	resolveLegacyClineDir,
-	resolveMakerrrDataDir,
 } from "./makerrr-paths";
 import {
 	CLINE_CHAT_WORKSPACE_DIRECTORY_NAME,
