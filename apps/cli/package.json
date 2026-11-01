@@ -2,14 +2,14 @@
 	"name": "@cline/cli",
 	"displayName": "Makerrr",
 	"version": "3.0.74",
-	"description": "Autonomous coding agent CLI - capable of creating/editing files, running commands, using the browser, and more",
+	"description": "Makerrr open AI development agent CLI for the terminal",
 	"type": "module",
 	"publishConfig": {
 		"access": "public"
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/cline/cline.git",
+		"url": "git+https://github.com/G-keyeserstack/SmithAgent.git",
 		"directory": "apps/cli"
 	},
 	"keywords": [
@@ -29,12 +29,12 @@
 		"cli"
 	],
 	"author": {
-		"name": "Cline Bot Inc."
+		"name": "Suppple Group Plc"
 	},
 	"license": "Apache-2.0",
-	"homepage": "https://cline.bot",
+	"homepage": "https://github.com/G-keyeserstack/SmithAgent",
 	"bugs": {
-		"url": "https://github.com/cline/cline/issues"
+		"url": "https://github.com/G-keyeserstack/SmithAgent/issues"
 	},
 	"bin": {
 		"makerrr": "src/index.ts",
