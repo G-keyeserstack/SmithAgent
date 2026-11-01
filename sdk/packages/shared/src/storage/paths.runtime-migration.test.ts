@@ -50,7 +50,6 @@ describe("runtime migration path activation", () => {
 		]) delete process.env[key];
 
 		expect(resolveClineDataDir()).toBe(legacyData);
-		expect(resolveClineDataDir()).toBe(legacyData);
 		expect(resolveSessionDataDir()).toBe(join(legacyData, "sessions"));
 		expect(resolveDbDataDir()).toBe(join(legacyData, "db"));
 
