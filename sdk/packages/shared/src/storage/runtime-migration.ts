@@ -201,22 +201,29 @@ export function recoverInterruptedRuntimeMigration(
 
 	const stagingExists = existsSync(journal.stagingDir);
 	const backupExists = !!journal.backupDir && existsSync(journal.backupDir);
-	const destinationExists = existsSync(destination);
+	let destinationExists = existsSync(destination);
 
-	if (journal.phase === "destination-backed-up" && !destinationExists && backupExists) {
+	// A crash can occur between the destination rename and journal update.
+	// Restore the backup whenever the live destination is absent, regardless
+	// of whether the last durable journal phase was "staged" or later.
+	if (!destinationExists && backupExists) {
 		renameSync(journal.backupDir!, destination);
+		destinationExists = true;
 	}
-	if (journal.phase === "destination-backed-up" && destinationExists && !stagingExists) {
-		// The stage was atomically promoted immediately before a process crash.
+	if (!stagingExists && destinationExists && (
+		journal.phase === "destination-backed-up" ||
+		(!journal.hadDestination && journal.phase === "staged") ||
+		(backupExists && journal.phase === "staged")
+	)) {
+		// The staged directory was atomically promoted before the process
+		// stopped. Preserve it and the old backup for an explicit rollback.
 		journal.phase = "committed";
 		writeJournal(journalPath, journal);
 		return journal;
 	}
 	if (stagingExists) rmSync(journal.stagingDir, { recursive: true, force: true });
-	if (journal.phase !== "committed") {
-		journal.phase = "rolled-back";
-		writeJournal(journalPath, journal);
-	}
+	journal.phase = "rolled-back";
+	writeJournal(journalPath, journal);
 	return journal;
 }
 
