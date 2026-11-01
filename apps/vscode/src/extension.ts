@@ -3,6 +3,14 @@
 
 import assert from "node:assert"
 import { disableCurrentDirectoryExecutableSearch } from "@cline/shared"
+import {
+	migrateLegacyClineSettings,
+	resolveLegacyClineDataDir,
+	resolveLegacyClineDir,
+	resolveMakerrrDataDir,
+	resolveMakerrrDir,
+	setClineDir,
+} from "@cline/shared/storage"
 import * as vscode from "vscode"
 import { Logger } from "@/shared/services/Logger"
 import { sendAccountButtonClickedEvent } from "./core/controller/ui/subscribeToAccountButtonClicked"
@@ -62,11 +70,59 @@ export async function reportRolloutActivation(input: RolloutBundleActivation): P
 	await telemetryService.captureRolloutBundleActivated(input)
 }
 
+async function initializeMakerrrStorage(context: ExtensionContext): Promise<void> {
+	// Keep the old Cline locations available for read-only compatibility while
+	// directing new runtime writes to Makerrr's canonical directories.
+	const legacyDir = resolveLegacyClineDir()
+	const legacyDataDir = resolveLegacyClineDataDir()
+	process.env.MAKERRR_LEGACY_CLINE_DIR = legacyDir
+	process.env.MAKERRR_LEGACY_CLINE_DATA_DIR = legacyDataDir
+
+	const makerrrDir = resolveMakerrrDir()
+	const makerrrDataDir = process.env.MAKERRR_DATA_DIR?.trim()
+		? resolveMakerrrDataDir()
+		: path.join(makerrrDir, "data")
+	setClineDir(makerrrDir)
+	process.env.CLINE_DIR = makerrrDir
+	if (process.env.MAKERRR_DATA_DIR?.trim()) {
+		process.env.CLINE_DATA_DIR = makerrrDataDir
+	} else {
+		delete process.env.CLINE_DATA_DIR
+	}
+
+	// Copying provider credentials is user-controlled. Offer a one-time preview
+	// and require an explicit confirmation; original Cline files are retained.
+	if (context.globalState.get<boolean>("makerrr.legacySettingsMigrationPrompted")) return
+	const preview = migrateLegacyClineSettings({
+		sourceDataDir: legacyDataDir,
+		destinationSettingsDir: path.join(makerrrDataDir, "settings"),
+		dryRun: true,
+	})
+	if (!preview.items.some((item) => item.status === "would-copy")) return
+
+	const choice = await vscode.window.showInformationMessage(
+		"Makerrr found existing Cline settings. Would you like to copy your settings and provider credentials into Makerrr? Your original files will remain untouched.",
+		"Copy settings",
+		"Later",
+	)
+	await context.globalState.update("makerrr.legacySettingsMigrationPrompted", true)
+	if (choice === "Copy settings") {
+		const result = migrateLegacyClineSettings({
+			sourceDataDir: legacyDataDir,
+			destinationSettingsDir: path.join(makerrrDataDir, "settings"),
+		})
+		const copied = result.items.filter((item) => item.status === "copied").length
+		vscode.window.showInformationMessage("Makerrr copied " + copied + " settings file(s). Your original Cline files were retained.")
+	}
+}
+
 // This method is called when the VS Code extension is activated.
 // NOTE: This is VS Code specific - services that should be registered
 // for all-platform should be registered in common.ts.
 export async function activate(context: vscode.ExtensionContext) {
 	const activationStartTime = performance.now()
+
+	await initializeMakerrrStorage(context)
 
 	// Before anything spawns with the workspace as cwd (rg, git, hooks, MCP).
 	disableCurrentDirectoryExecutableSearch()
