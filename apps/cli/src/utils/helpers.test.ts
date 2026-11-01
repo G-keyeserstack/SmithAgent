@@ -506,6 +506,8 @@ describe("hook payload validation and audit logging", () => {
 		const expectedPath = path.join(tempDir, "logs", "hooks.jsonl");
 		const env = captureEnv();
 		process.env.CLINE_DATA_DIR = tempDir;
+		process.env.MAKERRR_DATA_DIR = tempDir;
+		delete process.env.MAKERRR_HOOKS_LOG_PATH;
 		delete process.env.CLINE_HOOKS_LOG_PATH;
 		delete process.env.CLINE_SESSION_ID;
 		delete process.env.CLINE_SESSION_DATA_DIR;
@@ -540,7 +542,9 @@ describe("hook payload validation and audit logging", () => {
 		const expectedPath = path.join(tempDir, "hooks", "from-env.jsonl");
 		const env = captureEnv();
 		process.env.CLINE_HOOKS_LOG_PATH = expectedPath;
+		delete process.env.MAKERRR_HOOKS_LOG_PATH;
 		delete process.env.CLINE_DATA_DIR;
+		delete process.env.MAKERRR_DATA_DIR;
 		delete process.env.CLINE_SESSION_ID;
 		delete process.env.CLINE_SESSION_DATA_DIR;
 
