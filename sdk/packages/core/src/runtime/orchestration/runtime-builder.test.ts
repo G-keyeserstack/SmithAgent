@@ -1063,7 +1063,7 @@ Use conventional commits.`,
 				{
 					name: "review-plugin",
 					private: true,
-					cline: {
+					makerrr: {
 						plugins: [{ paths: ["./index.ts"] }],
 					},
 				},
