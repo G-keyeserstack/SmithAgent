@@ -119,6 +119,39 @@ describe("Makerrr runtime migration", () => {
 		expect(existsSync(join(source, "legacy.txt"))).toBe(true);
 	});
 
+	it("finishes rollback recovery after the old destination has already been restored", () => {
+		const root = makeRoot();
+		const destination = join(root, "makerrr-data");
+		const rollbackDir = destination + ".rollback-rollback";
+		const backupDir = destination + ".backup-rollback";
+		const journalPath = destination + ".migration-journal.json";
+		mkdirSync(destination, { recursive: true });
+		mkdirSync(rollbackDir, { recursive: true });
+		writeFileSync(join(destination, "original.txt"), "original");
+		writeFileSync(join(rollbackDir, "migrated.txt"), "migrated");
+		const now = new Date().toISOString();
+		const journal: RuntimeMigrationJournal = {
+			version: 1,
+			id: "rollback",
+			phase: "committed",
+			sourceDataDir: join(root, "cline-data"),
+			destinationDataDir: destination,
+			stagingDir: destination + ".staging-rollback",
+			backupDir,
+			hadDestination: true,
+			createdAt: now,
+			updatedAt: now,
+			copiedFiles: [],
+			snapshottedDatabases: [],
+		};
+		writeFileSync(journalPath, JSON.stringify(journal));
+
+		const recovered = rollbackLegacyRuntimeMigration(destination);
+		expect(recovered.phase).toBe("rolled-back");
+		expect(readFileSync(join(destination, "original.txt"), "utf8")).toBe("original");
+		expect(existsSync(rollbackDir)).toBe(false);
+	});
+
 	it("recovers a crash after the old destination was renamed but before promotion", () => {
 		const root = makeRoot();
 		const destination = join(root, "makerrr-data");
