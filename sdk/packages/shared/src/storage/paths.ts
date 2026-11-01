@@ -18,6 +18,7 @@ import {
 	resolve,
 } from "node:path";
 import type { PluginManifest } from "..";
+import { resolveLegacyClineDir } from "./makerrr-paths";
 import {
 	CLINE_CHAT_WORKSPACE_DIRECTORY_NAME,
 	CLINE_WORKSPACES_DIRECTORY_NAME,
@@ -489,6 +490,7 @@ export function resolveAgentConfigSearchPaths(
 			? join(workspacePath, CLINE_CONFIG_DIR, AGENT_CONFIG_DIRECTORY_NAME)
 			: "",
 		resolveAgentsConfigDirPath(),
+		join(resolveLegacyClineDir(), AGENT_CONFIG_DIRECTORY_NAME),
 	]);
 }
 
@@ -498,6 +500,7 @@ export function resolveHooksConfigSearchPaths(
 	const hooks = [
 		resolveDocumentsExtensionPath("Hooks"),
 		join(resolveClineDir(), HOOKS_CONFIG_DIRECTORY_NAME),
+		join(resolveLegacyClineDir(), HOOKS_CONFIG_DIRECTORY_NAME),
 	];
 	if (workspacePath) {
 		hooks.push(
@@ -514,6 +517,7 @@ export function resolveSkillsConfigSearchPaths(
 	return dedupePaths([
 		...getWorkspaceSkillDirectories(workspacePath),
 		join(resolveClineDir(), SKILLS_CONFIG_DIRECTORY_NAME),
+		join(resolveLegacyClineDir(), SKILLS_CONFIG_DIRECTORY_NAME),
 		join(
 			HOME_DIR,
 			LEGACY_AGENT_SKILLS_CONFIG_DIR,
@@ -571,6 +575,7 @@ function resolveRedirectedDocumentsPaths(): string[] {
 export function resolveGlobalRulesConfigPaths(): string[] {
 	return dedupePaths([
 		join(resolveClineDir(), RULES_CONFIG_DIRECTORY_NAME),
+		join(resolveLegacyClineDir(), RULES_CONFIG_DIRECTORY_NAME),
 		// The VS Code Rules tab resolves Documents via `xdg-user-dir DOCUMENTS`,
 		// which prints bare $HOME when unconfigured (WSL/headless), putting
 		// global rules at ~/Cline/Rules instead of ~/Documents/Cline/Rules
@@ -609,6 +614,7 @@ export function resolveWorkflowsConfigSearchPaths(
 			: "",
 		resolveDocumentsExtensionPath("Workflows"),
 		join(resolveClineDir(), WORKFLOWS_CONFIG_DIRECTORY_NAME),
+		join(resolveLegacyClineDir(), WORKFLOWS_CONFIG_DIRECTORY_NAME),
 		workspacePath
 			? join(workspacePath, ".cline", WORKFLOWS_CONFIG_DIRECTORY_NAME)
 			: "",
@@ -621,6 +627,7 @@ export function resolvePluginConfigSearchPaths(
 	return dedupePaths([
 		workspacePath ? join(workspacePath, ".cline", PLUGINS_DIRECTORY_NAME) : "",
 		join(resolveClineDir(), PLUGINS_DIRECTORY_NAME),
+		join(resolveLegacyClineDir(), PLUGINS_DIRECTORY_NAME),
 		resolveDocumentsExtensionPath("Plugins"),
 	]);
 }
