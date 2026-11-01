@@ -410,7 +410,7 @@ export async function applyPatchChanges(
 					throw new DiffError(`Cannot create ${filePath} with no content`);
 				}
 				await fs.mkdir(path.dirname(sourceAbsPath), { recursive: true });
-				await fs.writeFile(sourceAbsPath, change.newContent, { encoding });
+				await fs.writeFile(sourceAbsPath, change.newContent, { encoding, flag: "wx" });
 				touched.push(filePath);
 				break;
 			case PatchActionType.UPDATE: {
@@ -427,7 +427,7 @@ export async function applyPatchChanges(
 						restrictToCwd,
 					);
 					await fs.mkdir(path.dirname(moveAbsPath), { recursive: true });
-					await fs.writeFile(moveAbsPath, change.newContent, { encoding });
+					await fs.writeFile(moveAbsPath, change.newContent, { encoding, flag: "wx" });
 					await fs.rm(sourceAbsPath, { force: true });
 					touched.push(`${filePath} -> ${change.movePath}`);
 				} else {
