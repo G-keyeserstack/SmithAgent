@@ -286,7 +286,7 @@ Escalation runbook`,
 		const originalHomeDir = process.env.HOME?.trim() || homedir();
 		setHomeDir(join(tempRoot, "home"));
 		const workspaceRoot = join(tempRoot, "workspace");
-		const globalRulesDir = join(tempRoot, "home", ".cline", "rules");
+		const globalRulesDir = join(tempRoot, "home", ".makerrr", "rules");
 		await mkdir(workspaceRoot, { recursive: true });
 		await mkdir(globalRulesDir, { recursive: true });
 		// Legacy single-file ruleset: `.clinerules/skills` and
