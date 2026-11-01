@@ -1,16 +1,8 @@
-import { relative, sep } from "node:path";
-import { setHomeDir } from "@cline/shared/storage";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { CLI_DEFAULT_MAX_CONSECUTIVE_MISTAKES } from "../runtime/defaults";
 import { createProgram } from "./program";
 
-/** Render an absolute path under `home` the way help text does: `~/...`. */
-function tildePath(absolutePath: string, home: string): string {
-	return `~/${relative(home, absolutePath).split(sep).join("/")}`;
-}
-
 describe("root option help text", () => {
-	const FAKE_HOME = "/home/cline-help-test";
 	const savedEnv: Record<string, string | undefined> = {};
 
 	beforeAll(() => {
@@ -19,7 +11,6 @@ describe("root option help text", () => {
 			savedEnv[key] = process.env[key];
 			delete process.env[key];
 		}
-		setHomeDir(FAKE_HOME);
 	});
 
 	afterAll(() => {
