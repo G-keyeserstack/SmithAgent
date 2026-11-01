@@ -2,7 +2,7 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createApplyPatchExecutor } from "./apply-patch";
+import { applyPatchChanges, computePatchChanges, createApplyPatchExecutor } from "./apply-patch";
 
 describe("createApplyPatchExecutor", () => {
 	let tempDir: string;
@@ -297,4 +297,48 @@ describe("createApplyPatchExecutor", () => {
 
 		await expect(fs.readFile(filePath, "utf-8")).resolves.toBe(original);
 	});
+
+	it("refuses to overwrite a file changed after patch preview", async () => {
+		const filePath = path.join(tempDir, "concurrent.txt");
+		await fs.writeFile(filePath, "original\n", "utf-8");
+		const patch = [
+			"*** Update File: concurrent.txt",
+			"@@",
+			" original",
+			"+agent change",
+		].join("\n");
+		const { changes } = await computePatchChanges(patch, tempDir);
+		await fs.writeFile(filePath, "newer user change\n", "utf-8");
+
+		await expect(
+			applyPatchChanges(changes, tempDir, "utf-8", true),
+		).rejects.toThrow("File changed after patch preview");
+		await expect(fs.readFile(filePath, "utf-8")).resolves.toBe("newer user change\n");
+	});
+
+	it("preflights all files before writing any part of a multi-file patch", async () => {
+		const firstPath = path.join(tempDir, "first.txt");
+		const secondPath = path.join(tempDir, "second.txt");
+		await fs.writeFile(firstPath, "first\n", "utf-8");
+		await fs.writeFile(secondPath, "second\n", "utf-8");
+		const patch = [
+			"*** Update File: first.txt",
+			"@@",
+			" first",
+			"+updated first",
+			"*** Update File: second.txt",
+			"@@",
+			" second",
+			"+updated second",
+		].join("\n");
+		const { changes } = await computePatchChanges(patch, tempDir);
+		await fs.writeFile(secondPath, "concurrent second\n", "utf-8");
+
+		await expect(
+			applyPatchChanges(changes, tempDir, "utf-8", true),
+		).rejects.toThrow("File changed after patch preview");
+		await expect(fs.readFile(firstPath, "utf-8")).resolves.toBe("first\n");
+		await expect(fs.readFile(secondPath, "utf-8")).resolves.toBe("concurrent second\n");
+	});
+
 });
