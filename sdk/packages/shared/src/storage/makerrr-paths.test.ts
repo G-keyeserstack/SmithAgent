@@ -71,9 +71,10 @@ describe("Makerrr path resolution", () => {
 	it("resolves the legacy Cline root without redirecting Makerrr writes", () => {
 		const legacy = join(tempRoot(), "old-cline");
 		process.env.CLINE_DIR = legacy;
-		process.env.MAKERRR_DIR = join(tempRoot(), "new-makerrr");
+		delete process.env.MAKERRR_DIR;
 		expect(resolveLegacyClineDir()).toBe(legacy);
 		expect(resolveMakerrrDir()).not.toBe(legacy);
+		expect(resolveMakerrrDir()).toMatch(/[\\/]\.makerrr$/);
 	});
 });
 
@@ -109,7 +110,7 @@ describe("legacy Cline settings migration", () => {
 		const destination = join(root, "makerrr-settings");
 		mkdirSync(join(source, "settings"), { recursive: true });
 		mkdirSync(destination, { recursive: true });
-		writeFileSync(join(source, "global-settings.json"), '{"from":"cline"}');
+		writeFileSync(join(source, "settings", "global-settings.json"), '{"from":"cline"}');
 		writeFileSync(join(destination, "global-settings.json"), '{"from":"makerrr"}');
 
 		const result = migrateLegacyClineSettings({

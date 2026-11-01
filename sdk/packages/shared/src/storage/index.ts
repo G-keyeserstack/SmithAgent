@@ -84,3 +84,12 @@ export {
 	type LegacySettingsMigrationItem,
 	type LegacySettingsMigrationResult,
 } from "./makerrr-paths";
+
+export {
+	migrateLegacyRuntimeData,
+	recoverInterruptedRuntimeMigration,
+	rollbackLegacyRuntimeMigration,
+	type RuntimeMigrationJournal,
+	type RuntimeMigrationPhase,
+	type RuntimeMigrationResult,
+} from "./runtime-migration";

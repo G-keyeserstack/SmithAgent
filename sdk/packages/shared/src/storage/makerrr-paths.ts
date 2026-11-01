@@ -16,8 +16,7 @@ import { join } from "node:path";
  * CLINE_DIR override is explicitly supplied.
  */
 export function resolveMakerrrDir(): string {
-	const configured =
-		process.env.MAKERRR_DIR?.trim() || process.env.CLINE_DIR?.trim();
+	const configured = process.env.MAKERRR_DIR?.trim();
 	return configured || join(homedir(), ".makerrr");
 }
 

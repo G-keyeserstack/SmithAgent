@@ -284,9 +284,11 @@ Escalation runbook`,
 		tempRoots.push(tempRoot);
 
 		const originalHomeDir = process.env.HOME?.trim() || homedir();
+		const originalMakerrrDir = process.env.MAKERRR_DIR;
 		setHomeDir(join(tempRoot, "home"));
+		process.env.MAKERRR_DIR = join(tempRoot, "home", ".makerrr");
 		const workspaceRoot = join(tempRoot, "workspace");
-		const globalRulesDir = join(tempRoot, "home", ".cline", "rules");
+		const globalRulesDir = join(tempRoot, "home", ".makerrr", "rules");
 		await mkdir(workspaceRoot, { recursive: true });
 		await mkdir(globalRulesDir, { recursive: true });
 		// Legacy single-file ruleset: `.clinerules/skills` and
@@ -315,6 +317,8 @@ Escalation runbook`,
 			expect(rules).toContain("Never introduce ESM syntax.");
 			expect(rules).toContain("Sign off with GLOBAL-OK.");
 		} finally {
+			if (originalMakerrrDir === undefined) delete process.env.MAKERRR_DIR;
+			else process.env.MAKERRR_DIR = originalMakerrrDir;
 			setHomeDir(originalHomeDir);
 		}
 	});

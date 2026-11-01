@@ -1,4 +1,8 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { MessageWithMetadata } from "@cline/shared";
+import { resolveSessionDataDir } from "@cline/shared/storage";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("vscode", () => ({}));
@@ -139,5 +143,45 @@ describe("mapPersistedMessagesToWebviewMessages", () => {
 
 		expect(pending.at(-1)?.id).toBe("history-0");
 		expect(completed.at(-1)?.id).toBe("history-0");
+	});
+});
+
+
+describe("VS Code migrated runtime storage", () => {
+	it("resolves sessions from the committed Makerrr store and leaves Cline source available", () => {
+		const root = mkdtempSync(join(tmpdir(), "makerrr-vscode-migration-"));
+		const previous = {
+			MAKERRR_DIR: process.env.MAKERRR_DIR,
+			MAKERRR_DATA_DIR: process.env.MAKERRR_DATA_DIR,
+			CLINE_DATA_DIR: process.env.CLINE_DATA_DIR,
+		};
+		try {
+			const makerrrRoot = join(root, ".makerrr");
+			const makerrrData = join(makerrrRoot, "data");
+			const legacyData = join(root, ".cline", "data");
+			mkdirSync(join(legacyData, "sessions"), { recursive: true });
+			mkdirSync(join(makerrrData, "sessions"), { recursive: true });
+			process.env.MAKERRR_DIR = makerrrRoot;
+			delete process.env.MAKERRR_DATA_DIR;
+			process.env.CLINE_DATA_DIR = legacyData;
+
+			expect(resolveSessionDataDir()).toBe(join(legacyData, "sessions"));
+			writeFileSync(
+				makerrrData + ".migration-journal.json",
+				JSON.stringify({
+					version: 1,
+					phase: "committed",
+					destinationDataDir: makerrrData,
+				}),
+			);
+			expect(resolveSessionDataDir()).toBe(join(makerrrData, "sessions"));
+		} finally {
+			for (const key of Object.keys(previous) as Array<keyof typeof previous>) {
+				const value = previous[key];
+				if (value === undefined) delete process.env[key];
+				else process.env[key] = value;
+			}
+			rmSync(root, { recursive: true, force: true });
+		}
 	});
 });

@@ -63,12 +63,15 @@ async function collectExtensionTools(
 
 describe("DefaultRuntimeBuilder", () => {
 	const previousHome = process.env.HOME;
+	const previousMakerrrDir = process.env.MAKERRR_DIR;
 	const previousGlobalSettingsPath = process.env.CLINE_GLOBAL_SETTINGS_PATH;
 	const tempDirs: string[] = [];
 
 	afterEach(() => {
 		process.env.HOME = previousHome;
 		setHomeDir(previousHome ?? "~");
+		if (previousMakerrrDir === undefined) delete process.env.MAKERRR_DIR;
+		else process.env.MAKERRR_DIR = previousMakerrrDir;
 		process.env.CLINE_GLOBAL_SETTINGS_PATH = previousGlobalSettingsPath;
 		for (const dir of tempDirs.splice(0)) {
 			rmSync(dir, { recursive: true, force: true });
@@ -174,8 +177,9 @@ describe("DefaultRuntimeBuilder", () => {
 		const workspaceRoot = mkdtempSync(join(tmpdir(), "cline-agent-workspace-"));
 		tempDirs.push(tempHome, workspaceRoot);
 		setHomeDir(tempHome);
+		process.env.MAKERRR_DIR = join(tempHome, ".makerrr");
 
-		const globalAgentsDir = join(tempHome, ".cline", "agents");
+		const globalAgentsDir = join(tempHome, ".makerrr", "agents");
 		mkdirSync(globalAgentsDir, { recursive: true });
 		writeFileSync(
 			join(globalAgentsDir, "code-reviewer.yml"),

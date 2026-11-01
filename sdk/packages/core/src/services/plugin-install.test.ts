@@ -12,7 +12,6 @@ import { join } from "node:path";
 import {
 	discoverPluginModulePaths,
 	resolvePluginConfigSearchPaths,
-	setClineDir,
 	setHomeDir,
 } from "@cline/shared/storage";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -31,6 +30,9 @@ describe("plugin install service", () => {
 	let home = "";
 	let workspace = "";
 	let originalHome: string | undefined;
+	let originalMakerrrDir: string | undefined;
+	let originalMakerrrDataDir: string | undefined;
+	let originalMakerrrMcpSettingsPath: string | undefined;
 	let originalClineDir: string | undefined;
 	let originalClineDataDir: string | undefined;
 	let originalMcpSettingsPath: string | undefined;
@@ -40,10 +42,16 @@ describe("plugin install service", () => {
 		home = join(root, "home");
 		workspace = join(root, "workspace");
 		originalHome = process.env.HOME;
+		originalMakerrrDir = process.env.MAKERRR_DIR;
+		originalMakerrrDataDir = process.env.MAKERRR_DATA_DIR;
+		originalMakerrrMcpSettingsPath = process.env.MAKERRR_MCP_SETTINGS_PATH;
 		originalClineDir = process.env.CLINE_DIR;
 		originalClineDataDir = process.env.CLINE_DATA_DIR;
 		originalMcpSettingsPath = process.env.CLINE_MCP_SETTINGS_PATH;
 		process.env.HOME = home;
+		process.env.MAKERRR_DIR = join(home, ".makerrr");
+		process.env.MAKERRR_DATA_DIR = join(home, ".makerrr", "data");
+		process.env.MAKERRR_MCP_SETTINGS_PATH = join(home, ".makerrr", "data", "settings", "makerrr_mcp_settings.json");
 		process.env.CLINE_DIR = join(home, ".cline");
 		process.env.CLINE_DATA_DIR = join(home, ".cline", "data");
 		process.env.CLINE_MCP_SETTINGS_PATH = join(
@@ -52,11 +60,16 @@ describe("plugin install service", () => {
 			"cline_mcp_settings.json",
 		);
 		setHomeDir(home);
-		setClineDir(process.env.CLINE_DIR);
 	});
 
 	afterEach(() => {
 		vi.unstubAllGlobals();
+		if (originalMakerrrDir === undefined) delete process.env.MAKERRR_DIR;
+		else process.env.MAKERRR_DIR = originalMakerrrDir;
+		if (originalMakerrrDataDir === undefined) delete process.env.MAKERRR_DATA_DIR;
+		else process.env.MAKERRR_DATA_DIR = originalMakerrrDataDir;
+		if (originalMakerrrMcpSettingsPath === undefined) delete process.env.MAKERRR_MCP_SETTINGS_PATH;
+		else process.env.MAKERRR_MCP_SETTINGS_PATH = originalMakerrrMcpSettingsPath;
 		if (originalHome === undefined) {
 			delete process.env.HOME;
 		} else {
@@ -77,6 +90,7 @@ describe("plugin install service", () => {
 		} else {
 			process.env.CLINE_MCP_SETTINGS_PATH = originalMcpSettingsPath;
 		}
+		setHomeDir(originalHome ?? "~");
 		rmSync(root, { recursive: true, force: true });
 	});
 
@@ -135,10 +149,10 @@ describe("plugin install service", () => {
 
 		const result = await installPlugin({ source });
 
-		expect(result.installPath).toContain(join(home, ".cline", "plugins"));
+		expect(result.installPath).toContain(join(home, ".makerrr", "plugins"));
 		expect(result.entryPaths).toHaveLength(1);
 		expect(existsSync(result.entryPaths[0] ?? "")).toBe(true);
-		expect(discoverPluginModulePaths(join(home, ".cline", "plugins"))).toEqual(
+		expect(discoverPluginModulePaths(join(home, ".makerrr", "plugins"))).toEqual(
 			result.entryPaths,
 		);
 	});
@@ -160,14 +174,14 @@ describe("plugin install service", () => {
 
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 		expect(result.installPath).toContain(
-			join(workspace, ".cline", "plugins", "_installed", "remote"),
+			join(workspace, ".makerrr", "plugins", "_installed", "remote"),
 		);
 		expect(result.entryPaths).toHaveLength(1);
 		expect(readFileSync(result.entryPaths[0] ?? "", "utf8")).toContain(
 			"remote-weather",
 		);
 		expect(
-			discoverPluginModulePaths(join(workspace, ".cline", "plugins")),
+			discoverPluginModulePaths(join(workspace, ".makerrr", "plugins")),
 		).toEqual(result.entryPaths);
 	});
 
@@ -190,7 +204,7 @@ describe("plugin install service", () => {
 		});
 
 		expect(result.installPath).toContain(
-			join(workspace, ".cline", "plugins", "_installed", "official"),
+			join(workspace, ".makerrr", "plugins", "_installed", "official"),
 		);
 		expect(result.entryPaths).toHaveLength(1);
 		expect(readFileSync(result.entryPaths[0] ?? "", "utf8")).toContain(
@@ -205,7 +219,7 @@ describe("plugin install service", () => {
 			existsSync(join(result.installPath, "package", "other-plugin")),
 		).toBe(false);
 		expect(resolvePluginConfigSearchPaths(workspace)[0]).toBe(
-			join(workspace, ".cline", "plugins"),
+			join(workspace, ".makerrr", "plugins"),
 		);
 	});
 
@@ -240,7 +254,7 @@ export default {
 			}),
 		]);
 		const settings = JSON.parse(
-			readFileSync(process.env.CLINE_MCP_SETTINGS_PATH ?? "", "utf8"),
+			readFileSync(process.env.MAKERRR_MCP_SETTINGS_PATH ?? "", "utf8"),
 		) as {
 			mcpServers?: Record<
 				string,

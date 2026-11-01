@@ -18,7 +18,11 @@ import {
 	resolve,
 } from "node:path";
 import type { PluginManifest } from "..";
-import { resolveLegacyClineDataDir, resolveLegacyClineDir } from "./makerrr-paths";
+import {
+	resolveLegacyClineDataDir,
+	resolveLegacyClineDir,
+	resolveMakerrrDataDir,
+} from "./makerrr-paths";
 import {
 	CLINE_CHAT_WORKSPACE_DIRECTORY_NAME,
 	CLINE_WORKSPACES_DIRECTORY_NAME,
@@ -168,10 +172,6 @@ export function resolveClineDir(): string {
 	if (CLINE_DIR) {
 		return CLINE_DIR;
 	}
-	const envDir = process.env.CLINE_DIR?.trim();
-	if (envDir) {
-		return envDir;
-	}
 	return join(HOME_DIR, ".makerrr");
 }
 
@@ -203,12 +203,15 @@ export function resolveLegacyDocumentsExtensionPath(
 }
 
 export function resolveClineDataDir(): string {
-	const explicitDir =
-		process.env.MAKERRR_DATA_DIR?.trim() || process.env.CLINE_DATA_DIR?.trim();
-	if (explicitDir) {
-		return explicitDir;
+	const makerrrDataDir = resolveMakerrrDataDir();
+	const legacyOverride = process.env.CLINE_DATA_DIR?.trim();
+	if (process.env.MAKERRR_DATA_DIR?.trim()) {
+		return makerrrDataDir;
 	}
-	return join(resolveClineDir(), "data");
+	if (legacyOverride && !hasCommittedRuntimeMigration(makerrrDataDir)) {
+		return legacyOverride;
+	}
+	return makerrrDataDir;
 }
 
 
@@ -218,9 +221,48 @@ export function resolveClineDataDir(): string {
  * directory (including new writes) rather than splitting history between two
  * databases or silently presenting an empty history. New users use Makerrr.
  */
+function hasCommittedRuntimeMigration(destinationDataDir: string): boolean {
+	let journal: {
+		version?: number;
+		phase?: string;
+		destinationDataDir?: string;
+	};
+	try {
+		journal = JSON.parse(
+			readFileSync(destinationDataDir + ".migration-journal.json", "utf8"),
+		) as {
+			version?: number;
+			phase?: string;
+			destinationDataDir?: string;
+		};
+	} catch {
+		return false;
+	}
+	const committed =
+		journal.version === 1 &&
+		journal.phase === "committed" &&
+		!!journal.destinationDataDir &&
+		resolve(journal.destinationDataDir) === resolve(destinationDataDir);
+	if (committed && !existsSync(destinationDataDir)) {
+		throw new Error(
+			"Makerrr runtime migration is committed, but its destination data directory is missing: " +
+				destinationDataDir +
+				". Restore the destination backup or run the migration recovery procedure; refusing to fall back to stale Cline data.",
+		);
+	}
+	return committed;
+}
+
 function resolveRuntimeDataSubdirectory(name: string): string {
-	const makerrrPath = join(resolveClineDataDir(), name);
+	const makerrrDataDir = resolveMakerrrDataDir();
+	const makerrrPath = join(makerrrDataDir, name);
 	const legacyPath = join(resolveLegacyClineDataDir(), name);
+	// Once a journaled migration commits, every client using this shared
+	// resolver must switch to the staged Makerrr store even though the
+	// untouched Cline source directory still exists for rollback/audit.
+	if (hasCommittedRuntimeMigration(makerrrDataDir)) {
+		return makerrrPath;
+	}
 	return existsSync(legacyPath) ? legacyPath : makerrrPath;
 }
 

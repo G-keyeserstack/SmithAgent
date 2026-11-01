@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -85,7 +85,7 @@ describe("desktop MCP settings", () => {
 			const expectedPath = join(
 				tempRoot,
 				"settings",
-				"cline_mcp_settings.json",
+				"makerrr_mcp_settings.json",
 			);
 			const ensuredPath = (await handleCommand(
 				createContext(tempRoot),
@@ -109,8 +109,64 @@ describe("desktop MCP settings", () => {
 			} else {
 				process.env.CLINE_DATA_DIR = previousDataDir;
 			}
-			if (previousSettingsPath !== undefined) {
+			if (previousSettingsPath === undefined) {
+				delete process.env.CLINE_MCP_SETTINGS_PATH;
+			} else {
 				process.env.CLINE_MCP_SETTINGS_PATH = previousSettingsPath;
+			}
+			await rm(tempRoot, { recursive: true, force: true });
+		}
+	});
+
+	it("opens migrated Makerrr MCP settings while preserving the legacy source root", async () => {
+		const tempRoot = await mkdtemp(join(tmpdir(), "desktop-mcp-migrated-root-"));
+		const makerrrRoot = join(tempRoot, ".makerrr");
+		const makerrrData = join(makerrrRoot, "data");
+		const legacyData = join(tempRoot, ".cline", "data");
+		const keys = [
+			"MAKERRR_DIR",
+			"MAKERRR_DATA_DIR",
+			"MAKERRR_LEGACY_CLINE_DATA_DIR",
+			"MAKERRR_MCP_SETTINGS_PATH",
+			"CLINE_DATA_DIR",
+			"CLINE_MCP_SETTINGS_PATH",
+		] as const;
+		const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
+		try {
+			process.env.MAKERRR_DIR = makerrrRoot;
+			delete process.env.MAKERRR_DATA_DIR;
+			delete process.env.MAKERRR_LEGACY_CLINE_DATA_DIR;
+			process.env.CLINE_DATA_DIR = legacyData;
+			await mkdir(makerrrRoot, { recursive: true });
+			await mkdir(join(legacyData, "settings"), { recursive: true });
+			delete process.env.MAKERRR_MCP_SETTINGS_PATH;
+			delete process.env.CLINE_MCP_SETTINGS_PATH;
+			await writeFile(join(legacyData, "settings", "cline_mcp_settings.json"), '{"mcpServers":{}}');
+			await writeFile(
+				makerrrData + ".migration-journal.json",
+				JSON.stringify({
+					version: 1,
+					phase: "committed",
+					destinationDataDir: makerrrData,
+				}),
+			);
+
+			const expectedPath = join(makerrrData, "settings", "makerrr_mcp_settings.json");
+			const ensuredPath = (await handleCommand(
+				createContext(tempRoot),
+				"ensure_mcp_settings_file",
+				{},
+			)) as string;
+			expect(ensuredPath).toBe(expectedPath);
+			expect(JSON.parse(await readFile(expectedPath, "utf8"))).toEqual({
+				mcpServers: {},
+			});
+			expect(await readFile(join(legacyData, "settings", "cline_mcp_settings.json"), "utf8")).toContain("mcpServers");
+		} finally {
+			for (const key of keys) {
+				const value = previous[key];
+				if (value === undefined) delete process.env[key];
+				else process.env[key] = value;
 			}
 			await rm(tempRoot, { recursive: true, force: true });
 		}
@@ -118,7 +174,7 @@ describe("desktop MCP settings", () => {
 
 	it("keeps an unchanged enabled remote server enabled when saving metadata", async () => {
 		const tempRoot = await mkdtemp(join(tmpdir(), "desktop-mcp-settings-"));
-		const settingsPath = join(tempRoot, "cline_mcp_settings.json");
+		const settingsPath = join(tempRoot, "makerrr_mcp_settings.json");
 		const previousSettingsPath = process.env.CLINE_MCP_SETTINGS_PATH;
 		process.env.CLINE_MCP_SETTINGS_PATH = settingsPath;
 		try {

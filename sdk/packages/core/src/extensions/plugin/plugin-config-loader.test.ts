@@ -15,8 +15,10 @@ import {
 
 describe("plugin-config-loader", () => {
 	const envSnapshot = {
+		MAKERRR_DIR: process.env.MAKERRR_DIR,
 		HOME: process.env.HOME,
 		CLINE_GLOBAL_SETTINGS_PATH: process.env.CLINE_GLOBAL_SETTINGS_PATH,
+		CLINE_DIR: process.env.CLINE_DIR,
 		CLINE_PLUGIN_MODE: process.env.CLINE_PLUGIN_MODE,
 	};
 
@@ -29,6 +31,10 @@ describe("plugin-config-loader", () => {
 		}
 		process.env.CLINE_GLOBAL_SETTINGS_PATH =
 			envSnapshot.CLINE_GLOBAL_SETTINGS_PATH;
+		if (envSnapshot.CLINE_DIR === undefined) delete process.env.CLINE_DIR;
+		else process.env.CLINE_DIR = envSnapshot.CLINE_DIR;
+		if (envSnapshot.MAKERRR_DIR === undefined) delete process.env.MAKERRR_DIR;
+		else process.env.MAKERRR_DIR = envSnapshot.MAKERRR_DIR;
 		setHomeDir(envSnapshot.HOME ?? "~");
 	});
 
@@ -328,7 +334,7 @@ describe("plugin-config-loader", () => {
 		}
 	});
 
-	it("includes shared search-path plugins", async () => {
+	it("includes Makerrr and legacy Cline shared search-path plugins", async () => {
 		const home = await mkdtemp(
 			join(tmpdir(), "core-plugin-config-loader-home-"),
 		);
@@ -337,30 +343,33 @@ describe("plugin-config-loader", () => {
 		);
 		try {
 			process.env.HOME = home;
+			process.env.CLINE_DIR = join(home, ".cline");
+			process.env.MAKERRR_DIR = join(home, ".makerrr");
 			setHomeDir(home);
-			const workspacePlugins = join(workspace, ".cline", "plugins");
-			const userPlugins = join(home, ".cline", "plugins");
-			const documentsPlugins = join(home, "Documents", "Cline", "Plugins");
-			await mkdir(workspacePlugins, { recursive: true });
-			await mkdir(userPlugins, { recursive: true });
-			await mkdir(documentsPlugins, { recursive: true });
-			const workspacePlugin = join(workspacePlugins, "workspace.js");
-			const userPlugin = join(userPlugins, "user.js");
-			const documentsPlugin = join(documentsPlugins, "documents.js");
-			await writeFile(workspacePlugin, "export default {}", "utf8");
-			await writeFile(userPlugin, "export default {}", "utf8");
-			await writeFile(documentsPlugin, "export default {}", "utf8");
+			const workspaceMakerrrPlugins = join(workspace, ".makerrr", "plugins");
+			const workspaceClinePlugins = join(workspace, ".cline", "plugins");
+			const userMakerrrPlugins = join(home, ".makerrr", "plugins");
+			const userClinePlugins = join(home, ".cline", "plugins");
+			const documentsMakerrrPlugins = join(home, "Documents", "Makerrr", "Plugins");
+			const documentsClinePlugins = join(home, "Documents", "Cline", "Plugins");
+			const allPluginDirs = [
+				workspaceMakerrrPlugins,
+				workspaceClinePlugins,
+				userMakerrrPlugins,
+				userClinePlugins,
+				documentsMakerrrPlugins,
+				documentsClinePlugins,
+			];
+			await Promise.all(allPluginDirs.map((path) => mkdir(path, { recursive: true })));
+			const pluginFiles = allPluginDirs.map((path, index) => join(path, "plugin-" + index + ".js"));
+			await Promise.all(pluginFiles.map((path) => writeFile(path, "export default {}", "utf8")));
 
 			const searchPaths = resolvePluginConfigSearchPaths(workspace);
-			expect(searchPaths).toHaveLength(3);
-			expect(searchPaths).toContain(workspacePlugins);
-			expect(searchPaths).toContain(userPlugins);
-			expect(searchPaths).toContain(documentsPlugins);
+			expect(searchPaths).toHaveLength(6);
+			for (const path of allPluginDirs) expect(searchPaths).toContain(path);
 
 			const resolved = resolveAgentPluginPaths({ workspacePath: workspace });
-			expect(resolved).toContain(workspacePlugin);
-			expect(resolved).toContain(userPlugin);
-			expect(resolved).toContain(documentsPlugin);
+			for (const path of pluginFiles) expect(resolved).toContain(path);
 		} finally {
 			await rm(home, { recursive: true, force: true });
 			await rm(workspace, { recursive: true, force: true });

@@ -20,10 +20,10 @@ describe("agenda task storage paths", () => {
 	it("resolves global and workspace file-backed task roots", () => {
 		expect(resolveGlobalTaskSpecsDir()).toBe(join(resolveClineDir(), "tasks"));
 		expect(resolveWorkspaceTaskSpecsDir("/workspace")).toBe(
-			join("/workspace", ".cline", "tasks"),
+			join("/workspace", ".makerrr", "tasks"),
 		);
 		expect(
 			resolveTaskSpecsDir({ scope: "workspace", workspaceRoot: "/workspace" }),
-		).toBe(join("/workspace", ".cline", "tasks"));
+		).toBe(join("/workspace", ".makerrr", "tasks"));
 	});
 });
