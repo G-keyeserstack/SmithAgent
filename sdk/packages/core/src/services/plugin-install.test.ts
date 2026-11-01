@@ -90,6 +90,7 @@ describe("plugin install service", () => {
 		} else {
 			process.env.CLINE_MCP_SETTINGS_PATH = originalMcpSettingsPath;
 		}
+		setHomeDir(originalHome ?? "~");
 		rmSync(root, { recursive: true, force: true });
 	});
 
