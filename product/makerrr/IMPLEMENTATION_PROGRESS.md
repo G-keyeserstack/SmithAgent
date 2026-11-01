@@ -1,6 +1,7 @@
 # Makerrr Core — Implementation Progress
 
-**Branch:** `makerrr/product-foundation`  
+**Branch:** `makerrr/sqlite-runtime-migration`  
+**Review:** [Draft PR #4](https://github.com/G-keyeserstack/SmithAgent/pull/4) — targets `G-keyeserstack/SmithAgent:main`; intentionally unmerged.  
 **Scope:** First compatibility-first implementation slice following the repository capability audit.
 
 ## Implemented in source
@@ -20,7 +21,7 @@
 - VS Code offers a one-time consent prompt before copying settings.
 - Migration uses exclusive file creation, owner-only file mode where supported, rejects symlink sources, never overwrites destination files and never deletes originals.
 
-**Migration boundary:** this first pass copies only global settings, provider settings and MCP settings. Live SQLite/session databases, workspaces and other runtime data are deliberately not copied. Those need an offline-aware migration with backup, WAL/SHM handling, rollback and version compatibility. Existing Cline rules and other text-based configuration remain discoverable through compatibility paths.
+**Migration boundary:** settings-only migration remains the lightweight default. Draft PR #4 adds a shared SQLite-aware runtime migration prototype: it stages the destination and Cline source, snapshots SQLite databases with `VACUUM INTO` (including committed WAL content), skips transient SQLite sidecars, rejects symlinks/special files and conflicting data, writes an external fsynced transaction journal, and supports interrupted-cutover recovery and explicit rollback. The CLI requires `--runtime --yes --offline`; recovery and rollback also require explicit confirmation. Cline source data is not deleted. A committed journal makes shared runtime resolvers switch to the Makerrr destination, while rollback restores legacy path selection. This is not yet production-approved: process quiescence is user-asserted, and full schema/version compatibility, application-level record validation and cross-client acceptance remain release gates.
 
 ### CLI identity and local developer workflow
 - CLI program identity and user-facing command are `makerrr`.
@@ -45,8 +46,8 @@
 
 - Clean install, build, typecheck, unit and integration test runs.
 - Full workspace-wide audit of Cline identifiers and persistent storage consumers.
-- Offline migration of legacy SQLite/session/runtime data into Makerrr data paths.
-- Migration of SQLite sessions, teams, connector state and other runtime data.
+- Production-grade migration acceptance: complete persistent-store/schema inventory, automatic process-quiescence verification, schema/version compatibility, application-level record checks and full client acceptance.
+- Cross-platform recovery validation beyond the current prototype fixtures.
 - A Makerrr-owned configuration migration UI/rollback report across all clients.
 - Unified VS Code/CLI file-picker backend. CLI content search now shares the SDK executor; the VS Code file picker retains its host-native fuzzy file discovery path.
 - Context inspector for the *active* prompt/session (the current CLI `context` command inspects configured sources).
@@ -56,18 +57,16 @@
 
 ## Validation record
 
-The first merged foundation commit was not built or tested before merge. A release-hardening branch corrects environment restoration in the shared storage and CLI test helpers: variables absent in the snapshot are now deleted rather than assigned the string `undefined`. The SDK workflow now installs with `bun install --frozen-lockfile`, so lockfile drift is a CI failure. These changes are awaiting CI execution; they have not yet been verified by a runner.
+The baseline GitHub Actions run 41322386660 failed on both Ubuntu and Windows. The Windows logs identified four shared-storage failures (legacy settings fixture path, old `.cline` home expectation, old workspace task path) and four core failures (workspace plugin installation path, legacy/global rules fixture isolation, plugin search-path count, configured agent root). The Ubuntu logs showed the same path/configuration classes plus Desktop MCP settings expectations; the CLI test process was also interrupted after the failing package tests. PR #4 contains fixes for those failures, updates the workspace plugin installer to use the shared Makerrr-first resolver, and adds runtime-migration tests.
 
-A dedicated `LEGACY_RUNTIME_MIGRATION.md` now specifies the store inventory, quiescence, SQLite backup API, WAL/SHM handling, staged validation, atomic commit, rollback journal, cross-client compatibility matrix and security gates. This is a design specification, not a claim that live SQLite/runtime migration has been implemented.
-
-No clean checkout, local Bun install, build, typecheck or test suite has been executed in the current assistant environment. GitHub Actions reported zero runs for the original merge commit. Do not merge or publish until the PR CI matrix and the additional migration acceptance tests pass on the exact candidate commit.
+The runtime migration prototype and path activation tests are now in the PR. CI for the latest candidate has been triggered, but no passing full-matrix result has yet been verified. No clean local checkout or local Bun test run has been possible in this environment. Do not merge or publish until the exact PR head passes frozen install, builds, typechecks, shared/core/CLI/VS Code/Desktop tests and the platform matrix.
 
 ## Next engineering gate
 
-1. Run the frozen-lockfile install, SDK/CLI builds, typechecks, lint and shared/core/CLI/VS Code unit tests on the release-hardening branch.
-2. Fix all failures and rerun the complete affected suites.
-3. Complete the concrete persistent-store inventory from actual storage consumers and implement the offline-aware database migration using the approved design.
-4. Add cross-client migration fixtures and recovery tests on Linux, macOS and Windows.
-5. Validate CLI, VS Code and Desktop startup, provider setup, session continuity, approvals, edits and checkpoint restore.
-6. Complete the security review and full CI matrix.
-7. Only then proceed to Tab-style inline completion.
+1. Finish the current Ubuntu and Windows CI runs and inspect every failing step/log, including the new runtime-migration suite.
+2. Correct failures in the PR branch only and rerun the complete affected suites.
+3. Validate that CLI, VS Code and Desktop all resolve the committed Makerrr data root and read migrated sessions/configuration; test rollback switches all clients back.
+4. Complete the persistent-store/schema inventory, process-quiescence verification and application-level record checks.
+5. Run the full SDK/CLI/VS Code/Desktop CI matrix on the exact final PR head.
+6. Complete the security review and independent review of journal recovery/rollback.
+7. Keep PR #4 unmerged until every acceptance gate is evidenced.
