@@ -10,7 +10,7 @@ import {
 import { basename, dirname } from "node:path";
 import { resolveProviderSettingsPath } from "@cline/shared/storage";
 import { getProviderAuthHandler } from "../../auth/provider-auth-registry";
-import { hashSecret, sdkDebug } from "../../logging/early-logger";
+import { sdkDebug } from "../../logging/early-logger";
 import {
 	emptyStoredProviderSettings,
 	type ProviderConfig,
@@ -170,9 +170,8 @@ export class ProviderSettingsManager {
 			const result = StoredProviderSettingsSchema.safeParse(parsed);
 			if (result.success) {
 				registerConfiguredProvidersFromSettings(result.data);
-				const clineAuth = result.data.providers["cline"]?.settings?.auth;
 				sdkDebug(
-					`providers.read providers=[${Object.keys(result.data.providers).join(",")}] lastUsed=${result.data.lastUsedProvider ?? "none"} clineAuthPresent=${!!clineAuth?.accessToken} clineAccessTokenHash=${hashSecret(clineAuth?.accessToken)} clineRefreshTokenHash=${hashSecret(clineAuth?.refreshToken)}`,
+					`providers.read providers=[${Object.keys(result.data.providers).join(",")}] lastUsed=${result.data.lastUsedProvider ?? "none"} authConfigured=${Object.values(result.data.providers).some((entry) => !!entry.settings.auth?.accessToken)}`,
 				);
 				return result.data;
 			}
