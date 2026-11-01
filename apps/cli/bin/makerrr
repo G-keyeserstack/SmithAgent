@@ -7,8 +7,8 @@
 // has Bun embedded, so users don't need Bun installed.
 //
 // Resolution order:
-// 1. CLINE_BIN_PATH env var override
-// 2. Cached binary at bin/.cline (created by postinstall)
+// 1. MAKERRR_BIN_PATH env var override (legacy CLINE_BIN_PATH is accepted)
+// 2. Cached Makerrr binary at bin/.makerrr, then legacy bin/.cline
 // 3. Walk up node_modules to find the platform-specific package
 
 const childProcess = require("child_process");
@@ -31,8 +31,8 @@ const childEnv = {
 try {
 	const caCerts = require("./ca-certs.cjs");
 	const outcome = caCerts.configureNodeExtraCaCerts(childEnv);
-	const debug =
-		process.env.CLINE_DEBUG === "1" || process.env.CLINE_DEBUG === "true";
+	const debugValue = process.env.MAKERRR_DEBUG ?? process.env.CLINE_DEBUG;
+	const debug = debugValue === "1" || debugValue === "true";
 	// Not debug-gated: on old Nodes the harvest silently doing nothing is
 	// indistinguishable from a broken corporate proxy. Stamped per Node
 	// version so the nudge shows once, not on every command.
@@ -184,7 +184,7 @@ if (!resolved) {
 				return '"' + n + '"';
 			}).join(" or ") +
 			"\n\n" +
-			"Try reinstalling: npm install -g cline",
+			"Try reinstalling: npm install -g makerrr",
 	);
 	process.exit(1);
 }
