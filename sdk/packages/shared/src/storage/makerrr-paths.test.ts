@@ -80,7 +80,7 @@ describe("legacy Cline settings migration", () => {
 		const source = join(root, "cline-data");
 		const destination = join(root, "makerrr-settings");
 		mkdirSync(join(source, "settings"), { recursive: true });
-		writeFileSync(join(source, "global-settings.json"), '{"theme":"dark"}');
+		writeFileSync(join(source, "settings", "global-settings.json"), '{"theme":"dark"}');
 		writeFileSync(join(source, "settings", "providers.json"), '{"provider":"local"}');
 		writeFileSync(join(source, "settings", "cline_mcp_settings.json"), '{"mcpServers":{}}');
 
@@ -93,7 +93,7 @@ describe("legacy Cline settings migration", () => {
 		expect(readFileSync(join(destination, "global-settings.json"), "utf8")).toBe('{"theme":"dark"}');
 		expect(readFileSync(join(destination, "providers.json"), "utf8")).toBe('{"provider":"local"}');
 		expect(readFileSync(join(destination, "makerrr_mcp_settings.json"), "utf8")).toBe('{"mcpServers":{}}');
-		expect(existsSync(join(source, "global-settings.json"))).toBe(true);
+		expect(existsSync(join(source, "settings", "global-settings.json"))).toBe(true);
 		expect(existsSync(join(source, "settings", "providers.json"))).toBe(true);
 	});
 
