@@ -282,10 +282,11 @@ describe("storage path resolution", () => {
 		);
 	});
 
-	it("resolves both workspace rule layouts (.clinerules and .cline/rules)", () => {
+	it("resolves Makerrr and legacy workspace rule layouts", () => {
 		const workspacePath = join("/repo", "demo");
 
 		expect(resolveWorkspaceRulesConfigPaths(workspacePath)).toEqual([
+			join(workspacePath, ".makerrr", RULES_CONFIG_DIRECTORY_NAME),
 			join(workspacePath, ".clinerules"),
 			join(workspacePath, ".cline", RULES_CONFIG_DIRECTORY_NAME),
 		]);
@@ -347,8 +348,11 @@ describe("storage path resolution", () => {
 		const paths = resolveWorkflowsConfigSearchPaths(workspacePath);
 
 		expect(paths).toEqual([
+			join(workspacePath, ".makerrr", "workflows"),
 			join(workspacePath, ".clinerules", "workflows"),
+			expect.stringContaining(join("Documents", "Makerrr", "Workflows")),
 			expect.stringContaining(join("Documents", "Cline", "Workflows")),
+			join("/tmp/home", ".makerrr", "workflows"),
 			join("/tmp/home", ".cline", "workflows"),
 			join(workspacePath, ".cline", "workflows"),
 		]);
@@ -367,7 +371,7 @@ describe("chat workspace paths", () => {
 		expect(CLINE_CHAT_WORKSPACE_DIRECTORY_NAME).toBe("chat");
 	});
 
-	it("resolves the shared chat workspace under the cline data dir", () => {
+	it("resolves the shared chat workspace under the configured data dir", () => {
 		snapshot = captureEnv();
 		delete process.env.CLINE_DATA_DIR;
 		process.env.CLINE_DIR = "/tmp/home/.cline";
@@ -377,7 +381,7 @@ describe("chat workspace paths", () => {
 		);
 	});
 
-	it("honors the CLINE_DATA_DIR override", () => {
+	it("honors the CLINE_DATA_DIR compatibility override", () => {
 		snapshot = captureEnv();
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
 
