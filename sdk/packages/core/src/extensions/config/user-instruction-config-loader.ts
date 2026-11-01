@@ -721,7 +721,7 @@ export function createWorkflowsConfigDefinition(
 
 	return {
 		type: "workflow",
-		directories: managedRoot ? [...directories, managedRoot] : directories,
+		directories: dedupeDirectoryPaths([...directories, ...managedRoots]),
 		discoverFiles: discoverManagedWorkflowFiles,
 		includeFile: (fileName) => isMarkdownFile(fileName),
 		parseFile: (context) =>
