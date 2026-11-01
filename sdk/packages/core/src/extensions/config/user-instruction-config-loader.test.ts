@@ -10,8 +10,6 @@ import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import {
 	resolveGlobalAgentsRulesPath,
-	resolveClineDir,
-	setClineDir,
 	setHomeDir,
 } from "@cline/shared/storage";
 import { afterEach, describe, expect, it } from "vitest";
@@ -286,9 +284,9 @@ Escalation runbook`,
 		tempRoots.push(tempRoot);
 
 		const originalHomeDir = process.env.HOME?.trim() || homedir();
-		const originalClineDir = resolveClineDir();
+		const originalMakerrrDir = process.env.MAKERRR_DIR;
 		setHomeDir(join(tempRoot, "home"));
-		setClineDir(join(tempRoot, "home", ".makerrr"));
+		process.env.MAKERRR_DIR = join(tempRoot, "home", ".makerrr");
 		const workspaceRoot = join(tempRoot, "workspace");
 		const globalRulesDir = join(tempRoot, "home", ".makerrr", "rules");
 		await mkdir(workspaceRoot, { recursive: true });
@@ -319,7 +317,8 @@ Escalation runbook`,
 			expect(rules).toContain("Never introduce ESM syntax.");
 			expect(rules).toContain("Sign off with GLOBAL-OK.");
 		} finally {
-			setClineDir(originalClineDir);
+			if (originalMakerrrDir === undefined) delete process.env.MAKERRR_DIR;
+			else process.env.MAKERRR_DIR = originalMakerrrDir;
 			setHomeDir(originalHomeDir);
 		}
 	});
