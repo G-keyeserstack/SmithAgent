@@ -172,10 +172,6 @@ export function resolveClineDir(): string {
 	if (CLINE_DIR) {
 		return CLINE_DIR;
 	}
-	const envDir = process.env.CLINE_DIR?.trim();
-	if (envDir) {
-		return envDir;
-	}
 	return join(HOME_DIR, ".makerrr");
 }
 
