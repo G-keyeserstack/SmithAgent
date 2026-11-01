@@ -27,6 +27,17 @@ export class ClineFileStorage<T = any> extends ClineSyncStorage<T> {
 		this.fsPath = filePath
 		this.name = name
 		this.fileMode = options?.fileMode
+		// Existing secrets.json files may predate the restricted mode passed by
+		// storage-context. Harden them before reading credentials into memory.
+		if (this.fileMode !== undefined && fs.existsSync(this.fsPath)) {
+			try {
+				fs.chmodSync(this.fsPath, this.fileMode)
+			} catch (error) {
+				if (process.platform !== "win32") {
+					Logger.error(`[${this.name}] failed to harden file permissions:`, error)
+				}
+			}
+		}
 		this.data = this.readFromDisk()
 	}
 
