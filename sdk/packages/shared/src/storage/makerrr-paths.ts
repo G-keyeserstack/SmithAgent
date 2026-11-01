@@ -46,7 +46,8 @@ export function resolveMakerrrMcpSettingsPath(): string {
 
 /** The legacy root is read-only during migration; it is never removed. */
 export function resolveLegacyClineDir(): string {
-	const configured = process.env.CLINE_DIR?.trim();
+	const configured =
+		process.env.MAKERRR_LEGACY_CLINE_DIR?.trim() || process.env.CLINE_DIR?.trim();
 	return configured || join(homedir(), ".cline");
 }
 
