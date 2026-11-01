@@ -223,17 +223,22 @@ async function discoverAgentPluginSkillFile(
 	}
 }
 
+function isManagedPluginContainer(directoryPath: string): boolean {
+	const directoryName = basename(directoryPath);
+	return directoryName === ".makerrr" || directoryName === ".cline";
+}
+
 async function discoverManagedPluginRoots(
-	clineDirectoryPath: string,
+	managedPluginsDirectoryPath: string,
 ): Promise<string[]> {
 	try {
-		const entries = await readdir(clineDirectoryPath, { withFileTypes: true });
+		const entries = await readdir(managedPluginsDirectoryPath, { withFileTypes: true });
 		const pluginRoots: string[] = [];
 		for (const entry of entries) {
 			if (!entry.isDirectory()) {
 				continue;
 			}
-			const pluginRoot = join(clineDirectoryPath, entry.name);
+			const pluginRoot = join(managedPluginsDirectoryPath, entry.name);
 			const manifestPath = join(pluginRoot, MANAGED_PLUGIN_MANIFEST_FILE_NAME);
 			try {
 				const content = await readFile(manifestPath, "utf8");
@@ -455,7 +460,7 @@ export function resolveWorkflowsConfigSearchPaths(
 async function discoverSkillFiles(
 	directoryPath: string,
 ): Promise<ReadonlyArray<UnifiedConfigFileCandidate>> {
-	if (basename(directoryPath) === ".cline") {
+	if (isManagedPluginContainer(directoryPath)) {
 		const pluginRoots = await discoverManagedPluginRoots(directoryPath);
 		const nestedCandidates = await Promise.all(
 			pluginRoots.map((pluginRoot) =>
@@ -509,7 +514,7 @@ async function discoverSkillFiles(
 async function discoverRulesLikeFiles(
 	directoryPath: string,
 ): Promise<ReadonlyArray<UnifiedConfigFileCandidate>> {
-	if (basename(directoryPath) === ".cline") {
+	if (isManagedPluginContainer(directoryPath)) {
 		const pluginRoots = await discoverManagedPluginRoots(directoryPath);
 		const nestedCandidates = await Promise.all(
 			pluginRoots.map((pluginRoot) =>
@@ -593,7 +598,7 @@ async function discoverRulesLikeFiles(
 async function discoverManagedWorkflowFiles(
 	directoryPath: string,
 ): Promise<ReadonlyArray<UnifiedConfigFileCandidate>> {
-	if (basename(directoryPath) === ".cline") {
+	if (isManagedPluginContainer(directoryPath)) {
 		const pluginRoots = await discoverManagedPluginRoots(directoryPath);
 		const nestedCandidates = await Promise.all(
 			pluginRoots.map((pluginRoot) =>
@@ -617,15 +622,16 @@ export function createSkillsConfigDefinition(
 			skill,
 		]),
 	);
-	const managedRoot = options?.workspacePath
-		? join(options.workspacePath, ".cline")
-		: undefined;
+	const managedRoots = options?.workspacePath
+		? [
+				join(options.workspacePath, ".makerrr"),
+					join(options.workspacePath, ".cline"),
+			]
+		: [];
 
 	return {
 		type: "skill",
-		directories: managedRoot
-			? dedupeDirectoryPaths([...directories, managedRoot])
-			: directories,
+		directories: dedupeDirectoryPaths([...directories, ...managedRoots]),
 		discoverFiles: (directoryPath) => {
 			const agentPluginSkill = agentPluginSkillsByDirectory.get(
 				resolve(directoryPath),
@@ -682,7 +688,7 @@ export function createRulesConfigDefinition(
 
 	return {
 		type: "rule",
-		directories: managedRoot ? [...directories, managedRoot] : directories,
+		directories: dedupeDirectoryPaths([...directories, ...managedRoots]),
 		discoverFiles: discoverRulesLikeFiles,
 		includeFile: (fileName, filePath) =>
 			fileName === ".clinerules" ||
