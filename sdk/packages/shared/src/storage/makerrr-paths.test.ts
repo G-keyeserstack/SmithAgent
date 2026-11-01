@@ -46,6 +46,7 @@ describe("Makerrr path resolution", () => {
 	it("uses ~/.makerrr by default and derives data/settings paths", () => {
 		delete process.env.MAKERRR_DIR;
 		delete process.env.MAKERRR_DATA_DIR;
+		delete process.env.CLINE_DIR;
 		expect(resolveMakerrrDir()).toMatch(/[\\/]\.makerrr$/);
 		expect(resolveMakerrrDataDir()).toBe(join(resolveMakerrrDir(), "data"));
 	});
