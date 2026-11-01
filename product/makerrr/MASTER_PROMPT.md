@@ -145,3 +145,31 @@ The aspiration to support 100,000 or more developers is a capacity-planning targ
 ## Product voice
 
 Clear, direct, confident and developer-first. Express African pride without making the product feel exclusive to one geography. Be candid about AI limitations, supported integrations and data handling.
+
+## South African cloud infrastructure partners and deployment direction
+
+The preferred South African infrastructure strategy is to evaluate **Stratos Lab** as the primary cloud and AI infrastructure partner and **YSBERG** as a complementary dedicated-compute/private-inference partner. This is the intended architecture direction, not a representation that either provider has been contracted, integrated, capacity-reserved or placed into production.
+
+### Stratos Lab
+
+Evaluate its GPU-as-a-Service, Managed PaaS and bare-metal orchestration for hosted model inference, AI workloads and supporting cloud services. Treat published GPU configurations and prices as indicative until confirmed in a commercial proposal. Confirm capacity, hosting region, tenancy, network design, service levels, support, data-processing terms and automation interfaces before implementation.
+
+### YSBERG
+
+Evaluate its dedicated Johannesburg GPU infrastructure for private model hosting, predictable inference capacity, development and benchmarking. Treat it as complementary capacity and a potential resilience option. Confirm exact hardware, location, tenancy, network performance, support, backup, failover and contractual service commitments.
+
+### Makerrr-owned architecture
+
+Makerrr retains ownership of the product control plane: identity, organisations, authorization, billing, session metadata, task scheduling, model routing, policy, audit and user experience. Provider-specific infrastructure must sit behind replaceable adapters. The architecture must not make either provider a hard dependency for local-first use.
+
+Separate two workload classes:
+- **Model plane:** GPU-backed model serving and inference, potentially on Stratos Lab and/or YSBERG.
+- **Agent execution plane:** isolated, ephemeral workspaces that run untrusted repository code, tools and shell commands. Evaluate Firecracker microVMs or an equivalently strong isolation boundary. A GPU node or ordinary container is not automatically a secure per-task sandbox.
+
+Only use either provider for cloud agent execution after verifying support for the required isolation runtime, lifecycle automation, restricted networking, scoped credentials and resource quotas. Keep model endpoints separate from untrusted task workspaces.
+
+### Security, privacy and commercial gates
+
+Before production use, complete provider due diligence covering capacity and availability, hardware, pricing and egress, SLA and support, network isolation, privileged access, vulnerability management, data-processing terms, subprocessors, retention/deletion, backup geography, disaster recovery and exit portability. Map cross-border data flows; South African hosting alone does not establish POPIA compliance or guarantee that all processing remains in South Africa.
+
+Run a comparative proof of concept using representative coding-agent workloads. Measure first-token latency, end-to-end completion time, tool-call reliability, throughput, cost per successful task, failure recovery and operational burden. Do not publish capacity, performance, pricing or sovereignty claims until independently validated and contractually supported.
