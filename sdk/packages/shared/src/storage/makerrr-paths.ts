@@ -109,16 +109,16 @@ export function migrateLegacyClineSettings(options?: {
 			items.push({ source, destination, status: "already-exists" });
 			continue;
 		}
-		if (options?.dryRun) {
-			items.push({ source, destination, status: "would-copy" });
-			continue;
-		}
 		try {
-			mkdirSync(destinationDir, { recursive: true, mode: 0o700 });
 			const sourceStats = lstatSync(source);
 			if (!sourceStats.isFile() || sourceStats.isSymbolicLink()) {
 				throw new Error("Source is not a regular, non-symlink file");
 			}
+			if (options?.dryRun) {
+				items.push({ source, destination, status: "would-copy" });
+				continue;
+			}
+			mkdirSync(destinationDir, { recursive: true, mode: 0o700 });
 			// Settings may contain provider credentials. Always create private
 			// destination files, regardless of the source file's old mode.
 			copyFileSync(source, destination, 1); // COPYFILE_EXCL: never overwrite.
