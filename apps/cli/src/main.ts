@@ -226,7 +226,7 @@ export async function runCli(): Promise<void> {
 				dryRun: !options.yes,
 			});
 			for (const item of result.items) {
-				writeln(\`\${item.status}: \${item.source} -> \${item.destination}\`);
+				writeln(`${item.status}: ${item.source} -> ${item.destination}`);
 				if (item.error) writeErr(item.error);
 			}
 			if (!options.yes) {
