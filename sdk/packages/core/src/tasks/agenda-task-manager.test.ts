@@ -503,7 +503,7 @@ describe("AgendaTaskManager", () => {
 					expectedContentHash: goodSource.contentHash,
 				},
 			);
-			const badSpecsDir = join(badWorkspace, ".cline", "tasks");
+			const badSpecsDir = join(badWorkspace, ".makerrr", "tasks");
 			const badSpecsBackup = join(badWorkspace, ".cline", "tasks-real");
 			renameSync(badSpecsDir, badSpecsBackup);
 			symlinkSync(badSpecsBackup, badSpecsDir, "dir");
