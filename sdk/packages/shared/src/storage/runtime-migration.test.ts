@@ -53,8 +53,9 @@ describe("Makerrr runtime migration", () => {
 		// Keep two connections open before the insert so the committed row
 		// remains in the WAL instead of being checkpointed on last-close.
 		const walKeeper = loadSqliteDb(databasePath);
-		walWriter.prepare("INSERT INTO records(value) VALUES (?)").run("committed-in-wal");
-		expect(existsSync(databasePath + "-wal")).toBe(true);
+		try {
+			walWriter.prepare("INSERT INTO records(value) VALUES (?)").run("committed-in-wal");
+			expect(existsSync(databasePath + "-wal")).toBe(true);
 		writeFileSync(
 			join(source, "settings", "cline_mcp_settings.json"),
 			JSON.stringify({ mcpServers: {} }),
@@ -73,8 +74,6 @@ describe("Makerrr runtime migration", () => {
 			sourceDataDir: source,
 			destinationDataDir: destination,
 		});
-		walWriter.close?.();
-		walKeeper.close?.();
 		expect(result.phase).toBe("committed");
 		expect(existsSync(join(destination, "settings", "makerrr_mcp_settings.json"))).toBe(true);
 		expect(existsSync(join(destination, "settings", "cline_mcp_settings.json"))).toBe(false);
@@ -88,7 +87,11 @@ describe("Makerrr runtime migration", () => {
 		} finally {
 			migrated.close?.();
 		}
-		expect(existsSync(join(source, "db", "sessions.db"))).toBe(true);
+			expect(existsSync(join(source, "db", "sessions.db"))).toBe(true);
+		} finally {
+			walWriter.close?.();
+			walKeeper.close?.();
+		}
 	});
 
 	it("preserves the previous destination and supports explicit rollback", () => {
