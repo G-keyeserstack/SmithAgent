@@ -13,12 +13,12 @@
 - Explicit overrides: `MAKERRR_DIR`, `MAKERRR_DATA_DIR`, `MAKERRR_GLOBAL_SETTINGS_PATH`, `MAKERRR_PROVIDER_SETTINGS_PATH`, `MAKERRR_MCP_SETTINGS_PATH`.
 - Explicit legacy `CLINE_DIR` and `CLINE_DATA_DIR` values are captured as compatibility/migration sources.
 - Shared SDK storage now defaults to Makerrr for CLI, VS Code, desktop and other clients using the shared path resolver.
-- Global and workspace discovery now prefers Makerrr rules, skills, hooks, workflows, agents and plugins while retaining legacy Cline locations.
+- Global and workspace discovery now prefers Makerrr rules, skills, hooks, workflows, agents and plugins while retaining legacy Cline locations, including the `~/Makerrr/Rules` fallback used on headless/WSL systems.
 - Existing Cline session, team, connector, database and chat-workspace directories remain the active runtime stores when present. New users use Makerrr data directories; existing runtime stores are not silently hidden or split between two databases.
 - MCP settings now use `makerrr_mcp_settings.json`; the migration maps the old Cline MCP file to this name.
 - CLI migration defaults to preview. Actual copying requires `makerrr migrate --yes`.
 - VS Code offers a one-time consent prompt before copying settings.
-- Migration uses exclusive file creation, owner-only file mode where supported, rejects symlink sources, never overwrites destination files and never deletes originals.
+- Migration uses exclusive file creation, owner-only file mode where supported, rejects symlinked source files/directories and destination directories, never overwrites destination files and never deletes originals.
 
 **Migration boundary:** this first pass copies only global settings, provider settings and MCP settings. Live SQLite/session databases, workspaces and other runtime data are deliberately not copied. Those need an offline-aware migration with backup, WAL/SHM handling, rollback and version compatibility. Existing Cline rules and other text-based configuration remain discoverable through compatibility paths.
 
