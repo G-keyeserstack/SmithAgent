@@ -159,6 +159,10 @@ export function setClineDirIfUnset(dir: string): void {
 }
 
 export function resolveClineDir(): string {
+	const makerrrDir = process.env.MAKERRR_DIR?.trim();
+	if (makerrrDir) {
+		return makerrrDir;
+	}
 	if (CLINE_DIR) {
 		return CLINE_DIR;
 	}
@@ -166,7 +170,7 @@ export function resolveClineDir(): string {
 	if (envDir) {
 		return envDir;
 	}
-	return join(HOME_DIR, ".cline");
+	return join(HOME_DIR, ".makerrr");
 }
 
 export function resolveDocumentsClineDirectoryPath(): string {
@@ -197,7 +201,8 @@ export function resolveLegacyDocumentsExtensionPath(
 }
 
 export function resolveClineDataDir(): string {
-	const explicitDir = process.env.CLINE_DATA_DIR?.trim();
+	const explicitDir =
+		process.env.MAKERRR_DATA_DIR?.trim() || process.env.CLINE_DATA_DIR?.trim();
 	if (explicitDir) {
 		return explicitDir;
 	}
@@ -205,7 +210,9 @@ export function resolveClineDataDir(): string {
 }
 
 export function resolveSessionDataDir(): string {
-	const explicitDir = process.env.CLINE_SESSION_DATA_DIR?.trim();
+	const explicitDir =
+		process.env.MAKERRR_SESSION_DATA_DIR?.trim() ||
+		process.env.CLINE_SESSION_DATA_DIR?.trim();
 	if (explicitDir) {
 		return explicitDir;
 	}
@@ -213,7 +220,9 @@ export function resolveSessionDataDir(): string {
 }
 
 export function resolveTeamDataDir(): string {
-	const explicitDir = process.env.CLINE_TEAM_DATA_DIR?.trim();
+	const explicitDir =
+		process.env.MAKERRR_TEAM_DATA_DIR?.trim() ||
+		process.env.CLINE_TEAM_DATA_DIR?.trim();
 	if (explicitDir) {
 		return explicitDir;
 	}
@@ -221,7 +230,9 @@ export function resolveTeamDataDir(): string {
 }
 
 export function resolveConnectorDataDir(): string {
-	const explicitDir = process.env.CLINE_CONNECTOR_DATA_DIR?.trim();
+	const explicitDir =
+		process.env.MAKERRR_CONNECTOR_DATA_DIR?.trim() ||
+		process.env.CLINE_CONNECTOR_DATA_DIR?.trim();
 	if (explicitDir) {
 		return explicitDir;
 	}
@@ -250,7 +261,9 @@ export function resolveConnectorLogPath(
 }
 
 export function resolveConnectorSettingsPath(): string {
-	const explicitPath = process.env.CLINE_CONNECTOR_SETTINGS_PATH?.trim();
+	const explicitPath =
+		process.env.MAKERRR_CONNECTOR_SETTINGS_PATH?.trim() ||
+		process.env.CLINE_CONNECTOR_SETTINGS_PATH?.trim();
 	if (explicitPath) {
 		return explicitPath;
 	}
@@ -258,7 +271,8 @@ export function resolveConnectorSettingsPath(): string {
 }
 
 export function resolveDbDataDir(): string {
-	const explicitDir = process.env.CLINE_DB_DATA_DIR?.trim();
+	const explicitDir =
+		process.env.MAKERRR_DB_DATA_DIR?.trim() || process.env.CLINE_DB_DATA_DIR?.trim();
 	if (explicitDir) {
 		return explicitDir;
 	}
@@ -271,7 +285,9 @@ export function resolveDbDataDir(): string {
  * credentials/config stay decoupled from session storage.
  */
 export function resolveConnectorsDbPath(): string {
-	const explicitPath = process.env.CLINE_CONNECTORS_DB_PATH?.trim();
+	const explicitPath =
+		process.env.MAKERRR_CONNECTORS_DB_PATH?.trim() ||
+		process.env.CLINE_CONNECTORS_DB_PATH?.trim();
 	if (explicitPath) {
 		return explicitPath;
 	}
@@ -284,7 +300,8 @@ export function resolveConnectorsDbPath(): string {
  * retention, and query patterns stay decoupled from session storage.
  */
 export function resolveCronDbPath(): string {
-	const explicitPath = process.env.CLINE_CRON_DB_PATH?.trim();
+	const explicitPath =
+		process.env.MAKERRR_CRON_DB_PATH?.trim() || process.env.CLINE_CRON_DB_PATH?.trim();
 	if (explicitPath) {
 		return explicitPath;
 	}
@@ -293,7 +310,8 @@ export function resolveCronDbPath(): string {
 
 /** Path to the dedicated agenda task queue database. */
 export function resolveTasksDbPath(): string {
-	const explicitPath = process.env.CLINE_TASKS_DB_PATH?.trim();
+	const explicitPath =
+		process.env.MAKERRR_TASKS_DB_PATH?.trim() || process.env.CLINE_TASKS_DB_PATH?.trim();
 	if (explicitPath) {
 		return explicitPath;
 	}
