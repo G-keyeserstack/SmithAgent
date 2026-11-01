@@ -22,6 +22,8 @@ import {
 	resolveConnectorDataDir,
 	resolveConnectorSettingsPath,
 	resolveDbDataDir,
+	resolveDocumentsExtensionPath,
+	resolveLegacyDocumentsExtensionPath,
 	resolveGlobalAgentsRulesPath,
 	resolveGlobalRulesConfigPaths,
 	resolveGlobalSettingsPath,
@@ -639,6 +641,24 @@ describe("Cline plugin discovery boundary", () => {
 			join(workspace, ".clinerules"),
 			join(workspace, ".cline", RULES_CONFIG_DIRECTORY_NAME),
 		]);
+	});
+
+
+	it("uses Makerrr Documents folders for new context files and retains Cline folders", () => {
+		const homeRoot = mkdtempSync(join(tmpdir(), "makerrr-documents-paths-"));
+		const previousHome = process.env.HOME ?? "~";
+		try {
+			setHomeDir(homeRoot);
+			expect(resolveDocumentsExtensionPath("Rules")).toBe(
+				join(homeRoot, "Documents", "Makerrr", "Rules"),
+			);
+			expect(resolveLegacyDocumentsExtensionPath("Rules")).toBe(
+				join(homeRoot, "Documents", "Cline", "Rules"),
+			);
+		} finally {
+			setHomeDir(previousHome);
+			rmSync(homeRoot, { recursive: true, force: true });
+		}
 	});
 
 });
