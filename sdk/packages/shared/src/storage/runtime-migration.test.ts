@@ -138,11 +138,16 @@ describe("Makerrr runtime migration", () => {
 			snapshottedDatabases: [],
 		};
 		writeFileSync(journalPath, JSON.stringify(journal));
+		writeFileSync(
+			destination + ".migration.lock",
+			JSON.stringify({ pid: 99999999, createdAt: now }),
+		);
 
 		const recovered = recoverInterruptedRuntimeMigration(destination);
 		expect(recovered?.phase).toBe("rolled-back");
 		expect(readFileSync(join(destination, "original.txt"), "utf8")).toBe("original");
 		expect(existsSync(staging)).toBe(false);
+		expect(existsSync(destination + ".migration.lock")).toBe(false);
 	});
 
 	it("refuses to overwrite a database when both stores contain the same relative path", () => {
