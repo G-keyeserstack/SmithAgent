@@ -137,7 +137,7 @@ function promptArgLooksQuoted(arg: string | undefined): boolean {
 function writePromptArgError(args: string[]): void {
 	const renderedArgs = args.join(" ");
 	writeErr(
-		`Unknown command or unquoted prompt: ${renderedArgs}\nPrompt text must be passed as a single quoted argument, for example: cline "fix the tests". Use "cline --help" to see available commands and flags.`,
+		`Unknown command or unquoted prompt: ${renderedArgs}\nPrompt text must be passed as a single quoted argument, for example: makerrr "fix the tests". Use "makerrr --help" to see available commands and flags.`,
 	);
 }
 
@@ -280,7 +280,7 @@ export async function runCli(): Promise<void> {
 		.option("-c, --cwd <path>", "Working directory")
 		.option(
 			"--data-dir <dir>",
-			"Use isolated local state at <dir> instead of ~/.cline (enables sandbox mode)",
+			"Use isolated local state at <dir> instead of ~/.makerrr (enables sandbox mode)",
 		)
 		.option("-v, --verbose", "Show verbose output")
 		.action(async (positionalProvider: string | undefined) => {
@@ -366,7 +366,7 @@ export async function runCli(): Promise<void> {
 
 	const pluginCmd = program
 		.command("plugin")
-		.description("Manage Cline Plugins")
+		.description("Manage Makerrr Plugins")
 		.action(() => {
 			pluginCmd.help();
 		});
@@ -374,7 +374,7 @@ export async function runCli(): Promise<void> {
 		.command("install")
 		.alias("i")
 		.description(
-			"Install a Cline Plugin from an official keyword, npm, git, URL, or a local path",
+			"Install a Makerrr Plugin from an official keyword, npm, git, URL, or a local path",
 		)
 		.argument(
 			"<source>",
@@ -384,7 +384,7 @@ export async function runCli(): Promise<void> {
 		.option("--git", "Treat source as a git repository")
 		.option("--force", "Replace an existing install for the same source")
 		.option("--json", "Output as JSON")
-		.option("--cwd <path>", "Install to <path>/.cline/plugins")
+		.option("--cwd <path>", "Install to <path>/.makerrr/plugins")
 		.action(async (source: string) => {
 			const opts = pluginInstallCmd.opts<{
 				npm?: boolean;
