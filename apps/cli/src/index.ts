@@ -24,7 +24,7 @@ import { resolveCliLaunchSpec } from "./utils/internal-launch";
 import { writeErr } from "./utils/output";
 
 // Initialize VCR before any HTTP requests are made.
-// Set MAKERRR_VCR=record|playback to enable (legacy CLINE_VCR is also accepted).
+// Set MAKERRR_VCR=record|playback and MAKERRR_VCR_CASSETTE=<path> to enable (legacy CLINE_VCR variables are also accepted).
 initVcr(process.env.MAKERRR_VCR ?? process.env.CLINE_VCR);
 
 // Before any personality below can spawn a child with the workspace as cwd.
