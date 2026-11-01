@@ -10,16 +10,16 @@
  * SDKs (all of which delegate to the global fetch).
  *
  * Environment variables:
- *   CLINE_VCR           - "record" to record HTTP requests, "playback" to replay them
- *   CLINE_VCR_CASSETTE  - Path to the cassette file (default: ./vcr-cassette.json)
- *   CLINE_VCR_FILTER    - Substring to filter recorded/replayed request paths.
+ *   MAKERRR_VCR         - "record" to record HTTP requests, "playback" to replay them (legacy CLINE_VCR is accepted)
+ *   MAKERRR_VCR_CASSETTE - Path to the cassette file (legacy CLINE_VCR_CASSETTE is accepted) (default: ./vcr-cassette.json)
+ *   MAKERRR_VCR_FILTER   - Substring to filter recorded/replayed request paths (legacy CLINE_VCR_FILTER is accepted).
  *                         When set to a non-empty string, only requests whose path
  *                         contains this substring are recorded/replayed; all other
  *                         requests pass through to the real network.
  *                         When empty or unset, ALL requests are intercepted (no filter).
- *   CLINE_VCR_INCLUDE_REQUEST_BODY - "1" to save sanitized request bodies and
+ *   MAKERRR_VCR_INCLUDE_REQUEST_BODY - "1" to save sanitized request bodies and
  *                         assert them during playback.
- *   CLINE_VCR_SSE_DELAY - Milliseconds between SSE chunks during playback (default: 100).
+ *   MAKERRR_VCR_SSE_DELAY - Milliseconds between SSE chunks during playback (default: 100).
  *                         Set to 0 for instant delivery.
  *
  * Usage:
@@ -455,25 +455,23 @@ function getVcrConfig(vcrMode: string | undefined): VcrConfig | null {
 		return null;
 	}
 
-	if (!process.env.CLINE_VCR_CASSETTE) {
-		process.stderr.write(
-			"[VCR] No CLINE_VCR_CASSETTE: requests will not be recorded or played back.\n",
-		);
+	const cassette = process.env.MAKERRR_VCR_CASSETTE ?? process.env.CLINE_VCR_CASSETTE;
+	if (!cassette) {
+		process.stderr.write("[VCR] No MAKERRR_VCR_CASSETTE: requests will not be recorded or played back.\\n");
 		return null;
 	}
 
 	if (vcrMode !== "record" && vcrMode !== "playback") {
 		process.stderr.write(
-			`[VCR] Invalid CLINE_VCR value: "${vcrMode}". Expected "record" or "playback".\n`,
+			`[VCR] Invalid MAKERRR_VCR value: "${vcrMode}". Expected "record" or "playback".\n`,
 		);
 		process.exit(1);
 	}
 
-	const cassettePath = resolve(process.env.CLINE_VCR_CASSETTE);
-	const filter = process.env.CLINE_VCR_FILTER ?? "";
-	const includeRequestBody =
-		process.env.CLINE_VCR_INCLUDE_REQUEST_BODY === "1" ||
-		process.env.CLINE_VCR_INCLUDE_REQUEST_BODY === "true";
+	const cassettePath = resolve(cassette);
+	const filter = process.env.MAKERRR_VCR_FILTER ?? process.env.CLINE_VCR_FILTER ?? "";
+	const includeRequestBodyValue = process.env.MAKERRR_VCR_INCLUDE_REQUEST_BODY ?? process.env.CLINE_VCR_INCLUDE_REQUEST_BODY;
+	const includeRequestBody = includeRequestBodyValue === "1" || includeRequestBodyValue === "true";
 
 	return { mode: vcrMode, cassettePath, filter, includeRequestBody };
 }
