@@ -51,10 +51,10 @@ beforeEach(async () => {
 
 afterEach(async () => {
 	vi.unstubAllEnvs();
-	if (previousClineDir === undefined) {
+	if (previousMakerrrDir === undefined) {
 		delete process.env.MAKERRR_DIR;
 	} else {
-		process.env.MAKERRR_DIR = previousClineDir;
+		process.env.MAKERRR_DIR = previousMakerrrDir;
 	}
 	await rm(tempClineDir, { recursive: true, force: true });
 });
