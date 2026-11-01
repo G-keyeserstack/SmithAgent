@@ -40,8 +40,8 @@ describe("Hub agenda task vertical slice", () => {
 		// the Cline dir at the test root so that home stays inside this test.
 		// Restore via onTestFinished so an early throw (before the try below)
 		// cannot leave the override behind for later tests in this worker.
-		const makerrrHome = join(root, "cline-home");
-		mkdirSync(clineHome);
+		const makerrrHome = join(root, "makerrr-home");
+		mkdirSync(makerrrHome);
 		const previousMakerrrDir = process.env.MAKERRR_DIR;
 		process.env.MAKERRR_DIR = makerrrHome;
 		onTestFinished(() => {
