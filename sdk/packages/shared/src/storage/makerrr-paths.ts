@@ -16,7 +16,8 @@ import { join } from "node:path";
  * MAKERRR_DIR override is supplied.
  */
 export function resolveMakerrrDir(): string {
-	const configured = process.env.MAKERRR_DIR?.trim() || process.env.CLINE_DIR?.trim();
+	const configured =
+		process.env.MAKERRR_DIR?.trim() || process.env.CLINE_DIR?.trim();
 	return configured || join(homedir(), ".makerrr");
 }
 
