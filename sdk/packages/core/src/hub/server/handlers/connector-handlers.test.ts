@@ -20,7 +20,8 @@ describe("connector hub handlers", () => {
 	const tempRoots: string[] = [];
 
 	afterEach(() => {
-		process.env.MAKERRR_DATA_DIR = previousDataDir;
+		if (previousDataDir === undefined) delete process.env.MAKERRR_DATA_DIR;
+		else process.env.MAKERRR_DATA_DIR = previousDataDir;
 		for (const root of tempRoots.splice(0)) {
 			rmSync(root, { recursive: true, force: true });
 		}
