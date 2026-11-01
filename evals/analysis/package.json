@@ -1,5 +1,6 @@
 {
 	"name": "@cline/analysis",
+	"x-makerrr-attribution": "Based on Cline (Apache-2.0)",
 	"version": "1.0.0",
 	"description": "Analysis framework for Cline evaluations with failure classification and metrics",
 	"type": "module",

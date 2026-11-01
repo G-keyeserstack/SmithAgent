@@ -1,5 +1,6 @@
 {
 	"name": "@cline/llms",
+	"x-makerrr-attribution": "Based on Cline (Apache-2.0)",
 	"version": "0.2.0",
 	"description": "Config-driven SDK for selecting, extending, and instantiating LLM providers and models",
 	"repository": {

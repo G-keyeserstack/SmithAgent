@@ -1,5 +1,6 @@
 {
 	"name": "@cline/cli",
+	"x-makerrr-attribution": "Based on Cline (Apache-2.0)",
 	"displayName": "Makerrr",
 	"version": "3.0.74",
 	"description": "Makerrr open AI development agent CLI for the terminal",
