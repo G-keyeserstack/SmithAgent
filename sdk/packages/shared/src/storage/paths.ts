@@ -202,7 +202,8 @@ export function resolveLegacyDocumentsExtensionPath(
 }
 
 export function resolveClineDataDir(): string {
-	const makerrrDataDir = process.env.MAKERRR_DATA_DIR?.trim() || join(resolveClineDir(), "data");
+	const makerrrDataDir =
+		process.env.MAKERRR_DATA_DIR?.trim() || join(resolveClineDir(), "data");
 	const legacyOverride = process.env.CLINE_DATA_DIR?.trim();
 	if (process.env.MAKERRR_DATA_DIR?.trim()) {
 		return makerrrDataDir;
