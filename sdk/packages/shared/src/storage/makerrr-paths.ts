@@ -3,7 +3,7 @@ import {
 	copyFileSync,
 	existsSync,
 	mkdirSync,
-	statSync,
+	lstatSync,
 } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -110,9 +110,9 @@ export function migrateLegacyClineSettings(options?: {
 		}
 		try {
 			mkdirSync(destinationDir, { recursive: true, mode: 0o700 });
-			const sourceStats = statSync(source);
-			if (!sourceStats.isFile()) {
-				throw new Error("Source is not a regular file");
+			const sourceStats = lstatSync(source);
+			if (!sourceStats.isFile() || sourceStats.isSymbolicLink()) {
+				throw new Error("Source is not a regular, non-symlink file");
 			}
 			// Settings may contain provider credentials. Always create private
 			// destination files, regardless of the source file's old mode.
