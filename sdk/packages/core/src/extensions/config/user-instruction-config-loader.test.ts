@@ -323,6 +323,41 @@ Escalation runbook`,
 		}
 	});
 
+	it("loads rules from a legacy .clinerules directory", async () => {
+		const tempRoot = await mkdtemp(
+			join(tmpdir(), "core-user-instructions-clinerules-directory-"),
+		);
+		tempRoots.push(tempRoot);
+
+		const originalHomeDir = process.env.HOME?.trim() || homedir();
+		const originalMakerrrDir = process.env.MAKERRR_DIR;
+		setHomeDir(join(tempRoot, "home"));
+		process.env.MAKERRR_DIR = join(tempRoot, "home", ".makerrr");
+		const workspaceRoot = join(tempRoot, "workspace");
+		const legacyRulesDir = join(workspaceRoot, ".clinerules");
+		await mkdir(legacyRulesDir, { recursive: true });
+		await writeFile(
+			join(legacyRulesDir, "legacy-style.md"),
+			"Preserve the legacy rules directory.",
+		);
+
+		const watcher = createUserInstructionConfigWatcher({
+			rules: { workspacePath: workspaceRoot },
+		});
+
+		try {
+			await watcher.refreshAll();
+			const rules = [...watcher.getSnapshot("rule").values()].map(
+				(record) => record.item.instructions,
+			);
+			expect(rules).toContain("Preserve the legacy rules directory.");
+		} finally {
+			if (originalMakerrrDir === undefined) delete process.env.MAKERRR_DIR;
+			else process.env.MAKERRR_DIR = originalMakerrrDir;
+			setHomeDir(originalHomeDir);
+		}
+	});
+
 	it("loads global and workspace AGENTS.md rules without clobbering either source", async () => {
 		const tempRoot = await mkdtemp(
 			join(tmpdir(), "core-user-instructions-agents-"),
