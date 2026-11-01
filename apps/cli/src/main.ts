@@ -148,7 +148,7 @@ function startupTargetTakesPrecedenceOverMigrationNotice(
 }
 
 export async function runCli(): Promise<void> {
-	registerClineClientIdentity("cline-cli");
+	registerClineClientIdentity("makerrr-cli");
 	installStreamErrorGuards();
 	autoUpdateOnStartup();
 
@@ -170,10 +170,13 @@ export async function runCli(): Promise<void> {
 	// source and never removes it.
 	const legacyClineDataDir = resolveLegacyClineDataDir();
 	const effectiveConfigDir = configDir?.trim() || resolveMakerrrDir();
+	const effectiveDataDir = process.env.MAKERRR_DATA_DIR?.trim()
+		? resolveMakerrrDataDir()
+		: join(effectiveConfigDir, "data");
 	setClineDir(effectiveConfigDir);
 	process.env.CLINE_DIR = effectiveConfigDir;
 	if (process.env.MAKERRR_DATA_DIR?.trim()) {
-		process.env.CLINE_DATA_DIR = resolveMakerrrDataDir();
+		process.env.CLINE_DATA_DIR = effectiveDataDir;
 	} else {
 		// Let the legacy runtime's existing resolver derive <config>/data.
 		delete process.env.CLINE_DATA_DIR;
@@ -216,7 +219,7 @@ export async function runCli(): Promise<void> {
 		.action((options: { yes?: boolean }) => {
 			const result = migrateLegacyClineSettings({
 				sourceDataDir: legacyClineDataDir,
-				destinationSettingsDir: join(effectiveConfigDir, "data", "settings"),
+				destinationSettingsDir: join(effectiveDataDir, "settings"),
 				dryRun: !options.yes,
 			});
 			for (const item of result.items) {
