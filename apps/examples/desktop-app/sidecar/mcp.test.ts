@@ -138,6 +138,7 @@ describe("desktop MCP settings", () => {
 			delete process.env.MAKERRR_LEGACY_CLINE_DATA_DIR;
 			process.env.CLINE_DATA_DIR = legacyData;
 			await mkdir(makerrrRoot, { recursive: true });
+			await mkdir(makerrrData, { recursive: true });
 			await mkdir(join(legacyData, "settings"), { recursive: true });
 			delete process.env.MAKERRR_MCP_SETTINGS_PATH;
 			delete process.env.CLINE_MCP_SETTINGS_PATH;
