@@ -457,7 +457,7 @@ function getVcrConfig(vcrMode: string | undefined): VcrConfig | null {
 
 	const cassette = process.env.MAKERRR_VCR_CASSETTE ?? process.env.CLINE_VCR_CASSETTE;
 	if (!cassette) {
-		process.stderr.write("[VCR] No MAKERRR_VCR_CASSETTE: requests will not be recorded or played back.\\n");
+		process.stderr.write("[VCR] No MAKERRR_VCR_CASSETTE: requests will not be recorded or played back.\n");
 		return null;
 	}
 
@@ -469,8 +469,11 @@ function getVcrConfig(vcrMode: string | undefined): VcrConfig | null {
 	}
 
 	const cassettePath = resolve(cassette);
-	const filter = process.env.MAKERRR_VCR_FILTER ?? process.env.CLINE_VCR_FILTER ?? "";
-	const includeRequestBodyValue = process.env.MAKERRR_VCR_INCLUDE_REQUEST_BODY ?? process.env.CLINE_VCR_INCLUDE_REQUEST_BODY;
+	const filter =
+		process.env.MAKERRR_VCR_FILTER ?? process.env.CLINE_VCR_FILTER ?? "";
+	const includeRequestBodyValue =
+		process.env.MAKERRR_VCR_INCLUDE_REQUEST_BODY ??
+		process.env.CLINE_VCR_INCLUDE_REQUEST_BODY;
 	const includeRequestBody = includeRequestBodyValue === "1" || includeRequestBodyValue === "true";
 
 	return { mode: vcrMode, cassettePath, filter, includeRequestBody };
@@ -748,7 +751,7 @@ function startPlayingBackRequests(cassettePath: string, filter: string): void {
 	);
 
 	const sseDelayMs = Number.parseInt(
-		process.env.CLINE_VCR_SSE_DELAY ?? "100",
+		process.env.MAKERRR_VCR_SSE_DELAY ?? process.env.CLINE_VCR_SSE_DELAY ?? "100",
 		10,
 	);
 
@@ -831,7 +834,7 @@ function startPlayingBackRequests(cassettePath: string, filter: string): void {
 				}
 
 				// For SSE responses, stream chunks with a delay to simulate
-				// real-time delivery (controlled by CLINE_VCR_SSE_DELAY).
+				// real-time delivery (controlled by MAKERRR_VCR_SSE_DELAY).
 				if (isSSEResponse && typeof rec.response === "string") {
 					const chunks = splitSseChunks(rec.response);
 					if (chunks.length > 1) {
