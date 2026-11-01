@@ -1,6 +1,6 @@
 import { fstatSync } from "node:fs";
 import { homedir } from "node:os";
-import { basename } from "node:path";
+import { basename, join } from "node:path";
 import type { ToolPolicy } from "@cline/core";
 
 import { CLINE_DEFAULT_MODEL_ID, registerDisposable } from "@cline/shared";
@@ -156,11 +156,28 @@ export async function runCli(): Promise<void> {
 	const isFullTTY =
 		process.stdin.isTTY === true && process.stdout.isTTY === true;
 	const configDir = resolveConfigDirArg(cliArgs);
-	const { setClineDir, setHomeDir } = await import("@cline/shared/storage");
-	if (configDir) {
-		setClineDir(configDir);
-	}
+	const {
+		migrateLegacyClineSettings,
+		resolveLegacyClineDataDir,
+		resolveMakerrrDataDir,
+		resolveMakerrrDir,
+		setClineDir,
+		setHomeDir,
+	} = await import("@cline/shared/storage");
 	setHomeDir(homedir());
+	// Capture the old data root before redirecting the compatibility runtime
+	// to Makerrr's canonical paths. The migration command uses this read-only
+	// source and never removes it.
+	const legacyClineDataDir = resolveLegacyClineDataDir();
+	const effectiveConfigDir = configDir?.trim() || resolveMakerrrDir();
+	setClineDir(effectiveConfigDir);
+	process.env.CLINE_DIR = effectiveConfigDir;
+	if (process.env.MAKERRR_DATA_DIR?.trim()) {
+		process.env.CLINE_DATA_DIR = resolveMakerrrDataDir();
+	} else {
+		// Let the legacy runtime's existing resolver derive <config>/data.
+		delete process.env.CLINE_DATA_DIR;
+	}
 
 	// Capture activation telemetry only after config/home directory selection
 	// has been applied, so the telemetry singleton's persisted distinct-id
@@ -169,7 +186,7 @@ export async function runCli(): Promise<void> {
 	// `cline hub ...` is plumbing other clients invoke (the desktop app on
 	// every launch, the SSH remote flow on every connect), not a user
 	// activation, so it must not count as one.
-	if (cliArgs[0] !== "hub") {
+	if (cliArgs[0] !== "hub" && cliArgs[0] !== "migrate") {
 		captureCliExtensionActivated();
 	}
 
@@ -189,6 +206,29 @@ export async function runCli(): Promise<void> {
 	});
 	// Default action handles non-subcommand args (e.g. prompt text)
 	program.action(() => {});
+
+	// Migration is an explicit, two-step operation. The default invocation is
+	// a dry-run; copying credentials/settings requires the user's --yes flag.
+	program
+		.command("migrate")
+		.description("Preview or copy your existing Cline settings into Makerrr")
+		.option("--yes", "Copy settings that do not already exist in Makerrr")
+		.action((options: { yes?: boolean }) => {
+			const result = migrateLegacyClineSettings({
+				sourceDataDir: legacyClineDataDir,
+				destinationSettingsDir: join(effectiveConfigDir, "data", "settings"),
+				dryRun: !options.yes,
+			});
+			for (const item of result.items) {
+				writeln(\`\${item.status}: \${item.source} -> \${item.destination}\`);
+				if (item.error) writeErr(item.error);
+			}
+			if (!options.yes) {
+				writeln("Preview only. Review the files above, then run 'makerrr migrate --yes' to copy settings.");
+			} else {
+				writeln("Migration finished. Original Cline files were left untouched.");
+			}
+		});
 
 	// Auth subcommand: defines its own options so commander parses them
 	// directly. The short flags -p/-m intentionally shadow the root's -p (plan)
