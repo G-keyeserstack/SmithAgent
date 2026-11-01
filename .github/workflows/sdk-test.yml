@@ -4,6 +4,7 @@ on:
     push:
         branches:
             - main
+            - "makerrr/**"
         paths:
             - "sdk/**"
             - "apps/examples/desktop-app/**"
@@ -61,7 +62,7 @@ jobs:
                     - os: windows-latest
                       node-version: "24.x"
         runs-on: ${{ matrix.os }}
-        name: Test (${{ matrix.os }}, Node ${{ matrix.node-version }})
+        name: Test (${{ matrix.os }}, Node ${{ matrix.node-version}})
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
@@ -130,5 +131,5 @@ jobs:
               run: bun sdk/scripts/check-publish.ts
 
             - name: Smoke test packed UI package
-              if: ${{ !cancelled() && steps.build_sdk_step.outcome == 'success' && matrix.os == 'ubuntu-latest' && matrix.node-version == '24.x' }}
+              if: ${{ !cancelled() && steps.build_sdk_step.outcome == 'success' && matrix.os == 'ubuntu-latest' && node-version == '24.x' }}
               run: bun sdk/packages/ui/scripts/smoke-package.ts
