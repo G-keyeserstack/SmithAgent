@@ -83,6 +83,38 @@ describe("plugin-config-loader", () => {
 		}
 	});
 
+	it("discovers Makerrr package manifest entries", async () => {
+		const root = await mkdtemp(join(tmpdir(), "core-makerrr-plugin-manifest-"));
+		try {
+			const pluginDir = join(root, "plugin-package");
+			const srcDir = join(pluginDir, "src");
+			await mkdir(srcDir, { recursive: true });
+			const declaredEntry = join(srcDir, "index.ts");
+			await writeFile(
+				join(pluginDir, "package.json"),
+				JSON.stringify({
+					name: "makerrr-plugin-package",
+					private: true,
+					makerrr: {
+						plugins: [{ paths: ["./src/index.ts"] }],
+					},
+				}),
+				"utf8",
+			);
+			await writeFile(declaredEntry, "export default {}", "utf8");
+
+			const resolved = resolveAgentPluginPaths({
+				pluginPaths: ["./plugin-package"],
+				cwd: root,
+				workspacePath: join(root, "workspace"),
+			});
+
+			expect(resolved).toContain(declaredEntry);
+		} finally {
+			await rm(root, { recursive: true, force: true });
+		}
+	});
+
 	it("prefers package manifest plugin entries for configured directories", async () => {
 		const root = await mkdtemp(join(tmpdir(), "core-plugin-config-loader-"));
 		try {
