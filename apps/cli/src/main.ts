@@ -226,7 +226,8 @@ export async function runCli(): Promise<void> {
 		.option("--runtime", "Include SQLite databases, transcripts, workspaces and runtime files")
 		.option("--offline", "Confirm all Cline and Makerrr clients are fully closed")
 		.option("--rollback", "Restore the pre-migration Makerrr data directory")
-		.action((options: { yes?: boolean; runtime?: boolean; offline?: boolean; rollback?: boolean }) => {
+		.option("--recover", "Recover an interrupted runtime migration from its journal")
+		.action((options: { yes?: boolean; runtime?: boolean; offline?: boolean; rollback?: boolean; recover?: boolean }) => {
 			if (options.runtime) {
 				if (!options.offline) {
 					writeErr("Runtime migration requires --offline. Close VS Code, Desktop, CLI and all background agents first.");
@@ -244,6 +245,21 @@ export async function runCli(): Promise<void> {
 					writeln("Journal: " + effectiveDataDir + ".migration-journal.json (" + journal.phase + ")");
 					return;
 				}
+				if (options.recover) {
+					if (!options.yes) {
+						writeErr("Recovery changes migration state. Re-run with --yes --offline.");
+						ctx.exitCode = 1;
+						return;
+					}
+					const journal = recoverInterruptedRuntimeMigration(effectiveDataDir);
+					if (!journal) {
+						writeln("No runtime migration journal was found.");
+					} else {
+						writeln("Runtime migration recovery finished with phase: " + journal.phase);
+						writeln("Journal: " + effectiveDataDir + ".migration-journal.json");
+					}
+					return;
+				}
 				const result = migrateLegacyRuntimeData({
 					sourceDataDir: legacyClineDataDir,
 					destinationDataDir: effectiveDataDir,
@@ -252,7 +268,7 @@ export async function runCli(): Promise<void> {
 				for (const file of result.files) writeln("file: " + file);
 				for (const database of result.databases) writeln("sqlite snapshot: " + database);
 				if (result.dryRun) {
-					writeln("Preview only. Close all clients, then run 'makerrr migrate --runtime --yes --offline'.");
+					writeln("Preview only. Close all clients, then run 'makerrr migrate --runtime --yes --offline'. For an interrupted migration, use 'makerrr migrate --runtime --recover --yes --offline'.");
 				} else {
 					writeln("Runtime migration committed. Cline source data was left untouched.");
 					writeln("Journal: " + result.journalPath);
