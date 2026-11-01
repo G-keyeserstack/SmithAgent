@@ -34,11 +34,11 @@ const SKILL_ENTRY = {
 };
 
 let tempClineDir: string;
-let previousClineDir: string | undefined;
+let previousMakerrrDir: string | undefined;
 
 beforeEach(async () => {
 	tempClineDir = await mkdtemp(join(tmpdir(), "desktop-marketplace-"));
-	previousClineDir = process.env.CLINE_DIR;
+	previousClineDir = process.env.MAKERRR_DIR;
 	process.env.CLINE_DIR = tempClineDir;
 	installPluginMock.mockReset().mockImplementation(async (options) => ({
 		source: options.source,
