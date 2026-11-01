@@ -243,14 +243,18 @@ function writeJournal(journalPath: string, journal: RuntimeMigrationJournal): vo
 	const temporaryPath = journalPath + "." + randomUUID() + ".tmp";
 	journal.updatedAt = new Date().toISOString();
 	const fd = openSync(temporaryPath, "wx", 0o600);
+	let writeError: unknown;
 	try {
 		writeFileSync(fd, JSON.stringify(journal, null, 2) + "\n");
 		fsyncSync(fd);
 	} catch (error) {
-		rmSync(temporaryPath, { force: true });
-		throw error;
+		writeError = error;
 	} finally {
 		closeSync(fd);
+	}
+	if (writeError !== undefined) {
+		rmSync(temporaryPath, { force: true });
+		throw writeError;
 	}
 	renameSync(temporaryPath, journalPath);
 	syncDirectory(dirname(journalPath));
