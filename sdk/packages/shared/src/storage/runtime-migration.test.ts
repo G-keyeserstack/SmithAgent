@@ -54,14 +54,14 @@ describe("Makerrr runtime migration", () => {
 		// remains in the WAL instead of being checkpointed on last-close.
 		const walKeeper = loadSqliteDb(databasePath);
 		try {
-				walWriter.prepare("INSERT INTO records(value) VALUES (?)").run("committed-in-wal");
-				expect(existsSync(databasePath + "-wal")).toBe(true);
+			walWriter.prepare("INSERT INTO records(value) VALUES (?)").run("committed-in-wal");
+			expect(existsSync(databasePath + "-wal")).toBe(true);
 			writeFileSync(
 				join(source, "settings", "cline_mcp_settings.json"),
 				JSON.stringify({ mcpServers: {} }),
 			);
 			writeFileSync(join(source, "session-note.json"), '{"note":"legacy"}');
-	
+
 			const preview = migrateLegacyRuntimeData({
 				sourceDataDir: source,
 				destinationDataDir: destination,
@@ -69,16 +69,22 @@ describe("Makerrr runtime migration", () => {
 			});
 			expect(preview.dryRun).toBe(true);
 			expect(preview.databases).toContain("db/sessions.db");
-	
+
 			const result = migrateLegacyRuntimeData({
 				sourceDataDir: source,
 				destinationDataDir: destination,
 			});
 			expect(result.phase).toBe("committed");
-			expect(existsSync(join(destination, "settings", "makerrr_mcp_settings.json"))).toBe(true);
-			expect(existsSync(join(destination, "settings", "cline_mcp_settings.json"))).toBe(false);
-			expect(readFileSync(join(destination, "session-note.json"), "utf8")).toContain("legacy");
-	
+			expect(
+				existsSync(join(destination, "settings", "makerrr_mcp_settings.json")),
+			).toBe(true);
+			expect(
+				existsSync(join(destination, "settings", "cline_mcp_settings.json")),
+			).toBe(false);
+			expect(readFileSync(join(destination, "session-note.json"), "utf8")).toContain(
+				"legacy",
+			);
+
 			const migrated = loadSqliteDb(join(destination, "db", "sessions.db"));
 			try {
 				expect(migrated.prepare("SELECT value FROM records").get()).toMatchObject({
@@ -87,7 +93,7 @@ describe("Makerrr runtime migration", () => {
 			} finally {
 				migrated.close?.();
 			}
-				expect(existsSync(join(source, "db", "sessions.db"))).toBe(true);
+			expect(existsSync(join(source, "db", "sessions.db"))).toBe(true);
 		} finally {
 			walWriter.close?.();
 			walKeeper.close?.();
