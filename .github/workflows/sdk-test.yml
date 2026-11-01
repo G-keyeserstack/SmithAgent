@@ -1,9 +1,11 @@
+# Makerrr baseline validation: Bun 1.4.2, frozen lockfile, SDK/CLI/Desktop matrix.
 name: sdk-test
 
 on:
     push:
         branches:
             - main
+            - "makerrr/**"
         paths:
             - "sdk/**"
             - "apps/examples/desktop-app/**"
@@ -61,7 +63,7 @@ jobs:
                     - os: windows-latest
                       node-version: "24.x"
         runs-on: ${{ matrix.os }}
-        name: Test (${{ matrix.os }}, Node ${{ matrix.node-version }})
+        name: Test (${{ matrix.os }}, Node ${{ matrix.node-version}})
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
