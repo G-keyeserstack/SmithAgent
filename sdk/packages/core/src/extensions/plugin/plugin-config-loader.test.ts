@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { setHomeDir } from "@cline/shared/storage";
+import { setClineDir, setHomeDir } from "@cline/shared/storage";
 import { afterEach, describe, expect, it } from "vitest";
 import {
 	discoverPluginModulePaths,
@@ -17,6 +17,7 @@ describe("plugin-config-loader", () => {
 	const envSnapshot = {
 		HOME: process.env.HOME,
 		CLINE_GLOBAL_SETTINGS_PATH: process.env.CLINE_GLOBAL_SETTINGS_PATH,
+		CLINE_DIR: process.env.CLINE_DIR,
 		CLINE_PLUGIN_MODE: process.env.CLINE_PLUGIN_MODE,
 	};
 
@@ -29,6 +30,8 @@ describe("plugin-config-loader", () => {
 		}
 		process.env.CLINE_GLOBAL_SETTINGS_PATH =
 			envSnapshot.CLINE_GLOBAL_SETTINGS_PATH;
+		if (envSnapshot.CLINE_DIR === undefined) delete process.env.CLINE_DIR;
+		else process.env.CLINE_DIR = envSnapshot.CLINE_DIR;
 		setHomeDir(envSnapshot.HOME ?? "~");
 	});
 
@@ -337,7 +340,9 @@ describe("plugin-config-loader", () => {
 		);
 		try {
 			process.env.HOME = home;
+			process.env.CLINE_DIR = join(home, ".cline");
 			setHomeDir(home);
+			setClineDir(join(home, ".makerrr"));
 			const workspaceMakerrrPlugins = join(workspace, ".makerrr", "plugins");
 			const workspaceClinePlugins = join(workspace, ".cline", "plugins");
 			const userMakerrrPlugins = join(home, ".makerrr", "plugins");
