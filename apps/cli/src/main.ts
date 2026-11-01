@@ -1,7 +1,7 @@
 import { fstatSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, join } from "node:path";
-import type { ToolPolicy } from "@cline/core";
+import { createSearchExecutor, type ToolPolicy } from "@cline/core";
 
 import { CLINE_DEFAULT_MODEL_ID, registerDisposable } from "@cline/shared";
 import type { Command } from "commander";
@@ -236,6 +236,32 @@ export async function runCli(): Promise<void> {
 			}
 		});
 
+	// Reuse the SDK's bounded, ripgrep-first search executor so CLI searches
+	// and agent codebase searches share the same implementation.
+	program
+		.command("search")
+		.description("Search code and text in a local workspace using regex")
+		.argument("<pattern>", "Regular-expression search pattern")
+		.option("-c, --cwd <path>", "Workspace directory")
+		.option("--max-results <count>", "Maximum matches to return", (value) => Math.max(1, Number.parseInt(value, 10) || 100), 100)
+		.option("--context-lines <count>", "Context lines around each match", (value) => Math.max(0, Number.parseInt(value, 10) || 0), 2)
+		.action(async (pattern: string, options: { cwd?: string; maxResults: number; contextLines: number }) => {
+			const search = createSearchExecutor({
+				maxResults: options.maxResults,
+				contextLines: options.contextLines,
+			});
+			const result = await search(
+				pattern,
+				resolveWorkspaceRoot(options.cwd ?? process.cwd()),
+				{
+					agentId: "makerrr-cli-search",
+					conversationId: "makerrr-local-search",
+					iteration: 1,
+				},
+			);
+			writeln(result);
+		});
+
 	// Auth subcommand: defines its own options so commander parses them
 	// directly. The short flags -p/-m intentionally shadow the root's -p (plan)
 	// and -m (model); commander scopes options per-command so there is no
@@ -324,7 +350,8 @@ export async function runCli(): Promise<void> {
 
 	program
 		.command("config")
-		.description("Show current configuration")
+		.alias("context")
+		.description("Inspect configured context sources: rules, skills, workflows, agents, plugins and MCP")
 		.option("--json", "Output as JSON")
 		.option("--config <dir>", "configuration directory")
 		.allowUnknownOption()
