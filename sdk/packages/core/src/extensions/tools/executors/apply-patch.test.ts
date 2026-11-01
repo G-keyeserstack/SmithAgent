@@ -341,4 +341,30 @@ describe("createApplyPatchExecutor", () => {
 		await expect(fs.readFile(secondPath, "utf-8")).resolves.toBe("concurrent second\n");
 	});
 
+
+	it("rejects relative edit paths that escape the workspace through a symlink", async () => {
+		const outsideDir = await fs.mkdtemp(path.join(os.tmpdir(), "apply-patch-outside-"));
+		try {
+			await fs.writeFile(path.join(outsideDir, "secret.txt"), "outside data\n", "utf-8");
+			try {
+				await fs.symlink(outsideDir, path.join(tempDir, "linked"), "dir");
+			} catch {
+				// Some Windows environments do not grant symlink creation rights.
+				return;
+			}
+			const patch = [
+				"*** Update File: linked/secret.txt",
+				"@@",
+				" outside data",
+				"+changed",
+			].join("\n");
+			await expect(computePatchChanges(patch, tempDir)).rejects.toThrow(
+				"Path resolves outside cwd through a symbolic link",
+			);
+			await expect(fs.readFile(path.join(outsideDir, "secret.txt"), "utf-8")).resolves.toBe("outside data\n");
+		} finally {
+			await fs.rm(outsideDir, { recursive: true, force: true });
+		}
+	});
+
 });
