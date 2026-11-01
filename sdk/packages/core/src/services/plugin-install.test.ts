@@ -220,7 +220,7 @@ describe("plugin install service", () => {
 			existsSync(join(result.installPath, "package", "other-plugin")),
 		).toBe(false);
 		expect(resolvePluginConfigSearchPaths(workspace)[0]).toBe(
-			join(workspace, ".cline", "plugins"),
+			join(workspace, ".makerrr", "plugins"),
 		);
 	});
 
