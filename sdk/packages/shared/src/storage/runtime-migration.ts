@@ -14,7 +14,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { randomUUID } from "node:crypto";
-import { dirname, extname, join, relative, resolve } from "node:path";
+import { dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import { loadSqliteDb } from "../db/sqlite-db";
 
 export type RuntimeMigrationPhase =
@@ -288,8 +288,8 @@ export function migrateLegacyRuntimeData(options: {
 	const destinationFromSource = relative(source, destination);
 	if (
 		source === destination ||
-		(sourceFromDestination !== "" && !sourceFromDestination.startsWith("..") && !sourceFromDestination.startsWith("/")) ||
-		(destinationFromSource !== "" && !destinationFromSource.startsWith("..") && !destinationFromSource.startsWith("/"))
+		(sourceFromDestination !== "" && !sourceFromDestination.startsWith("..") && !isAbsolute(sourceFromDestination)) ||
+		(destinationFromSource !== "" && !destinationFromSource.startsWith("..") && !isAbsolute(destinationFromSource))
 	) {
 		throw new Error("Source and destination data directories must be separate, non-nested paths");
 	}
