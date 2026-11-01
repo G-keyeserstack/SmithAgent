@@ -172,6 +172,7 @@ export async function runCli(): Promise<void> {
 	const legacyClineDir = resolveLegacyClineDir();
 	const legacyClineDataDir = resolveLegacyClineDataDir();
 	process.env.MAKERRR_LEGACY_CLINE_DIR = legacyClineDir;
+	process.env.MAKERRR_LEGACY_CLINE_DATA_DIR = legacyClineDataDir;
 	const effectiveConfigDir = configDir?.trim() || resolveMakerrrDir();
 	const effectiveDataDir = process.env.MAKERRR_DATA_DIR?.trim()
 		? resolveMakerrrDataDir()
