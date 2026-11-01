@@ -183,9 +183,13 @@ describe("storage path resolution", () => {
 			mkdirSync(join(legacyRoot, "data", "sessions"), { recursive: true });
 			mkdirSync(join(legacyRoot, "data", "db"), { recursive: true });
 			mkdirSync(join(legacyRoot, "data", "workspaces"), { recursive: true });
+			mkdirSync(join(legacyRoot, "data", "teams"), { recursive: true });
+			mkdirSync(join(legacyRoot, "data", "connectors"), { recursive: true });
 
 			expect(resolveSessionDataDir()).toBe(join(legacyRoot, "data", "sessions"));
 			expect(resolveDbDataDir()).toBe(join(legacyRoot, "data", "db"));
+			expect(resolveTeamDataDir()).toBe(join(legacyRoot, "data", "teams"));
+			expect(resolveConnectorDataDir()).toBe(join(legacyRoot, "data", "connectors"));
 			expect(resolveChatWorkspacePath()).toBe(
 				join(legacyRoot, "data", "workspaces", "chat"),
 			);
