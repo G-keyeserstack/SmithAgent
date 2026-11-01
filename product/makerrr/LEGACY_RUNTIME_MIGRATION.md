@@ -1,6 +1,6 @@
 # Legacy Cline Runtime Migration — Safety Design
 
-**Status:** Design specification; not an authorization to move live user data.  
+**Status:** Prototype implementation in draft PR #4; not production-approved and not an authorization to migrate live user data yet.  
 **Scope:** Existing Cline runtime data transitioning to Makerrr-managed paths on the same device.  
 **Primary invariant:** The original Cline tree remains recoverable and is never deleted by the migration.
 
@@ -16,7 +16,7 @@
 
 ## 2. Inventory and migration manifest
 
-Before implementation, enumerate every persistent store through the actual storage resolvers and their consumers. The inventory must include, at minimum:
+Before production release, enumerate every persistent store through the actual storage resolvers and their consumers. The inventory must include, at minimum:
 
 - global settings and provider credentials;
 - MCP and connector configuration, including encrypted/secret material and connector state;
@@ -34,7 +34,7 @@ A versioned manifest should record source and destination roots, store identifie
 
 ## 3. Preflight and quiescence
 
-The migration command should have separate `inspect`, `backup`, `stage`, `validate` and `commit` phases. Default invocation is read-only.
+The current CLI exposes a read-only settings/runtime preview by default. Runtime migration is explicit: `makerrr migrate --runtime --yes --offline`. Recovery and rollback require `--runtime --recover --yes --offline` or `--runtime --rollback --yes --offline`. The `--offline` flag is a user assertion; the current prototype does not automatically enumerate or stop client processes.
 
 Preflight must:
 - resolve source and destination using the same shared path resolver used by all clients;
@@ -50,7 +50,7 @@ Before a database snapshot, stop all writers cleanly: close CLI/VS Code/Desktop 
 
 ## 4. SQLite backup and WAL/SHM handling
 
-**Preferred method:** use SQLite's supported online backup API through the repository's supported SQLite driver, with the source application quiesced. Snapshot each database to a new temporary backup file. This produces a consistent database image that includes committed transactions represented in the WAL. Never assume copying only the main `.db` file captures committed WAL transactions.
+**Current prototype:** uses SQLite `VACUUM INTO` through the repository's shared SQLite adapter, with the source application quiesced. This creates a transactionally consistent database image that includes committed WAL transactions without copying `-wal` or `-shm` sidecars. It is SQLite-aware, but it is not the SQLite online-backup API. Keep the application offline and do not replace this with a raw file copy. A driver-native online backup adapter may be preferable when supported consistently across Bun and Node.
 
 For every SQLite store:
 1. Record `PRAGMA user_version`, application schema/version metadata and source database identity.
@@ -69,7 +69,7 @@ For every SQLite store:
 
 ## 5. Staging, compatibility and commit
 
-Stage all stores into a versioned temporary directory on the same filesystem as the final Makerrr destination. Preserve relative layout and restrictive permissions. Copy file-backed user content without following symlinks; reject special files and unsafe links. Hash files before and after copying.
+The prototype stages the destination and legacy source into a temporary sibling directory on the same filesystem, then promotes it with directory renames. SQLite files are snapshotted with `VACUUM INTO`; WAL/SHM/journal sidecars are not copied. File-backed content is copied with owner-only permissions; symbolic links and special files are rejected. Conflicting databases or non-identical ordinary files fail closed instead of silently overwriting. The external journal is written through a temporary file, fsynced and atomically renamed; stale process locks are detected conservatively.
 
 Before commit:
 - run database integrity, foreign-key and schema checks;
@@ -115,14 +115,14 @@ For every fixture, assert that the source tree is byte-for-byte unchanged, migra
 
 ## 8. Release gates and security review
 
-The migration is not production-ready until:
+The migration remains a prototype and is not production-ready until:
 - the persistent-store inventory is complete and code-reviewed;
-- backup/restore and crash-recovery tests pass on Linux, macOS and Windows;
+- the new WAL, interrupted-cutover, stale-lock and rollback fixtures pass on Linux, macOS and Windows;\n- additional database schema/version and application-level record checks are implemented;
 - all migration writes are least-privilege and path-safe;
 - secrets are not logged or included in manifests;
 - source immutability and destination collision handling are tested;
-- database integrity and application-level compatibility checks pass;
-- CLI, VS Code and Desktop smoke tests pass on fresh and upgraded fixtures;
+- database integrity, schema compatibility and application-level compatibility checks pass;
+- CLI, VS Code and Desktop smoke tests pass on fresh and upgraded fixtures;\n- the complete SDK, CLI, VS Code and Desktop CI matrix passes on the exact reviewed PR head;\n- the security review and recovery behaviour are independently reviewed.tures;
 - a security review covers symlinks, path traversal, TOCTOU races, permissions, secret handling, lock ownership, interrupted commits and malicious/corrupt databases;
 - the full CI matrix passes on the exact release commit.
 
