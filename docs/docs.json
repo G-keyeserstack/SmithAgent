@@ -112,7 +112,7 @@
 						"group": "Usage",
 						"pages": [
 							{
-								"group": "Cline Desktop",
+								"group": "Makerrr Desktop",
 								"pages": [
 									"usage/cline-desktop",
 									"usage/cline-desktop-ssh",
@@ -321,7 +321,7 @@
 								]
 							},
 							{
-								"group": "Control Other Cline Features",
+								"group": "Control Other Features",
 								"pages": [
 									"enterprise-solutions/configuration/infrastructure-configuration/control-other-cline-features/yolo-mode",
 									"enterprise-solutions/configuration/infrastructure-configuration/control-other-cline-features/mcp-server-controls"
