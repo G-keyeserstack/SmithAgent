@@ -81,8 +81,7 @@ export const AGENT_PLUGIN_MANIFEST_FILE_NAME = "plugin.json";
  */
 export function resolveChatWorkspacePath(): string {
 	return join(
-		resolveClineDataDir(),
-		CLINE_WORKSPACES_DIRECTORY_NAME,
+		resolveRuntimeDataSubdirectory(CLINE_WORKSPACES_DIRECTORY_NAME),
 		CLINE_CHAT_WORKSPACE_DIRECTORY_NAME,
 	);
 }
