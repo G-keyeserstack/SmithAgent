@@ -298,7 +298,7 @@ export function migrateLegacyRuntimeData(options: {
 	try {
 		if (existsSync(journalPath)) {
 			const previous = JSON.parse(
-				require("node:fs").readFileSync(journalPath, "utf8"),
+				readFileSync(journalPath, "utf8"),
 			) as RuntimeMigrationJournal;
 			if (previous.phase !== "committed" && previous.phase !== "rolled-back") {
 				throw new Error(
@@ -366,7 +366,7 @@ export function rollbackLegacyRuntimeMigration(
 		throw new Error("No Makerrr runtime migration journal exists: " + journalPath);
 	}
 	const journal = JSON.parse(
-		require("node:fs").readFileSync(journalPath, "utf8"),
+		readFileSync(journalPath, "utf8"),
 	) as RuntimeMigrationJournal;
 	if (journal.phase !== "committed") {
 		throw new Error("Only a committed migration can be rolled back (phase: " + journal.phase + ")");
