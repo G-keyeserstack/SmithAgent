@@ -158,6 +158,8 @@ export async function runCli(): Promise<void> {
 	const configDir = resolveConfigDirArg(cliArgs);
 	const {
 		migrateLegacyClineSettings,
+		migrateLegacyRuntimeData,
+		rollbackLegacyRuntimeMigration,
 		resolveLegacyClineDataDir,
 		resolveLegacyClineDir,
 		resolveMakerrrDataDir,
@@ -214,29 +216,65 @@ export async function runCli(): Promise<void> {
 	// Default action handles non-subcommand args (e.g. prompt text)
 	program.action(() => {});
 
-	// Migration is an explicit, two-step operation. The default invocation is
-	// a dry-run; copying credentials/settings requires the user's --yes flag.
+	// Migration is explicit and offline-aware. Settings-only migration remains
+	// available as the lightweight default; SQLite/runtime migration requires
+	// both --yes and --offline after every Makerrr/Cline client has been closed.
 	program
 		.command("migrate")
-		.description("Preview or copy your existing Cline settings into Makerrr")
-		.option("--yes", "Copy settings that do not already exist in Makerrr")
-		.action((options: { yes?: boolean }) => {
+		.description("Preview or migrate legacy Cline settings and runtime data into Makerrr")
+		.option("--yes", "Confirm migration or rollback")
+		.option("--runtime", "Include SQLite databases, transcripts, workspaces and runtime files")
+		.option("--offline", "Confirm all Cline and Makerrr clients are fully closed")
+		.option("--rollback", "Restore the pre-migration Makerrr data directory")
+		.action((options: { yes?: boolean; runtime?: boolean; offline?: boolean; rollback?: boolean }) => {
+			if (options.runtime) {
+				if (!options.offline) {
+					writeErr("Runtime migration requires --offline. Close VS Code, Desktop, CLI and all background agents first.");
+					ctx.exitCode = 1;
+					return;
+				}
+				if (options.rollback) {
+					if (!options.yes) {
+						writeErr("Rollback changes the active data directory. Re-run with --yes --offline.");
+						ctx.exitCode = 1;
+						return;
+					}
+					const journal = rollbackLegacyRuntimeMigration(effectiveDataDir);
+					writeln("Runtime migration rolled back. Original Cline data remains untouched.");
+					writeln("Journal: " + effectiveDataDir + ".migration-journal.json (" + journal.phase + ")");
+					return;
+				}
+				const result = migrateLegacyRuntimeData({
+					sourceDataDir: legacyClineDataDir,
+					destinationDataDir: effectiveDataDir,
+					dryRun: !options.yes,
+				});
+				for (const file of result.files) writeln("file: " + file);
+				for (const database of result.databases) writeln("sqlite snapshot: " + database);
+				if (result.dryRun) {
+					writeln("Preview only. Close all clients, then run 'makerrr migrate --runtime --yes --offline'.");
+				} else {
+					writeln("Runtime migration committed. Cline source data was left untouched.");
+					writeln("Journal: " + result.journalPath);
+					if (result.backupDir) writeln("Pre-migration backup: " + result.backupDir);
+				}
+				return;
+			}
+
 			const result = migrateLegacyClineSettings({
 				sourceDataDir: legacyClineDataDir,
 				destinationSettingsDir: join(effectiveDataDir, "settings"),
 				dryRun: !options.yes,
 			});
 			for (const item of result.items) {
-				writeln(`${item.status}: ${item.source} -> ${item.destination}`);
+				writeln(item.status + ": " + item.source + " -> " + item.destination);
 				if (item.error) writeErr(item.error);
 			}
 			if (!options.yes) {
 				writeln("Preview only. Review the files above, then run 'makerrr migrate --yes' to copy settings.");
 			} else {
 				writeln("Settings migration finished. Original Cline files were left untouched.");
-				writeln(
-				"This phase copies global settings, provider settings and MCP settings only. Session databases, workspaces and other runtime data remain in their original locations pending an offline-aware migration.",
-			);
+				writeln("This settings-only operation does not move SQLite databases or session runtime data. Use 'makerrr migrate --runtime' for the offline-aware migration preview.");
 			}
 		});
 
