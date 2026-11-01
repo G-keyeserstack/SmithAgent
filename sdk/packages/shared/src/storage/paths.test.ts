@@ -203,6 +203,31 @@ describe("storage path resolution", () => {
 		}
 	});
 
+	it("honors explicit Makerrr data overrides before legacy store discovery", () => {
+		snapshot = captureEnv();
+		const homeRoot = mkdtempSync(join(tmpdir(), "makerrr-explicit-data-"));
+		const legacyRoot = join(homeRoot, ".cline");
+		const explicitData = join(homeRoot, "custom-state");
+		try {
+			process.env.MAKERRR_DIR = join(homeRoot, ".makerrr");
+			process.env.MAKERRR_LEGACY_CLINE_DIR = legacyRoot;
+			delete process.env.MAKERRR_LEGACY_CLINE_DATA_DIR;
+			delete process.env.MAKERRR_DATA_DIR;
+			delete process.env.CLINE_DATA_DIR;
+			delete process.env.CLINE_DIR;
+			mkdirSync(join(legacyRoot, "data", "sessions"), { recursive: true });
+			process.env.MAKERRR_DATA_DIR = explicitData;
+			expect(resolveSessionDataDir()).toBe(join(explicitData, "sessions"));
+
+			delete process.env.MAKERRR_DATA_DIR;
+			expect(resolveSessionDataDir()).toBe(
+				join(homeRoot, ".makerrr", "data", "sessions"),
+			);
+		} finally {
+			rmSync(homeRoot, { recursive: true, force: true });
+		}
+	});
+
 	it("uses CLINE_DATA_DIR as-is when set", () => {
 		snapshot = captureEnv();
 		delete process.env.MAKERRR_DATA_DIR;
