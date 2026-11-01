@@ -92,7 +92,9 @@ async function initializeMakerrrStorage(context: ExtensionContext): Promise<void
 
 	// Copying provider credentials is user-controlled. Offer a one-time preview
 	// and require an explicit confirmation; original Cline files are retained.
-	if (context.globalState.get<boolean>("makerrr.legacySettingsMigrationPrompted")) return
+	if (context.globalState.get<boolean>("makerrr.legacySettingsMigrationPrompted")) {
+		return
+	}
 	const preview = migrateLegacyClineSettings({
 		sourceDataDir: legacyDataDir,
 		destinationSettingsDir: path.join(makerrrDataDir, "settings"),
@@ -112,7 +114,9 @@ async function initializeMakerrrStorage(context: ExtensionContext): Promise<void
 			destinationSettingsDir: path.join(makerrrDataDir, "settings"),
 		})
 		const copied = result.items.filter((item) => item.status === "copied").length
-		vscode.window.showInformationMessage("Makerrr copied " + copied + " settings file(s). Your original Cline files were retained.")
+		vscode.window.showInformationMessage(
+			"Makerrr copied " + copied + " settings file(s). Your original Cline files were retained.",
+		)
 	}
 }
 
