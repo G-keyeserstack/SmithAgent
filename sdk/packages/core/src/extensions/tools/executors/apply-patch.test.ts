@@ -342,6 +342,39 @@ describe("createApplyPatchExecutor", () => {
 	});
 
 
+	it("enforces workspace boundaries for absolute paths without rejecting in-workspace names beginning with dots", async () => {
+		const inWorkspacePath = path.join(tempDir, "..notes.txt");
+		await fs.writeFile(inWorkspacePath, "before\n", "utf-8");
+		const patch = [
+			"*** Update File: ..notes.txt",
+			"@@",
+			" before",
+			"+after",
+		].join("\n");
+		const { changes } = await computePatchChanges(patch, tempDir);
+		await applyPatchChanges(changes, tempDir, "utf-8", true);
+		await expect(fs.readFile(inWorkspacePath, "utf-8")).resolves.toBe("before\nafter");
+
+		const outsideDir = await fs.mkdtemp(path.join(os.tmpdir(), "apply-patch-absolute-outside-"));
+		try {
+			const outsidePath = path.join(outsideDir, "secret.txt");
+			await fs.writeFile(outsidePath, "outside data\n", "utf-8");
+			const outsidePatch = [
+				`*** Update File: ${outsidePath}`,
+				"@@",
+				" outside data",
+				"+changed",
+			].join("\n");
+			await expect(computePatchChanges(outsidePatch, tempDir)).rejects.toThrow(
+				"Path must stay within cwd",
+			);
+			await expect(fs.readFile(outsidePath, "utf-8")).resolves.toBe("outside data\n");
+		} finally {
+			await fs.rm(outsideDir, { recursive: true, force: true });
+		}
+	});
+
+
 	it("rejects relative edit paths that escape the workspace through a symlink", async () => {
 		const outsideDir = await fs.mkdtemp(path.join(os.tmpdir(), "apply-patch-outside-"));
 		try {
