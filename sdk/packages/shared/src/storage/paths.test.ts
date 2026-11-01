@@ -406,7 +406,7 @@ describe("chat workspace paths", () => {
 
 	it("resolves the shared chat workspace under the configured data dir", () => {
 		snapshot = captureEnv();
-		delete process.env.CLINE_DATA_DIR;
+		process.env.CLINE_DATA_DIR = "/tmp/home/.cline/data";
 		process.env.CLINE_DIR = "/tmp/home/.cline";
 
 		expect(resolveChatWorkspacePath()).toBe(
