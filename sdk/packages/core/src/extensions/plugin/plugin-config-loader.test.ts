@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { setClineDir, setHomeDir } from "@cline/shared/storage";
+import { resolveClineDir, setClineDir, setHomeDir } from "@cline/shared/storage";
 import { afterEach, describe, expect, it } from "vitest";
 import {
 	discoverPluginModulePaths,
@@ -14,6 +14,7 @@ import {
 } from "./plugin-config-loader";
 
 describe("plugin-config-loader", () => {
+	const originalResolvedClineDir = resolveClineDir();
 	const envSnapshot = {
 		HOME: process.env.HOME,
 		CLINE_GLOBAL_SETTINGS_PATH: process.env.CLINE_GLOBAL_SETTINGS_PATH,
@@ -33,6 +34,7 @@ describe("plugin-config-loader", () => {
 		if (envSnapshot.CLINE_DIR === undefined) delete process.env.CLINE_DIR;
 		else process.env.CLINE_DIR = envSnapshot.CLINE_DIR;
 		setHomeDir(envSnapshot.HOME ?? "~");
+		setClineDir(originalResolvedClineDir);
 	});
 
 	it("discovers plugin modules recursively", async () => {
