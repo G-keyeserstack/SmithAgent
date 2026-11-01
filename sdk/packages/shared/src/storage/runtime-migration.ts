@@ -208,6 +208,15 @@ function copyTree(
 	}
 }
 
+function syncFile(path: string): void {
+	const fd = openSync(path, "r+");
+	try {
+		fsyncSync(fd);
+	} finally {
+		closeSync(fd);
+	}
+}
+
 function syncDirectory(path: string): void {
 	if (process.platform === "win32") return;
 	const fd = openSync(path, "r");
@@ -216,6 +225,18 @@ function syncDirectory(path: string): void {
 	} finally {
 		closeSync(fd);
 	}
+}
+
+function syncStagedTree(root: string): void {
+	for (const entry of readdirSync(root, { withFileTypes: true })) {
+		const entryPath = join(root, entry.name);
+		if (entry.isDirectory()) {
+			syncStagedTree(entryPath);
+		} else if (entry.isFile()) {
+			syncFile(entryPath);
+		}
+	}
+	syncDirectory(root);
 }
 
 function writeJournal(journalPath: string, journal: RuntimeMigrationJournal): void {
@@ -411,6 +432,7 @@ export function migrateLegacyRuntimeData(options: {
 			snapshottedDatabases: journal.snapshottedDatabases,
 			renameLegacyMcpSettings: true,
 		});
+		syncStagedTree(stagingDir);
 		journal.phase = "staged";
 		writeJournal(journalPath, journal);
 
