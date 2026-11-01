@@ -6,7 +6,7 @@ import {
 	AGENT_CONFIG_DIRECTORY_NAME,
 	CLINE_CHAT_WORKSPACE_DIRECTORY_NAME,
 	CLINE_CONNECTOR_SETTINGS_FILE_NAME,
-	CLINE_MCP_SETTINGS_FILE_NAME,
+	MAKERRR_MCP_SETTINGS_FILE_NAME,
 	CLINE_WORKSPACES_DIRECTORY_NAME,
 	discoverPluginModulePaths,
 	getPluginDisplayName,
@@ -183,13 +183,13 @@ describe("storage path resolution", () => {
 		);
 	});
 
-	it("falls back to CLINE_DATA_DIR/settings/cline_mcp_settings.json for MCP settings", () => {
+	it("uses the Makerrr MCP settings filename under the configured data directory", () => {
 		snapshot = captureEnv();
 		delete process.env.CLINE_MCP_SETTINGS_PATH;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
 
 		expect(resolveMcpSettingsPath()).toBe(
-			join("/tmp/cline-data", "settings", CLINE_MCP_SETTINGS_FILE_NAME),
+			join("/tmp/cline-data", "settings", MAKERRR_MCP_SETTINGS_FILE_NAME),
 		);
 	});
 
