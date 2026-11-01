@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-// Publishes cline and all platform-specific binary packages to npm.
+// Publishes Makerrr and its Cline-derived platform-specific binary packages to npm.
 //
 // Usage:
 //   bun script/publish-npm.ts                 # publish with "latest" tag
