@@ -432,7 +432,9 @@ export function resolveCronEventsDir(
 }
 
 export function resolveProviderSettingsPath(): string {
-	const explicitPath = process.env.CLINE_PROVIDER_SETTINGS_PATH?.trim();
+	const explicitPath =
+		process.env.MAKERRR_PROVIDER_SETTINGS_PATH?.trim() ||
+		process.env.CLINE_PROVIDER_SETTINGS_PATH?.trim();
 	if (explicitPath) {
 		return explicitPath;
 	}
@@ -440,7 +442,9 @@ export function resolveProviderSettingsPath(): string {
 }
 
 export function resolveGlobalSettingsPath(): string {
-	const explicitPath = process.env.CLINE_GLOBAL_SETTINGS_PATH?.trim();
+	const explicitPath =
+		process.env.MAKERRR_GLOBAL_SETTINGS_PATH?.trim() ||
+		process.env.CLINE_GLOBAL_SETTINGS_PATH?.trim();
 	if (explicitPath) {
 		return explicitPath;
 	}
@@ -448,7 +452,9 @@ export function resolveGlobalSettingsPath(): string {
 }
 
 export function resolveMcpSettingsPath(): string {
-	const explicitPath = process.env.CLINE_MCP_SETTINGS_PATH?.trim();
+	const explicitPath =
+		process.env.MAKERRR_MCP_SETTINGS_PATH?.trim() ||
+		process.env.CLINE_MCP_SETTINGS_PATH?.trim();
 	if (explicitPath) {
 		return explicitPath;
 	}
