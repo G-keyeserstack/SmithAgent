@@ -109,7 +109,7 @@ describe("legacy Cline settings migration", () => {
 		const destination = join(root, "makerrr-settings");
 		mkdirSync(join(source, "settings"), { recursive: true });
 		mkdirSync(destination, { recursive: true });
-		writeFileSync(join(source, "global-settings.json"), '{"from":"cline"}');
+		writeFileSync(join(source, "settings", "global-settings.json"), '{"from":"cline"}');
 		writeFileSync(join(destination, "global-settings.json"), '{"from":"makerrr"}');
 
 		const result = migrateLegacyClineSettings({
