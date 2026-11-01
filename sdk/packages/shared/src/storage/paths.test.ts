@@ -343,6 +343,7 @@ describe("storage path resolution", () => {
 	it("resolves legacy and new workflow paths, with .cline paths later for duplicate-name precedence", () => {
 		snapshot = captureEnv();
 		process.env.CLINE_DIR = "/tmp/home/.cline";
+		process.env.MAKERRR_DIR = "/tmp/home/.makerrr";
 		const workspacePath = "/repo/demo";
 
 		const paths = resolveWorkflowsConfigSearchPaths(workspacePath);
