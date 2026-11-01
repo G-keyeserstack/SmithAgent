@@ -231,11 +231,13 @@ export function recoverInterruptedRuntimeMigration(
 		renameSync(journal.backupDir!, destination);
 		destinationExists = true;
 	}
-	if (!stagingExists && destinationExists && (
-		journal.phase === "destination-backed-up" ||
-		(!journal.hadDestination && journal.phase === "staged") ||
-		(backupExists && journal.phase === "staged")
-	)) {
+	if (
+		!stagingExists &&
+		destinationExists &&
+		(journal.phase === "destination-backed-up" ||
+			(!journal.hadDestination && (journal.phase === "staged" || journal.phase === "failed")) ||
+			(journal.hadDestination && backupExists && (journal.phase === "staged" || journal.phase === "failed")))
+	) {
 		// The staged directory was atomically promoted before the process
 		// stopped. Preserve it and the old backup for an explicit rollback.
 		journal.phase = "committed";
