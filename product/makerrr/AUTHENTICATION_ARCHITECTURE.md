@@ -81,9 +81,9 @@ The provider registry reconstructs this object from saved provider settings. Exp
 
 ### Provider settings
 
-`ProviderSettingsManager` stores provider settings in a JSON file. Credential-bearing fields include API keys, OAuth access and refresh tokens, AWS credentials, SAP client secrets and custom headers. The implementation sanitises invisible control/format characters, uses atomic temporary-file replacement and applies restrictive POSIX file permissions (directory 0700, file 0600).
+`ProviderSettingsManager` stores provider settings in a JSON file. Credential-bearing fields include API keys, OAuth access and refresh tokens, AWS credentials, SAP client secrets and custom headers. The implementation sanitises invisible control/format characters, uses atomic temporary-file replacement and applies restrictive POSIX file permissions (directory 0700, file 0600). The security branch now hardens an existing provider-settings file before migration or provider registration can read it; on POSIX, failure to apply the owner-only file mode aborts startup rather than silently continuing.
 
-These controls reduce accidental disclosure and partial writes. They are **not encryption at rest**. The JSON file remains readable to a process or user account that can access it.
+These controls reduce accidental disclosure and partial writes. They are **not encryption at rest**. The JSON file remains readable to a process or user account that can access it. Windows ACL protection is not established by POSIX mode bits and still requires a native credential-store implementation.
 
 ### VS Code secrets
 
