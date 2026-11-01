@@ -1,8 +1,8 @@
 import {
+	chmodSync,
 	copyFileSync,
 	existsSync,
 	mkdirSync,
-	readFileSync,
 	statSync,
 } from "node:fs";
 import { homedir } from "node:os";
@@ -110,10 +110,8 @@ export function migrateLegacyClineSettings(options?: {
 			}
 			// Settings may contain provider credentials. Always create private
 			// destination files, regardless of the source file's old mode.
-			readFileSync(source);
 			copyFileSync(source, destination, 1); // COPYFILE_EXCL: never overwrite.
 			try {
-				const { chmodSync } = require("node:fs") as typeof import("node:fs");
 				chmodSync(destination, 0o600);
 			} catch {
 				// Best effort on filesystems/platforms without POSIX permissions.
