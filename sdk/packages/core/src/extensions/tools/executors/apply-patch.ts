@@ -313,13 +313,49 @@ function formatSkippedHunkFailure(warnings: readonly PatchWarning[]): string {
 	return lines.join("\n");
 }
 
-async function applyChanges(
+export async function applyPatchChanges(
 	changes: Record<string, PatchFileChange>,
 	cwd: string,
 	encoding: BufferEncoding,
 	restrictToCwd: boolean,
 ): Promise<string[]> {
 	const touched: string[] = [];
+
+	// Preflight every touched path before the first write. This prevents a
+	// concurrent editor change or an unexpectedly-created destination from
+	// causing a patch to partially apply across multiple files.
+	for (const [filePath, change] of Object.entries(changes)) {
+		const sourceAbsPath = resolveFilePath(cwd, filePath, restrictToCwd);
+		if (change.type === PatchActionType.ADD) {
+			try {
+				await fs.lstat(sourceAbsPath);
+				throw new DiffError("Add File Error: File already exists: " + filePath);
+			} catch (error) {
+				if (error instanceof DiffError) throw error;
+				if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+			}
+		} else {
+			let currentContent: string;
+			try {
+				currentContent = await fs.readFile(sourceAbsPath, encoding);
+			} catch {
+				throw new DiffError("File changed or disappeared after patch preview: " + filePath);
+			}
+			if (currentContent !== change.oldContent) {
+				throw new DiffError("File changed after patch preview; refusing to overwrite newer content: " + filePath);
+			}
+		}
+		if (change.type === PatchActionType.UPDATE && change.movePath) {
+			const moveAbsPath = resolveFilePath(cwd, change.movePath, restrictToCwd);
+			try {
+				await fs.lstat(moveAbsPath);
+				throw new DiffError("Move destination already exists: " + change.movePath);
+			} catch (error) {
+				if (error instanceof DiffError) throw error;
+				if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+			}
+		}
+	}
 
 	for (const [filePath, change] of Object.entries(changes)) {
 		const sourceAbsPath = resolveFilePath(cwd, filePath, restrictToCwd);
@@ -410,7 +446,7 @@ export function createApplyPatchExecutor(
 			encoding,
 			restrictToCwd,
 		});
-		const touched = await applyChanges(changes, cwd, encoding, restrictToCwd);
+		const touched = await applyPatchChanges(changes, cwd, encoding, restrictToCwd);
 
 		const responseLines = [
 			"Successfully applied patch to the following files:",
