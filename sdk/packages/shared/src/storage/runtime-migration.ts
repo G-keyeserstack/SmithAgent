@@ -424,6 +424,14 @@ export function rollbackLegacyRuntimeMigration(
 	if (journal.phase !== "committed") {
 		throw new Error("Only a committed migration can be rolled back (phase: " + journal.phase + ")");
 	}
+	const rollbackDir = destination + ".rollback-" + journal.id;
+	const backupExists = !!journal.backupDir && existsSync(journal.backupDir);
+	const rollbackWasInterrupted =
+		existsSync(rollbackDir) &&
+		(journal.hadDestination ? existsSync(destination) && !backupExists : !existsSync(destination));
+	if (journal.hadDestination && !backupExists && !rollbackWasInterrupted) {
+		throw new Error("The pre-migration backup is missing; refusing destructive rollback");
+	}
 	const lockPath = lockPathFor(destination);
 	clearStaleMigrationLock(lockPath);
 	let lockFd: number;
@@ -433,11 +441,13 @@ export function rollbackLegacyRuntimeMigration(
 	} catch {
 		throw new Error("Cannot roll back while another migration holds the lock: " + lockPath);
 	}
-	if (journal.hadDestination && (!journal.backupDir || !existsSync(journal.backupDir))) {
-		throw new Error("The pre-migration backup is missing; refusing destructive rollback");
-	}
-	const rollbackDir = destination + ".rollback-" + journal.id;
 	try {
+		if (rollbackWasInterrupted) {
+			journal.phase = "rolled-back";
+			writeJournal(journalPath, journal);
+			rmSync(rollbackDir, { recursive: true, force: true });
+			return journal;
+		}
 		if (existsSync(destination)) renameSync(destination, rollbackDir);
 		if (journal.hadDestination && journal.backupDir && existsSync(journal.backupDir)) {
 			renameSync(journal.backupDir, destination);
