@@ -48,19 +48,13 @@ function captureEnv(): EnvSnapshot {
 }
 
 function restoreEnv(snapshot: EnvSnapshot): void {
-	process.env.MAKERRR_DATA_DIR = snapshot.MAKERRR_DATA_DIR;
-	process.env.MAKERRR_DB_DATA_DIR = snapshot.MAKERRR_DB_DATA_DIR;
-	process.env.MAKERRR_HOOKS_LOG_PATH = snapshot.MAKERRR_HOOKS_LOG_PATH;
-	process.env.MAKERRR_SESSION_DATA_DIR = snapshot.MAKERRR_SESSION_DATA_DIR;
-	process.env.MAKERRR_TEAM_DATA_DIR = snapshot.MAKERRR_TEAM_DATA_DIR;
-	process.env.MAKERRR_PROVIDER_SETTINGS_PATH = snapshot.MAKERRR_PROVIDER_SETTINGS_PATH;
-	process.env.MAKERRR_SANDBOX = snapshot.MAKERRR_SANDBOX;
-	process.env.MAKERRR_SANDBOX_DATA_DIR = snapshot.MAKERRR_SANDBOX_DATA_DIR;
-	process.env.CLINE_DATA_DIR = snapshot.CLINE_DATA_DIR;
-	process.env.CLINE_DB_DATA_DIR = snapshot.CLINE_DB_DATA_DIR;
-	process.env.CLINE_HOOKS_LOG_PATH = snapshot.CLINE_HOOKS_LOG_PATH;
-	process.env.CLINE_SESSION_ID = snapshot.CLINE_SESSION_ID;
-	process.env.CLINE_SESSION_DATA_DIR = snapshot.CLINE_SESSION_DATA_DIR;
+	for (const [key, value] of Object.entries(snapshot)) {
+		if (value === undefined) {
+			delete process.env[key];
+		} else {
+			process.env[key] = value;
+		}
+	}
 }
 
 describe("parseArgs", () => {
