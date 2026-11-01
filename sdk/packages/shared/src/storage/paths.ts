@@ -226,23 +226,35 @@ export function resolveClineDataDir(): string {
  * databases or silently presenting an empty history. New users use Makerrr.
  */
 function hasCommittedRuntimeMigration(destinationDataDir: string): boolean {
+	let journal: {
+		version?: number;
+		phase?: string;
+		destinationDataDir?: string;
+	};
 	try {
-		const journal = JSON.parse(
+		journal = JSON.parse(
 			readFileSync(destinationDataDir + ".migration-journal.json", "utf8"),
 		) as {
 			version?: number;
 			phase?: string;
 			destinationDataDir?: string;
 		};
-		return (
-			journal.version === 1 &&
-			journal.phase === "committed" &&
-			!!journal.destinationDataDir &&
-			resolve(journal.destinationDataDir) === resolve(destinationDataDir)
-		);
 	} catch {
 		return false;
 	}
+	const committed =
+		journal.version === 1 &&
+		journal.phase === "committed" &&
+		!!journal.destinationDataDir &&
+		resolve(journal.destinationDataDir) === resolve(destinationDataDir);
+	if (committed && !existsSync(destinationDataDir)) {
+		throw new Error(
+			"Makerrr runtime migration is committed, but its destination data directory is missing: " +
+				destinationDataDir +
+				". Restore the destination backup or run the migration recovery procedure; refusing to fall back to stale Cline data.",
+		);
+	}
+	return committed;
 }
 
 function resolveRuntimeDataSubdirectory(name: string): string {
