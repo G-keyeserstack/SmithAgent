@@ -254,7 +254,8 @@ function hasCommittedRuntimeMigration(destinationDataDir: string): boolean {
 }
 
 function resolveRuntimeDataSubdirectory(name: string): string {
-	const makerrrDataDir = process.env.MAKERRR_DATA_DIR?.trim() || join(resolveClineDir(), "data");
+	const makerrrDataDir =
+		process.env.MAKERRR_DATA_DIR?.trim() || join(resolveClineDir(), "data");
 	const makerrrPath = join(makerrrDataDir, name);
 
 	// An explicit Makerrr data root always wins. A committed migration also
