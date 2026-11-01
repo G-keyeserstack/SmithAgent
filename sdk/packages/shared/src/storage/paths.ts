@@ -215,16 +215,14 @@ export function resolveClineDataDir(): string {
 
 /**
  * Keep existing runtime data visible until an explicit offline migration has
- * moved it. New data goes to Makerrr; if the Makerrr subdirectory is not yet
- * present but the corresponding Cline directory exists, continue using the
- * legacy directory rather than silently presenting an empty history.
+ * moved it. If the corresponding Cline directory exists, continue using that
+ * directory (including new writes) rather than splitting history between two
+ * databases or silently presenting an empty history. New users use Makerrr.
  */
 function resolveRuntimeDataSubdirectory(name: string): string {
 	const makerrrPath = join(resolveClineDataDir(), name);
 	const legacyPath = join(resolveLegacyClineDataDir(), name);
-	return !existsSync(makerrrPath) && existsSync(legacyPath)
-		? legacyPath
-		: makerrrPath;
+	return existsSync(legacyPath) ? legacyPath : makerrrPath;
 }
 
 export function resolveSessionDataDir(): string {
