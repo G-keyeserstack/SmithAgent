@@ -86,7 +86,7 @@ export function migrateLegacyClineSettings(options?: {
 	const destinationDir =
 		options?.destinationSettingsDir || resolveMakerrrSettingsDir();
 	const files = [
-		["global-settings.json", "global-settings.json"],
+		["settings/global-settings.json", "global-settings.json"],
 		["settings/providers.json", "providers.json"],
 		["settings/cline_mcp_settings.json", "makerrr_mcp_settings.json"],
 	] as const;
