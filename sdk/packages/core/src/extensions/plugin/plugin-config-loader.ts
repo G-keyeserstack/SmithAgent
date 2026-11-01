@@ -107,13 +107,13 @@ function readDeclaredPluginEntryPaths(packageRoot: string): string[] {
 		const parsed = JSON.parse(
 			readFileSync(join(packageRoot, PACKAGE_JSON_FILE_NAME), "utf8"),
 		) as unknown;
-		if (!isRecord(parsed) || !isRecord(parsed.cline)) {
+		if (!isRecord(parsed)) {
 			return [];
 		}
-		const entries = parsed.cline.plugins;
-		if (!Array.isArray(entries)) {
-			return [];
-		}
+		const manifests = [parsed.makerrr, parsed.cline].filter(isRecord);
+		const entries = manifests.flatMap((manifest) =>
+			Array.isArray(manifest.plugins) ? manifest.plugins : [],
+		);
 		const paths: string[] = [];
 		for (const entry of entries) {
 			if (typeof entry === "string") {
