@@ -131,5 +131,5 @@ jobs:
               run: bun sdk/scripts/check-publish.ts
 
             - name: Smoke test packed UI package
-              if: ${{ !cancelled() && steps.build_sdk_step.outcome == 'success' && matrix.os == 'ubuntu-latest' && node-version == '24.x' }}
+              if: ${{ !cancelled() && steps.build_sdk_step.outcome == 'success' && matrix.os == 'ubuntu-latest' && matrix.node-version == '24.x' }}
               run: bun sdk/packages/ui/scripts/smoke-package.ts
