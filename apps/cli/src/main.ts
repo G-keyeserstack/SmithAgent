@@ -159,6 +159,7 @@ export async function runCli(): Promise<void> {
 	const {
 		migrateLegacyClineSettings,
 		migrateLegacyRuntimeData,
+		recoverInterruptedRuntimeMigration,
 		rollbackLegacyRuntimeMigration,
 		resolveLegacyClineDataDir,
 		resolveLegacyClineDir,
