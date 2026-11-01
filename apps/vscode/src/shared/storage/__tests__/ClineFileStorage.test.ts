@@ -25,4 +25,17 @@ describe("ClineFileStorage secret-file permissions", () => {
 		expect(storage.get("apiKey")).toBe("test-secret")
 		expect(readFileSync(file, "utf8")).toContain("test-secret")
 	})
+
+	it("does not publish a secret deletion when persistence fails", () => {
+		const root = mkdtempSync(join(tmpdir(), "makerrr-secret-storage-failure-"))
+		roots.push(root)
+		const blocker = join(root, "not-a-directory")
+		writeFileSync(blocker, "block")
+		const storage = new ClineFileStorage<string>(join(blocker, "secrets.json"), "Secrets", {
+			fileMode: 0o600,
+		})
+
+		expect(() => storage.set("apiKey", undefined)).toThrow()
+		expect(storage.get("apiKey")).toBeUndefined()
+	})
 })
