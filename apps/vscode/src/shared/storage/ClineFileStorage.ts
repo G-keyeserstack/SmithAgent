@@ -35,6 +35,7 @@ export class ClineFileStorage<T = any> extends ClineSyncStorage<T> {
 			} catch (error) {
 				if (process.platform !== "win32") {
 					Logger.error(`[${this.name}] failed to harden file permissions:`, error)
+					throw error
 				}
 			}
 		}
