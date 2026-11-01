@@ -21,7 +21,6 @@ import type { PluginManifest } from "..";
 import {
 	resolveLegacyClineDataDir,
 	resolveLegacyClineDir,
-	resolveMakerrrDataDir,
 } from "./makerrr-paths";
 import {
 	CLINE_CHAT_WORKSPACE_DIRECTORY_NAME,
@@ -203,7 +202,7 @@ export function resolveLegacyDocumentsExtensionPath(
 }
 
 export function resolveClineDataDir(): string {
-	const makerrrDataDir = resolveMakerrrDataDir();
+	const makerrrDataDir = process.env.MAKERRR_DATA_DIR?.trim() || join(resolveClineDir(), "data");
 	const legacyOverride = process.env.CLINE_DATA_DIR?.trim();
 	if (process.env.MAKERRR_DATA_DIR?.trim()) {
 		return makerrrDataDir;
@@ -254,15 +253,28 @@ function hasCommittedRuntimeMigration(destinationDataDir: string): boolean {
 }
 
 function resolveRuntimeDataSubdirectory(name: string): string {
-	const makerrrDataDir = resolveMakerrrDataDir();
+	const makerrrDataDir = process.env.MAKERRR_DATA_DIR?.trim() || join(resolveClineDir(), "data");
 	const makerrrPath = join(makerrrDataDir, name);
-	const legacyPath = join(resolveLegacyClineDataDir(), name);
-	// Once a journaled migration commits, every client using this shared
-	// resolver must switch to the staged Makerrr store even though the
-	// untouched Cline source directory still exists for rollback/audit.
-	if (hasCommittedRuntimeMigration(makerrrDataDir)) {
+
+	// An explicit Makerrr data root always wins. A committed migration also
+	// takes precedence over legacy overrides so clients cannot silently reopen
+	// the pre-migration store after cutover.
+	if (
+		process.env.MAKERRR_DATA_DIR?.trim() ||
+		hasCommittedRuntimeMigration(makerrrDataDir)
+	) {
 		return makerrrPath;
 	}
+
+	// Preserve the documented CLINE_DATA_DIR compatibility override even when
+	// the target subdirectory has not been created yet. Existence-based legacy
+	// discovery is only for the implicit default location.
+	const legacyDataOverride = process.env.CLINE_DATA_DIR?.trim();
+	if (legacyDataOverride) {
+		return join(legacyDataOverride, name);
+	}
+
+	const legacyPath = join(resolveLegacyClineDataDir(), name);
 	return existsSync(legacyPath) ? legacyPath : makerrrPath;
 }
 
