@@ -136,6 +136,19 @@ export class ProviderSettingsManager {
 	constructor(options: ProviderSettingsManagerOptions = {}) {
 		this.filePath = options.filePath ?? resolveProviderSettingsPath();
 		this.dataDir = options.dataDir ?? inferLegacyDataDir(this.filePath);
+		// Restrict existing credential files before migration or provider
+		// registration can read them. On POSIX, failure to apply the owner-only
+		// mode is a startup error rather than silently continuing insecurely.
+		if (existsSync(this.filePath)) {
+			try {
+				chmodSync(this.filePath, 0o600);
+			} catch (error) {
+				if (process.platform !== "win32") {
+					throw error;
+				}
+				// Windows ACLs are not represented by POSIX chmod bits.
+			}
+		}
 		if (this.dataDir || !options.filePath) {
 			migrateLegacyProviderSettings({
 				providerSettingsManager: this,
@@ -144,15 +157,6 @@ export class ProviderSettingsManager {
 		}
 		ensureCustomProvidersLoadedSync(this);
 		registerConfiguredProvidersFromSettings(this.read());
-		// Harden permissions on any existing file at startup so that
-		// pre-existing installations are also protected (best-effort; no-op on Windows).
-		if (existsSync(this.filePath)) {
-			try {
-				chmodSync(this.filePath, 0o600);
-			} catch {
-				// Ignore — Windows does not support POSIX chmod.
-			}
-		}
 	}
 
 	getFilePath(): string {
