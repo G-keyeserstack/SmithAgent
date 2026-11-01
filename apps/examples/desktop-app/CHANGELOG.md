@@ -1,4 +1,6 @@
-# Cline Desktop Changelog
+# Makerrr Desktop Changelog
+
+> Historical entries below are inherited from the Cline-derived codebase; Makerrr release notes will be maintained separately from the first Makerrr release.
 
 ## 0.0.49
 
