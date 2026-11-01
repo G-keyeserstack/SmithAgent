@@ -14,7 +14,7 @@ import {
 	createContributionRegistry,
 	type Message,
 } from "@cline/shared";
-import { setClineDir, setHomeDir } from "@cline/shared/storage";
+import { resolveClineDir, setClineDir, setHomeDir } from "@cline/shared/storage";
 import { afterEach, describe, expect, it } from "vitest";
 import { createUserInstructionConfigService } from "../../extensions/config";
 import { PLAN_MODE_COMMAND_GUARD_EXTENSION_NAME } from "../../extensions/tools/command-guard-extension";
@@ -62,6 +62,7 @@ async function collectExtensionTools(
 }
 
 describe("DefaultRuntimeBuilder", () => {
+	const originalClineDir = resolveClineDir();
 	const previousHome = process.env.HOME;
 	const previousGlobalSettingsPath = process.env.CLINE_GLOBAL_SETTINGS_PATH;
 	const tempDirs: string[] = [];
@@ -69,6 +70,7 @@ describe("DefaultRuntimeBuilder", () => {
 	afterEach(() => {
 		process.env.HOME = previousHome;
 		setHomeDir(previousHome ?? "~");
+		setClineDir(originalClineDir);
 		process.env.CLINE_GLOBAL_SETTINGS_PATH = previousGlobalSettingsPath;
 		for (const dir of tempDirs.splice(0)) {
 			rmSync(dir, { recursive: true, force: true });
