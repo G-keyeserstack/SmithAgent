@@ -8,9 +8,11 @@ import {
 	openSync,
 	readdirSync,
 	readFileSync,
+	readSync,
 	renameSync,
 	rmSync,
 	lstatSync,
+	statSync,
 	writeFileSync,
 } from "node:fs";
 import { randomUUID } from "node:crypto";
@@ -59,6 +61,32 @@ const MAKERRR_MCP_SETTINGS = "settings/makerrr_mcp_settings.json";
 
 function isSqliteFile(path: string): boolean {
 	return SQLITE_EXTENSIONS.has(extname(path).toLowerCase());
+}
+
+function filesHaveIdenticalContents(leftPath: string, rightPath: string): boolean {
+	const leftStats = statSync(leftPath);
+	const rightStats = statSync(rightPath);
+	if (!leftStats.isFile() || !rightStats.isFile() || leftStats.size !== rightStats.size) {
+		return false;
+	}
+	const leftFd = openSync(leftPath, "r");
+	const rightFd = openSync(rightPath, "r");
+	const leftBuffer = Buffer.allocUnsafe(64 * 1024);
+	const rightBuffer = Buffer.allocUnsafe(64 * 1024);
+	try {
+		while (true) {
+			const leftBytes = readSync(leftFd, leftBuffer, 0, leftBuffer.length, null);
+			const rightBytes = readSync(rightFd, rightBuffer, 0, rightBuffer.length, null);
+			if (leftBytes !== rightBytes) return false;
+			if (leftBytes === 0) return true;
+			if (!leftBuffer.subarray(0, leftBytes).equals(rightBuffer.subarray(0, rightBytes))) {
+				return false;
+			}
+		}
+	} finally {
+		closeSync(leftFd);
+		closeSync(rightFd);
+	}
 }
 
 function quoteSqliteString(value: string): string {
@@ -159,7 +187,7 @@ function copyTree(
 						". Automatic database merging is not supported; preserve both stores and resolve the conflict before retrying.",
 				);
 			}
-			if (!readFileSync(sourcePath).equals(readFileSync(destinationPath))) {
+			if (!filesHaveIdenticalContents(sourcePath, destinationPath)) {
 				throw new Error(
 					"Conflicting runtime file at " + mappedPath +
 						". Automatic merging is not supported; resolve the conflict before retrying.",
