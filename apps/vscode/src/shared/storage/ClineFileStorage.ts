@@ -60,20 +60,24 @@ export class ClineFileStorage<T = any> extends ClineSyncStorage<T> {
 	 * since it only writes to disk once.
 	 */
 	public setBatch(entries: Record<string, T | undefined>): Thenable<void> {
+		const nextData = { ...this.data }
 		const changedKeys: string[] = []
 		for (const [key, value] of Object.entries(entries)) {
 			if (value === undefined) {
-				if (key in this.data) {
-					delete this.data[key]
+				if (key in nextData) {
+					delete nextData[key]
 					changedKeys.push(key)
 				}
 			} else {
-				this.data[key] = value
+				nextData[key] = value
 				changedKeys.push(key)
 			}
 		}
 		if (changedKeys.length > 0) {
-			this.writeToDisk()
+			// Persist before publishing the new in-memory state or firing change
+			// events. Logout must not appear successful if secrets cannot be saved.
+			this.writeToDisk(nextData)
+			this.data = nextData
 			for (const key of changedKeys) {
 				this.fireChange(key)
 			}
@@ -96,13 +100,14 @@ export class ClineFileStorage<T = any> extends ClineSyncStorage<T> {
 		return {}
 	}
 
-	private writeToDisk(): void {
+	private writeToDisk(data: Record<string, T> = this.data): void {
 		try {
 			const dir = path.dirname(this.fsPath)
 			fs.mkdirSync(dir, { recursive: true })
-			atomicWriteFileSync(this.fsPath, JSON.stringify(this.data, null, 2), this.fileMode)
+			atomicWriteFileSync(this.fsPath, JSON.stringify(data, null, 2), this.fileMode)
 		} catch (error) {
 			Logger.error(`[${this.name}] failed to write to ${this.fsPath}:`, error)
+			throw error
 		}
 	}
 }
