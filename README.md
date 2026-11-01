@@ -18,7 +18,7 @@
 
 Makerrr is under active development by Suppple Group Plc. This repository contains a Cline-derived foundation being developed into the Makerrr product described in `product/makerrr/`.
 
-The product name and visual identity are being established ahead of the controlled migration of all package scopes, extension identifiers, commands, environment variables and remaining upstream-facing strings. Some internal packages and source identifiers still use the upstream `@cline/*` and `cline` names for compatibility. They are implementation details, not the intended public Makerrr package or marketplace names.
+The Makerrr name and initial geometric identity are being introduced ahead of the controlled migration of package scopes, extension identifiers, environment variables and remaining upstream-facing strings. The CLI currently exposes both `makerrr` and `cline` command aliases; internal packages and source identifiers still use the upstream `@cline/*` and `cline` names for compatibility. They are implementation details, not the intended public Makerrr package or marketplace names.
 
 **This repository is not yet a commercial release.** Do not assume that a hosted Makerrr identity service, subscription billing, OS-native credential vault, multi-region cloud service or 100,000-developer capacity has been deployed or load-tested.
 
@@ -76,7 +76,7 @@ For VS Code-specific checks, see `apps/vscode/package.json` and the workflows un
 
 Authentication and credential handling are being hardened in stages. Current provider credentials are still file-backed in parts of the application; restrictive file permissions are not encryption at rest. The OS-native credential manager, cross-client refresh unification, secure migration and complete logout/revocation lifecycle remain release gates.
 
-Please do not submit real API keys, OAuth tokens, passwords or customer data in issues or pull requests. Report security vulnerabilities privately through the repository's configured security contact.
+Please do not submit real API keys, OAuth tokens, passwords or customer data in issues or pull requests. Contact the repository maintainers privately about suspected vulnerabilities; do not publish credentials, exploit details or customer data in public issues.
 
 ## Brand
 
