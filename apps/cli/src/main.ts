@@ -234,7 +234,9 @@ export async function runCli(): Promise<void> {
 				writeln("Preview only. Review the files above, then run 'makerrr migrate --yes' to copy settings.");
 			} else {
 				writeln("Settings migration finished. Original Cline files were left untouched.");
-				writeln("This phase copies global settings, provider settings and MCP settings only. Session databases, workspaces and other runtime data remain in their original locations pending an offline-aware migration.");
+				writeln(
+				"This phase copies global settings, provider settings and MCP settings only. Session databases, workspaces and other runtime data remain in their original locations pending an offline-aware migration.",
+			);
 			}
 		});
 
@@ -245,9 +247,23 @@ export async function runCli(): Promise<void> {
 		.description("Search code and text in a local workspace using regex")
 		.argument("<pattern>", "Regular-expression search pattern")
 		.option("-c, --cwd <path>", "Workspace directory")
-		.option("--max-results <count>", "Maximum matches to return", (value) => Math.max(1, Number.parseInt(value, 10) || 100), 100)
-		.option("--context-lines <count>", "Context lines around each match", (value) => Math.max(0, Number.parseInt(value, 10) || 0), 2)
-		.action(async (pattern: string, options: { cwd?: string; maxResults: number; contextLines: number }) => {
+		.option(
+			"--max-results <count>",
+			"Maximum matches to return",
+			(value) => Math.max(1, Number.parseInt(value, 10) || 100),
+			100,
+		)
+		.option(
+			"--context-lines <count>",
+			"Context lines around each match",
+			(value) => Math.max(0, Number.parseInt(value, 10) || 0),
+			2,
+		)
+		.action(
+			async (
+				pattern: string,
+				options: { cwd?: string; maxResults: number; contextLines: number },
+			) => {
 			const search = createSearchExecutor({
 				maxResults: options.maxResults,
 				contextLines: options.contextLines,
