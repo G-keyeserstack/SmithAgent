@@ -1,9 +1,9 @@
 import {
-	chmodSync,
-	copyFileSync,
 	existsSync,
 	lstatSync,
 	mkdirSync,
+	readFileSync,
+	writeFileSync,
 } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -119,14 +119,12 @@ export function migrateLegacyClineSettings(options?: {
 				continue;
 			}
 			mkdirSync(destinationDir, { recursive: true, mode: 0o700 });
-			// Settings may contain provider credentials. Always create private
-			// destination files, regardless of the source file's old mode.
-			copyFileSync(source, destination, 1); // COPYFILE_EXCL: never overwrite.
-			try {
-				chmodSync(destination, 0o600);
-			} catch {
-				// Best effort on filesystems/platforms without POSIX permissions.
-			}
+			// Settings may contain provider credentials. Create the destination
+			// exclusively with owner-only permissions; never overwrite an existing file.
+			writeFileSync(destination, readFileSync(source), {
+				flag: "wx",
+				mode: 0o600,
+			});
 			items.push({ source, destination, status: "copied" });
 		} catch (error) {
 			items.push({
