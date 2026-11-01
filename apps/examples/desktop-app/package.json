@@ -1,5 +1,6 @@
 {
 	"name": "@cline/code",
+	"x-makerrr-attribution": "Based on Cline (Apache-2.0)",
 	"version": "0.0.49",
 	"private": true,
 	"scripts": {
