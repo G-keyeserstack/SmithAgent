@@ -125,6 +125,10 @@ describe("storage path resolution", () => {
 			setHomeDir(homeRoot);
 			expect(resolveClineDir()).toBe(join(homeRoot, ".makerrr"));
 			expect(resolveClineDataDir()).toBe(join(homeRoot, ".makerrr", "data"));
+			process.env.CLINE_DIR = join(homeRoot, ".cline");
+			mkdirSync(process.env.CLINE_DIR, { recursive: true });
+			expect(resolveClineDataDir()).toBe(join(homeRoot, ".makerrr", "data"));
+			delete process.env.CLINE_DIR;
 			process.env.MAKERRR_DATA_DIR = join(homeRoot, "custom-data");
 			expect(resolveClineDataDir()).toBe(join(homeRoot, "custom-data"));
 		} finally {
