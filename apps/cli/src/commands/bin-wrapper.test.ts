@@ -14,6 +14,9 @@ import { describe, expect, it } from "vitest";
 const sourceWrapperPath = fileURLToPath(
 	new URL("../../bin/cline", import.meta.url),
 );
+const sourceMakerrrWrapperPath = fileURLToPath(
+	new URL("../../bin/makerrr", import.meta.url),
+);
 
 function createWrapperCopy(): string {
 	const dir = mkdtempSync(join(tmpdir(), "cline-bin-package-"));
@@ -23,6 +26,31 @@ function createWrapperCopy(): string {
 	copyFileSync(sourceWrapperPath, wrapperPath);
 	chmodSync(wrapperPath, 0o755);
 	return wrapperPath;
+}
+
+
+function createMakerrrWrapperCopy(): string {
+	const dir = mkdtempSync(join(tmpdir(), "makerrr-bin-package-"));
+	const binDir = join(dir, "bin");
+	mkdirSync(binDir, { recursive: true });
+	const clinePath = join(binDir, "cline");
+	const makerrrPath = join(binDir, "makerrr");
+	copyFileSync(sourceWrapperPath, clinePath);
+	copyFileSync(sourceMakerrrWrapperPath, makerrrPath);
+	chmodSync(clinePath, 0o755);
+	chmodSync(makerrrPath, 0o755);
+	return makerrrPath;
+}
+
+function runMakerrrWrapper(target: string, args: string[] = []) {
+	const wrapperPath = createMakerrrWrapperCopy();
+	return spawnSync(process.execPath, [wrapperPath, ...args], {
+		env: {
+			...process.env,
+			MAKERRR_BIN_PATH: target,
+		},
+		encoding: "utf8",
+	});
 }
 
 function createExecutableScript(contents: string): string {
@@ -84,4 +112,15 @@ setTimeout(() => {}, 1000);
 			expect(result.signal).toBe("SIGTERM");
 		},
 	);
+
+	it("resolves the Makerrr command through the legacy platform binary package", () => {
+		const target = createExecutableScript(
+			'console.log(process.env.CLINE_BIN_PATH ?? "");\nprocess.exit(Number(process.argv[2] ?? "0"));\n',
+		);
+		const result = runMakerrrWrapper(target, ["0"]);
+		expect(result.error).toBeUndefined();
+		expect(result.status).toBe(0);
+		expect(result.stdout.trim()).toBe(target);
+	});
+
 });
