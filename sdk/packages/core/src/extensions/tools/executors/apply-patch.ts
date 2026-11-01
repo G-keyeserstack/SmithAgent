@@ -65,12 +65,16 @@ function resolveFilePath(
 	const resolved = isAbsoluteInput
 		? path.normalize(inputPath)
 		: path.resolve(cwd, inputPath);
-	if (!restrictToCwd || isAbsoluteInput) {
+	if (!restrictToCwd) {
 		return resolved;
 	}
 
-	const rel = path.relative(cwd, resolved);
-	if (rel.startsWith("..") || path.isAbsolute(rel)) {
+	const rel = path.relative(path.resolve(cwd), resolved);
+	if (
+		rel === ".." ||
+		rel.startsWith(`..${path.sep}`) ||
+		path.isAbsolute(rel)
+	) {
 		throw new DiffError(`Path must stay within cwd: ${inputPath}`);
 	}
 	return resolved;
@@ -82,7 +86,7 @@ async function assertWorkspacePath(
 	inputPath: string,
 	restrictToCwd: boolean,
 ): Promise<void> {
-	if (!restrictToCwd || path.isAbsolute(inputPath)) {
+	if (!restrictToCwd) {
 		return;
 	}
 	const realCwd = await fs.realpath(cwd);
