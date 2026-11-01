@@ -38,7 +38,9 @@
 - Update/delete operations refuse to overwrite a file whose content changed after patch computation.
 - Add operations refuse an existing destination.
 - Move operations refuse an existing destination.
-- Relative patch paths that resolve outside the workspace through symbolic links are rejected.
+- Relative and absolute patch paths that resolve outside the workspace are rejected when workspace restriction is enabled, including symlink escapes.
+- New-file and move destinations use exclusive creation so a file created after preflight is not overwritten.
+- Path checks are segment-aware, allowing valid in-workspace names that begin with `..`.
 - Regression tests cover stale files, multi-file preflight and symlink escapes.
 - Existing checkpoint restore transaction and refusal tests were inspected and retained; no restore semantics were rewritten.
 
