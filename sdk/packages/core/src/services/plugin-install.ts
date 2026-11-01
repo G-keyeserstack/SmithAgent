@@ -17,6 +17,7 @@ import { toPosixSeparators } from "@cline/shared";
 import {
 	isPluginModulePath,
 	resolveClineDir,
+	resolvePluginConfigSearchPaths,
 	resolvePluginModuleEntries,
 } from "@cline/shared/storage";
 import {
@@ -437,9 +438,10 @@ export function parsePluginSource(
 }
 
 function getPluginRoot(cwd: string | undefined): string {
-	return cwd
-		? join(cwd, ".cline", "plugins")
-		: join(resolveClineDir(), "plugins");
+	if (cwd) {
+		return resolvePluginConfigSearchPaths(cwd)[0] ?? join(cwd, ".makerrr", "plugins");
+	}
+	return join(resolveClineDir(), "plugins");
 }
 
 function getInstallPath(
