@@ -109,7 +109,9 @@ describe("desktop MCP settings", () => {
 			} else {
 				process.env.CLINE_DATA_DIR = previousDataDir;
 			}
-			if (previousSettingsPath !== undefined) {
+			if (previousSettingsPath === undefined) {
+				delete process.env.CLINE_MCP_SETTINGS_PATH;
+			} else {
 				process.env.CLINE_MCP_SETTINGS_PATH = previousSettingsPath;
 			}
 			await rm(tempRoot, { recursive: true, force: true });
