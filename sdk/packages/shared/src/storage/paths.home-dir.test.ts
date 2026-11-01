@@ -50,7 +50,7 @@ describe("storage home directory fallback", () => {
 		process.env.USERPROFILE = "C:\\Users\\saoud";
 		delete process.env.HOMEDRIVE;
 		delete process.env.HOMEPATH;
-		delete process.env.CLINE_DIR;
+		process.env.CLINE_DIR = join("C:\\Users\\saoud", ".cline");
 		delete process.env.MAKERRR_DIR;
 
 		const { resolveClineDir } = await import("./paths");
