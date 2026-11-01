@@ -34,6 +34,7 @@ export {
 
 const DEPRECATED_CONFIG_DIR = ".clinerules";
 const CLINE_CONFIG_DIR = ".cline";
+const MAKERRR_CONFIG_DIR = ".makerrr";
 /**
  * Claude Code's project directory. Skills authored for Claude Code live in
  * `.claude/skills`, which is documented as a supported project skill location,
@@ -472,6 +473,7 @@ function getWorkspaceSkillDirectories(workspacePath?: string): string[] {
 	}
 	return [
 		DEPRECATED_CONFIG_DIR,
+		MAKERRR_CONFIG_DIR,
 		CLINE_CONFIG_DIR,
 		CLAUDE_CONFIG_DIR,
 		LEGACY_AGENT_SKILLS_CONFIG_DIR,
@@ -486,6 +488,9 @@ export function resolveAgentConfigSearchPaths(
 	workspacePath?: string,
 ): string[] {
 	return dedupePaths([
+		workspacePath
+			? join(workspacePath, MAKERRR_CONFIG_DIR, AGENT_CONFIG_DIRECTORY_NAME)
+			: "",
 		workspacePath
 			? join(workspacePath, CLINE_CONFIG_DIR, AGENT_CONFIG_DIRECTORY_NAME)
 			: "",
@@ -504,6 +509,7 @@ export function resolveHooksConfigSearchPaths(
 	];
 	if (workspacePath) {
 		hooks.push(
+			join(workspacePath, MAKERRR_CONFIG_DIR, HOOKS_CONFIG_DIRECTORY_NAME),
 			join(workspacePath, DEPRECATED_CONFIG_DIR, HOOKS_CONFIG_DIRECTORY_NAME),
 			join(workspacePath, CLINE_CONFIG_DIR, HOOKS_CONFIG_DIRECTORY_NAME),
 		);
@@ -541,6 +547,7 @@ export function resolveWorkspaceRulesConfigPaths(
 	workspacePath: string,
 ): string[] {
 	return [
+		join(workspacePath, MAKERRR_CONFIG_DIR, RULES_CONFIG_DIRECTORY_NAME),
 		join(workspacePath, DEPRECATED_CONFIG_DIR),
 		join(workspacePath, CLINE_CONFIG_DIR, RULES_CONFIG_DIRECTORY_NAME),
 	];
@@ -610,6 +617,9 @@ export function resolveWorkflowsConfigSearchPaths(
 ): string[] {
 	return dedupePaths([
 		workspacePath
+			? join(workspacePath, MAKERRR_CONFIG_DIR, WORKFLOWS_CONFIG_DIRECTORY_NAME)
+			: "",
+		workspacePath
 			? join(workspacePath, ".clinerules", WORKFLOWS_CONFIG_DIRECTORY_NAME)
 			: "",
 		resolveDocumentsExtensionPath("Workflows"),
@@ -625,6 +635,7 @@ export function resolvePluginConfigSearchPaths(
 	workspacePath?: string,
 ): string[] {
 	return dedupePaths([
+		workspacePath ? join(workspacePath, MAKERRR_CONFIG_DIR, PLUGINS_DIRECTORY_NAME) : "",
 		workspacePath ? join(workspacePath, ".cline", PLUGINS_DIRECTORY_NAME) : "",
 		join(resolveClineDir(), PLUGINS_DIRECTORY_NAME),
 		join(resolveLegacyClineDir(), PLUGINS_DIRECTORY_NAME),
