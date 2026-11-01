@@ -457,7 +457,9 @@ function getVcrConfig(vcrMode: string | undefined): VcrConfig | null {
 
 	const cassette = process.env.MAKERRR_VCR_CASSETTE ?? process.env.CLINE_VCR_CASSETTE;
 	if (!cassette) {
-		process.stderr.write("[VCR] No MAKERRR_VCR_CASSETTE: requests will not be recorded or played back.\n");
+		process.stderr.write(
+			"[VCR] No MAKERRR_VCR_CASSETTE: requests will not be recorded or played back.\n",
+		);
 		return null;
 	}
 
@@ -474,7 +476,8 @@ function getVcrConfig(vcrMode: string | undefined): VcrConfig | null {
 	const includeRequestBodyValue =
 		process.env.MAKERRR_VCR_INCLUDE_REQUEST_BODY ??
 		process.env.CLINE_VCR_INCLUDE_REQUEST_BODY;
-	const includeRequestBody = includeRequestBodyValue === "1" || includeRequestBodyValue === "true";
+	const includeRequestBody =
+		includeRequestBodyValue === "1" || includeRequestBodyValue === "true";
 
 	return { mode: vcrMode, cassettePath, filter, includeRequestBody };
 }
