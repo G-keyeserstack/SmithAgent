@@ -24,7 +24,8 @@ function restoreEnv(snapshot: EnvSnapshot): void {
 	else process.env.MAKERRR_DATA_DIR = snapshot.MAKERRR_DATA_DIR;
 	if (snapshot.CLINE_DATA_DIR === undefined) delete process.env.CLINE_DATA_DIR;
 	else process.env.CLINE_DATA_DIR = snapshot.CLINE_DATA_DIR;
-	process.env.CLINE_TEAM_DATA_DIR = snapshot.CLINE_TEAM_DATA_DIR;
+	if (snapshot.CLINE_TEAM_DATA_DIR === undefined) delete process.env.CLINE_TEAM_DATA_DIR;
+	else process.env.CLINE_TEAM_DATA_DIR = snapshot.CLINE_TEAM_DATA_DIR;
 }
 
 function makeTeammateConfigProvider(
