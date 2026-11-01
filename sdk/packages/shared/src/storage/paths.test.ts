@@ -18,6 +18,7 @@ import {
 	resolveAgentsConfigDirPath,
 	resolveChatWorkspacePath,
 	resolveClineDataDir,
+	resolveClineDir,
 	resolveConfiguredPluginModulePaths,
 	resolveConnectorDataDir,
 	resolveConnectorSettingsPath,
@@ -40,6 +41,8 @@ import {
 } from "./paths";
 
 type EnvSnapshot = {
+	MAKERRR_DIR: string | undefined;
+	MAKERRR_DATA_DIR: string | undefined;
 	CLINE_DIR: string | undefined;
 	CLINE_DATA_DIR: string | undefined;
 	CLINE_CONNECTOR_DATA_DIR: string | undefined;
@@ -58,6 +61,8 @@ type EnvSnapshot = {
 
 function captureEnv(): EnvSnapshot {
 	return {
+		MAKERRR_DIR: process.env.MAKERRR_DIR,
+		MAKERRR_DATA_DIR: process.env.MAKERRR_DATA_DIR,
 		CLINE_DIR: process.env.CLINE_DIR,
 		CLINE_DATA_DIR: process.env.CLINE_DATA_DIR,
 		CLINE_CONNECTOR_DATA_DIR: process.env.CLINE_CONNECTOR_DATA_DIR,
@@ -76,6 +81,8 @@ function captureEnv(): EnvSnapshot {
 }
 
 function restoreEnv(snapshot: EnvSnapshot): void {
+	process.env.MAKERRR_DIR = snapshot.MAKERRR_DIR;
+	process.env.MAKERRR_DATA_DIR = snapshot.MAKERRR_DATA_DIR;
 	process.env.CLINE_DATA_DIR = snapshot.CLINE_DATA_DIR;
 	process.env.CLINE_CONNECTOR_DATA_DIR = snapshot.CLINE_CONNECTOR_DATA_DIR;
 	process.env.CLINE_CONNECTOR_SETTINGS_PATH =
@@ -109,6 +116,25 @@ describe("storage path resolution", () => {
 			expect(resolveAgentPluginSearchPaths()).toEqual([
 				join(homeRoot, ".agents", "plugins"),
 			]);
+		} finally {
+			setHomeDir(previousHome);
+			rmSync(homeRoot, { recursive: true, force: true });
+		}
+	});
+
+
+	it("defaults the shared runtime storage root to Makerrr", () => {
+		snapshot = captureEnv();
+		const homeRoot = mkdtempSync(join(tmpdir(), "makerrr-default-root-"));
+		const previousHome = process.env.HOME ?? "~";
+		try {
+			delete process.env.MAKERRR_DIR;
+			delete process.env.CLINE_DIR;
+			setHomeDir(homeRoot);
+			expect(resolveClineDir()).toBe(join(homeRoot, ".makerrr"));
+			expect(resolveClineDataDir()).toBe(join(homeRoot, ".makerrr", "data"));
+			process.env.MAKERRR_DATA_DIR = join(homeRoot, "custom-data");
+			expect(resolveClineDataDir()).toBe(join(homeRoot, "custom-data"));
 		} finally {
 			setHomeDir(previousHome);
 			rmSync(homeRoot, { recursive: true, force: true });
