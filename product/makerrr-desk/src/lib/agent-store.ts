@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { classifyCommand, TOUR } from "@/lib/controls";
+import { PACKS, reviewPull as reviewPullText, shadowResult, triageLog } from "@/lib/platform";
 import { DOCS, polish, searchProject, WEBHOOK_PATH, WEBHOOK_SOURCE } from "@/lib/search";
 import {
   applyIdempotency,
@@ -34,6 +36,8 @@ export const MODELS: {
 }[] = [
   { id: "kimi-k3.1-pro", label: "Kimi K3.1 Pro", inputPerM: 2.4, outputPerM: 8, kind: "third-party" },
   { id: "grok-4", label: "Grok 4", inputPerM: 3, outputPerM: 15, kind: "grok" },
+  { id: "claude-sonnet", label: "Claude Sonnet", inputPerM: 3, outputPerM: 15, kind: "third-party" },
+  { id: "gpt-4o", label: "GPT-4o", inputPerM: 2.5, outputPerM: 10, kind: "third-party" },
   { id: "codestral", label: "Codestral", inputPerM: 0.3, outputPerM: 0.9, kind: "third-party" },
   { id: "ollama-local", label: "Ollama local", inputPerM: 0, outputPerM: 0, kind: "local" },
 ];
@@ -66,7 +70,7 @@ export type Session = {
   id: string;
   title: string;
   brief: string;
-  location: "Johannesburg";
+  location: string;
   column: Column;
   modelId: ModelId;
   mode: Mode;
@@ -78,6 +82,7 @@ export type Session = {
   shellStatus: ShellStatus;
   shellOutput: string;
   checkpoints: Checkpoint[];
+  planSteps: { title: string; done: boolean }[];
   charged: { start: boolean; diff: boolean; shell: boolean };
 };
 
@@ -86,6 +91,7 @@ export type Account = {
   name: string;
   planId: PlanId;
   region: Region;
+  teamSeats: number;
   requestsUsed: number;
   privacy: boolean;
   autoRun: boolean;
@@ -118,6 +124,18 @@ export type Project = {
   chat: ChatLine[];
   formatHook: boolean;
   secretHook: boolean;
+  allow: string[];
+  block: string[];
+  pendingCommand: string;
+  reduceMotion: boolean;
+  tourStep: number;
+  imageNote: string;
+  themeName: string;
+  digest: string;
+  shadowLog: string;
+  prStatus: string;
+  ciNote: string;
+  hubs: Record<string, "off" | "waiting">;
 };
 
 type AgentState = {
@@ -142,6 +160,7 @@ type AgentState = {
   signOut: () => void;
   setPlan: (id: PlanId) => string;
   setRegion: (region: Region) => void;
+  setTeamSeats: (seats: number) => void;
   spawnAgent: (title: string, surface: Surface) => string;
   focusAgent: (id: string, surface: Surface) => string;
   sandboxRun: (surface: Surface) => string;
@@ -160,6 +179,20 @@ type AgentState = {
   readFile: (surface: Surface) => string;
   composer: (prompt: string, surface: Surface) => string;
   setHook: (key: "formatHook" | "secretHook", value: boolean) => void;
+  setCommand: (command: string) => void;
+  setList: (key: "allow" | "block", value: string) => void;
+  steer: (text: string, surface: Surface) => string;
+  reclaimChats: () => string;
+  toggleMotion: () => void;
+  importSettings: (raw: string) => string;
+  tourNext: () => string;
+  attachImage: (name: string) => string;
+  installPack: (id: string, surface: Surface) => string;
+  connectHub: (name: string) => string;
+  runShadow: (surface: Surface) => string;
+  reviewPull: (surface: Surface) => string;
+  writeDigest: (surface: Surface) => string;
+  triageCi: (surface: Surface) => string;
 };
 
 function freshFiles(): ProjectFile[] {
@@ -172,9 +205,9 @@ function freshFiles(): ProjectFile[] {
 function freshSession(): Session {
   return {
     id: "jhb-rosebank",
-    title: "Harden the Rosebank checkout",
-    brief: "Review the pay path, open the diff, and keep the session on the Johannesburg board.",
-    location: "Johannesburg",
+    title: "Build the landing page",
+    brief: "Open the charge path, show the diff, and keep the session on the board.",
+    location: "Desk",
     column: "queued",
     modelId: "grok-4",
     mode: "plan",
@@ -186,6 +219,7 @@ function freshSession(): Session {
     shellStatus: "pending",
     shellOutput: "",
     checkpoints: [],
+    planSteps: [],
     charged: { start: false, diff: false, shell: false },
   };
 }
@@ -193,9 +227,10 @@ function freshSession(): Session {
 function freshAccount(): Account {
   return {
     signedIn: true,
-    name: "Johannesburg desk",
+    name: "",
     planId: "pro",
     region: "za",
+    teamSeats: 5,
     requestsUsed: 0,
     privacy: false,
     autoRun: false,
@@ -217,6 +252,18 @@ function freshProject(): Project {
     chat: [],
     formatHook: true,
     secretHook: true,
+    allow: ["bun test"],
+    block: ["rm -rf", "sudo"],
+    pendingCommand: SHELL_COMMAND,
+    reduceMotion: false,
+    tourStep: 0,
+    imageNote: "",
+    themeName: "",
+    digest: "",
+    shadowLog: "",
+    prStatus: "",
+    ciNote: "",
+    hubs: {},
   };
 }
 
@@ -254,6 +301,16 @@ function stamp(surface: Surface, call: string, detail: string): CallLog {
 
 function logDetail(account: Account, detail: string) {
   return account.privacy ? "Redacted. Privacy mode is on for this desk." : detail;
+}
+
+function draftSteps(text: string) {
+  const steps = ["Read the charge path"];
+  if (/webhook/i.test(text)) steps.push("Add the webhook");
+  if (/idempotenc|retry|double|charge|settle|rosebank|fix/i.test(text)) steps.push("Write the idempotency key");
+  if (/docs|gateway|@docs|@web/i.test(text)) steps.push("Read the docs");
+  steps.push("Review the diff");
+  steps.push("Save a checkpoint");
+  return steps;
 }
 
 export const useAgent = create<AgentState>()(
@@ -336,8 +393,8 @@ export const useAgent = create<AgentState>()(
             surface,
             "agent.startJob()",
             first
-              ? "Opened src/checkout/pay.ts and moved the Johannesburg session to Running."
-              : "Diff already open. Johannesburg session stays on the board.",
+              ? "Opened src/checkout/pay.ts and moved this session to Running."
+              : "Diff already open. This session stays on the board.",
           );
           if (get().account.autoRun && session.mode === "act" && get().account.network) {
             return get().approveShell(surface);
@@ -382,7 +439,7 @@ export const useAgent = create<AgentState>()(
         acceptDiff: (surface) => {
           const current = get().session;
           if (current.mode !== "act") return "Switch to Act before accepting the diff.";
-          if (current.column === "queued") return "Start the Johannesburg job first.";
+          if (current.column === "queued") return "Start the job first.";
           const project = get().project;
           if (!get().account.mcp) return "MCP writes are off. Turn them on under Enterprise.";
           if (rulesBlockEdit(project.rules)) return "Rules block edits to pay.ts.";
@@ -410,12 +467,36 @@ export const useAgent = create<AgentState>()(
         },
         approveShell: (surface) => {
           const current = get().session;
+          const project = get().project;
+          const command = project.pendingCommand || SHELL_COMMAND;
+          const verdict = classifyCommand(command, project.allow, project.block);
+          if (verdict === "block") {
+            set({
+              session: { ...current, surface, shellStatus: "denied", shellOutput: `Blocked by the desk list: ${command}` },
+            });
+            push(surface, "agent.approveShell()", "Blocked before it ran.");
+            return "Command blocked.";
+          }
+          if (verdict === "sandbox") {
+            set({
+              session: {
+                ...current,
+                surface,
+                shellStatus: "pending",
+                shellOutput: `Sandbox only. ${command} did not touch the files or the network.`,
+              },
+            });
+            push(surface, "agent.approveShell()", "Ran inside the sandbox.");
+            return "Sandboxed.";
+          }
           if (current.mode !== "act" && !get().account.autoRun) return "Switch to Act before approving the shell.";
-          if (current.column === "queued") return "Start the Johannesburg job first.";
+          if (current.column === "queued") return "Start the job first.";
           if (!get().account.network) return "Network is off for this desk. The test runner stays closed.";
           const blocked = gate(surface, "agent.approveShell()");
           if (blocked) return blocked;
-          const project = get().project;
+          if (verdict === "ask" && !get().account.autoRun) {
+            return "This command is not on the allow list. Add it, or turn auto-run on.";
+          }
           const file = fileByPath(project.files, PAY_PATH);
           const result = runCheckoutTest(file.text, project.rules);
           const first = !current.charged.shell;
@@ -436,7 +517,7 @@ export const useAgent = create<AgentState>()(
         },
         denyShell: (surface) => {
           const current = get().session;
-          if (current.column === "queued") return "Start the Johannesburg job first.";
+          if (current.column === "queued") return "Start the job first.";
           set({
             session: {
               ...current,
@@ -499,21 +580,21 @@ export const useAgent = create<AgentState>()(
           const current = get().session;
           if (current.column === "queued") return;
           set({ session: { ...current, column: "held", surface } });
-          push(surface, "agent.hold()", "Johannesburg session moved to Held.");
+          push(surface, "agent.hold()", "This session moved to Held.");
         },
         finish: (surface) => {
           const current = get().session;
           if (current.column === "queued") return;
           set({ session: { ...current, column: "done", surface, openDiff: true } });
-          push(surface, "agent.finish()", "Johannesburg session moved to Done.");
+          push(surface, "agent.finish()", "This session moved to Done.");
         },
         resume: (surface) => {
           const current = get().session;
           set({ session: { ...current, column: "running", surface, openDiff: true } });
-          push(surface, "agent.resume()", "Johannesburg session is running again.");
+          push(surface, "agent.resume()", "This session is running again.");
         },
         signIn: (name) => {
-          const cleaned = name.trim() || "Johannesburg desk";
+          const cleaned = name.trim() || "your desk";
           set({ account: { ...get().account, signedIn: true, name: cleaned } });
         },
         signOut: () => {
@@ -566,7 +647,7 @@ export const useAgent = create<AgentState>()(
         inlineEdit: (instruction, surface) => {
           const current = get().session;
           if (current.mode !== "act") return "Switch to Act before an inline edit.";
-          if (current.column === "queued") return "Start the Johannesburg job first.";
+          if (current.column === "queued") return "Start the job first.";
           const blocked = gate(surface, "editor.inlineEdit()");
           if (blocked) return blocked;
           if (rulesBlockEdit(get().project.rules)) return "Rules block edits to pay.ts.";
@@ -688,12 +769,17 @@ export const useAgent = create<AgentState>()(
             const where = hits.length
               ? hits.map((hit) => `${hit.path}:${hit.line} ${hit.text}`).join("\n")
               : "No matching line.";
-            const result =
-              get().session.mode === "ask"
-                ? `Ask (no edits)\n${where}`
-                : `Plan: ${text}\nSwitch to Agent before a file changes.\n${where}`;
+            if (get().session.mode === "ask") {
+              const result = `Ask (no edits)\n${where}`;
+              talk("agent", result);
+              push(surface, "agent.composer()", "Ask only.");
+              return result;
+            }
+            const steps = draftSteps(text).map((title) => ({ title, done: false }));
+            set({ session: { ...get().session, planSteps: steps, surface } });
+            const result = `Plan\n${steps.map((step, index) => `${index + 1}. ${step.title}`).join("\n")}\nSwitch to Agent and run again to apply it.`;
             talk("agent", result);
-            push(surface, "agent.composer()", get().session.mode === "ask" ? "Ask only." : "Plan only.");
+            push(surface, "agent.composer()", "Plan only.");
             return result;
           }
           const blocked = gate(surface, "agent.composer()");
@@ -701,46 +787,57 @@ export const useAgent = create<AgentState>()(
             talk("agent", blocked);
             return blocked;
           }
-          const notes: string[] = [];
           const asking = /^(where|how|what|why|when|who)\b/i.test(text) || text.endsWith("?");
-          const wantsWebhook = !asking && /webhook/i.test(text);
-          const wantsCharge = !asking && /idempotenc|retry|double|charge|settle|rosebank|fix/i.test(text);
-          if (wantsWebhook) {
-            const existing = project.files.some((file) => file.path === WEBHOOK_PATH);
-            const files = existing
-              ? project.files.map((file) =>
-                  file.path === WEBHOOK_PATH ? { ...file, text: polish(WEBHOOK_SOURCE, project.formatHook) } : file,
-                )
-              : [...project.files, { path: WEBHOOK_PATH, text: polish(WEBHOOK_SOURCE, project.formatHook) }];
-            set({ project: { ...get().project, files, activePath: WEBHOOK_PATH } });
-            notes.push("Wrote src/checkout/webhook.ts. It calls settle.");
+          if (asking) {
+            const hits = searchProject(project.files, project.rules, project.notepad, text);
+            const result = hits.length
+              ? hits.map((hit) => `${hit.path}:${hit.line} ${hit.text}`).join("\n")
+              : "No matching line.";
+            talk("agent", result);
+            push(surface, "agent.composer()", "Answered without editing.");
+            return result;
           }
-          if (wantsCharge) {
-            const file = fileByPath(get().project.files, PAY_PATH);
-            if (rulesBlockEdit(get().project.rules)) {
-              notes.push("Rules block edits to pay.ts.");
-            } else {
-              const next = applyIdempotency(file.text);
-              if (next !== file.text) {
-                writePay(next);
-                set({
-                  session: { ...get().session, openDiff: true, diffAccepted: true, surface },
-                });
-                notes.push("Updated src/checkout/pay.ts with an idempotency key.");
+          const model = modelById(get().session.modelId);
+          const notes: string[] = [`${model.label} is running the plan.`];
+          const steps = draftSteps(text);
+          const done: { title: string; done: boolean }[] = [];
+          for (const title of steps) {
+            if (title === "Read the docs") {
+              notes.push(DOCS.map((doc) => `${doc.title}: ${doc.body}`).join("\n"));
+            } else if (title.startsWith("Read")) {
+              const hits = searchProject(get().project.files, get().project.rules, get().project.notepad, "charge");
+              notes.push(hits.length ? `Read ${hits[0].path}:${hits[0].line}` : "Read the open files.");
+            } else if (title.startsWith("Add the webhook")) {
+              const existing = get().project.files.some((file) => file.path === WEBHOOK_PATH);
+              const files = existing
+                ? get().project.files.map((file) =>
+                    file.path === WEBHOOK_PATH ? { ...file, text: polish(WEBHOOK_SOURCE, get().project.formatHook) } : file,
+                  )
+                : [...get().project.files, { path: WEBHOOK_PATH, text: polish(WEBHOOK_SOURCE, get().project.formatHook) }];
+              set({ project: { ...get().project, files, activePath: WEBHOOK_PATH } });
+              notes.push("Wrote src/checkout/webhook.ts.");
+            } else if (title.startsWith("Write")) {
+              if (rulesBlockEdit(get().project.rules)) {
+                notes.push("Rules block edits to pay.ts.");
+              } else {
+                const file = fileByPath(get().project.files, PAY_PATH);
+                const next = applyIdempotency(file.text);
+                if (next !== file.text) {
+                  writePay(next);
+                  set({ session: { ...get().session, openDiff: true, diffAccepted: true, surface } });
+                  notes.push("Updated src/checkout/pay.ts.");
+                } else {
+                  notes.push("The charge already has an idempotency key.");
+                }
               }
+            } else if (title.startsWith("Review")) {
+              notes.push(get().runReview(surface));
+            } else if (title.startsWith("Save")) {
+              notes.push(get().checkpoint("composer", surface));
             }
+            done.push({ title, done: true });
           }
-          const hits = searchProject(get().project.files, get().project.rules, get().project.notepad, text);
-          if (hits.length) {
-            const label = get().project.indexed ? "Index" : "Raw scan (index is off)";
-            notes.push(`${label}\n${hits.slice(0, 3).map((hit) => `${hit.path}:${hit.line} ${hit.text}`).join("\n")}`);
-          }
-          if (/docs|gateway|@web|@docs/i.test(text)) {
-            notes.push(DOCS.map((doc) => `${doc.title}: ${doc.body}`).join("\n"));
-          }
-          if (!notes.length) {
-            notes.push("No file change matched. Ask for the idempotency key, a webhook, or run /security-audit.");
-          }
+          set({ session: { ...get().session, planSteps: done, surface } });
           spend();
           const result = notes.join("\n");
           talk("agent", result);
@@ -749,6 +846,11 @@ export const useAgent = create<AgentState>()(
         },
         setRegion: (region) => {
           set({ account: { ...get().account, region } });
+        },
+        setTeamSeats: (seats) => {
+          if (!Number.isFinite(seats)) return;
+          const count = Math.min(250, Math.max(1, Math.round(seats)));
+          set({ account: { ...get().account, teamSeats: count } });
         },
         spawnAgent: (title, surface) => {
           const plan = planById(get().account.planId);
@@ -884,6 +986,124 @@ export const useAgent = create<AgentState>()(
           push(surface, "agent.print()", text);
           return text;
         },
+        setCommand: (command) => set({ project: { ...get().project, pendingCommand: command } }),
+        setList: (key, value) => {
+          const items = value.split("\n").map((item) => item.trim()).filter(Boolean);
+          set({ project: { ...get().project, [key]: items } });
+        },
+        steer: (text, surface) => {
+          const note = text.trim();
+          if (!note) return "Type the correction first.";
+          talk("you", note);
+          talk("agent", `Steering kept. The current job stays ${get().session.column}.`);
+          push(surface, "agent.steer()", note);
+          return "Steered.";
+        },
+        reclaimChats: () => {
+          const chat = get().project.chat;
+          const kept = chat.slice(-2);
+          const removed = chat.length - kept.length;
+          set({ project: { ...get().project, chat: kept, notice: `Removed ${removed} old chat lines.` } });
+          return `Removed ${removed} old chat lines.`;
+        },
+        toggleMotion: () => set({ project: { ...get().project, reduceMotion: !get().project.reduceMotion } }),
+        importSettings: (raw) => {
+          try {
+            const parsed = JSON.parse(raw) as { "workbench.colorTheme"?: string; keybindings?: unknown[] };
+            const theme = typeof parsed["workbench.colorTheme"] === "string" ? parsed["workbench.colorTheme"] : "Default Dark+";
+            const keys = Array.isArray(parsed.keybindings) ? parsed.keybindings.length : 0;
+            set({ project: { ...get().project, themeName: theme, notice: `Imported ${theme}. ${keys} keybindings.` } });
+            return `Imported ${theme}.`;
+          } catch {
+            return "That is not VS Code settings JSON.";
+          }
+        },
+        tourNext: () => {
+          const step = (get().project.tourStep + 1) % TOUR.length;
+          const path = TOUR[step]?.path ?? PAY_PATH;
+          set({
+            project: {
+              ...get().project,
+              tourStep: step,
+              activePath: path === ".makerrrrules" ? get().project.activePath : path,
+            },
+          });
+          return path;
+        },
+        attachImage: (name) => {
+          const note = name.trim() ? `Image attached: ${name.trim()}` : "No image.";
+          set({ project: { ...get().project, imageNote: note } });
+          return note;
+        },
+        installPack: (id, surface) => {
+          const pack = PACKS.find((item) => item.id === id);
+          if (!pack) return "Unknown pack.";
+          const project = get().project;
+          if (project.rules.includes(pack.body)) return `${pack.name} is already installed.`;
+          const rules = `${project.rules.trim()}\n${pack.body}\n`;
+          set({
+            project: {
+              ...project,
+              rules,
+              formatHook: id === "format-hook" ? true : project.formatHook,
+              secretHook: id === "secret-hook" ? true : project.secretHook,
+            },
+          });
+          push(surface, "marketplace.install()", pack.name);
+          return `${pack.name} installed.`;
+        },
+        connectHub: (name) => {
+          const hubs = { ...get().project.hubs, [name]: "waiting" as const };
+          set({ project: { ...get().project, hubs, notice: `${name} is waiting for a token. Nothing was stored.` } });
+          return `${name} is waiting for a token.`;
+        },
+        runShadow: (surface) => {
+          const project = get().project;
+          const output = shadowResult(project.files, project.rules);
+          const card: FleetJob = {
+            id: `shadow-${Date.now().toString(36)}`,
+            title: "Shadow workspace",
+            brief: output,
+            column: "done",
+            mode: "act",
+            branch: "shadow/checkout",
+            files: project.files.map((file) => ({ ...file })),
+            surface,
+          };
+          set({
+            fleet: [card, ...get().fleet].slice(0, 8),
+            project: { ...project, shadowLog: output },
+          });
+          push(surface, "agent.shadow()", "Shadow run finished. The editor was not changed.");
+          return output;
+        },
+        reviewPull: (surface) => {
+          const text = reviewPullText(get().project.files);
+          set({ project: { ...get().project, prStatus: text } });
+          push(surface, "agent.reviewPull()", text);
+          return text;
+        },
+        writeDigest: (surface) => {
+          const project = get().project;
+          const session = get().session;
+          const text = [
+            `Session ${session.column}.`,
+            `${get().fleet.length} worktrees.`,
+            project.prStatus || "No pull request review yet.",
+            project.shadowLog ? "A shadow run is on the board." : "No shadow run yet.",
+          ].join(" ");
+          set({ project: { ...project, digest: text } });
+          push(surface, "agent.digest()", text);
+          return text;
+        },
+        triageCi: (surface) => {
+          const project = get().project;
+          const file = fileByPath(project.files, PAY_PATH);
+          const text = triageLog(get().session.shellOutput || project.shadowLog, file.text.includes("idempotencyKey"));
+          set({ project: { ...project, ciNote: text } });
+          push(surface, "agent.triage()", text);
+          return text;
+        },
         delegateTests: (surface) => {
           const plan = planById(get().account.planId);
           if (!plan.subagents) return "Subagents start on Pro Plus.";
@@ -933,6 +1153,18 @@ export const useAgent = create<AgentState>()(
             chat: saved.project?.chat ?? current.project.chat,
             formatHook: saved.project?.formatHook ?? current.project.formatHook,
             secretHook: saved.project?.secretHook ?? current.project.secretHook,
+            allow: saved.project?.allow ?? current.project.allow,
+            block: saved.project?.block ?? current.project.block,
+            pendingCommand: saved.project?.pendingCommand || current.project.pendingCommand,
+            reduceMotion: saved.project?.reduceMotion ?? current.project.reduceMotion,
+            tourStep: saved.project?.tourStep ?? current.project.tourStep,
+            imageNote: saved.project?.imageNote ?? "",
+            themeName: saved.project?.themeName ?? "",
+            digest: saved.project?.digest ?? "",
+            shadowLog: saved.project?.shadowLog ?? "",
+            prStatus: saved.project?.prStatus ?? "",
+            ciNote: saved.project?.ciNote ?? "",
+            hubs: saved.project?.hubs ?? {},
           },
         };
       },

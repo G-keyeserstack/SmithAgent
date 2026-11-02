@@ -1,5 +1,12 @@
 export interface WebviewMessage {
-	type: "grpc_request" | "grpc_request_cancel"
+	type: "grpc_request" | "grpc_request_cancel" | "makerrr_checkout"
+	makerrr_checkout?: {
+		planId: string
+		region: "za" | "ng" | "ke"
+		provider: "stripe" | "link"
+		email: string
+		seats?: number
+	}
 	grpc_request?: GrpcRequest
 	grpc_request_cancel?: GrpcCancel
 }

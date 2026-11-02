@@ -237,6 +237,11 @@
 				"title": "Search Codebase",
 				"category": "Makerrr",
 				"icon": "$(search)"
+			},
+			{
+				"command": "makerrr.openCheckout",
+				"title": "Open Checkout",
+				"category": "Makerrr"
 			}
 		],
 		"keybindings": [

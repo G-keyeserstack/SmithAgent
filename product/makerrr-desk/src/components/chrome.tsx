@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Mark } from "@/components/mark";
 import {
   formatUsd,
   modelById,
@@ -11,10 +10,10 @@ import {
   type ModelId,
   type Surface,
 } from "@/lib/agent-store";
-import { planById, PLANS, priceFor, type PlanId } from "@/lib/plans";
+import { planById, PLANS, priceLabel, type PlanId } from "@/lib/plans";
 
 const PRODUCT = [
-  { to: "/cloud", label: "Agents", note: "The Johannesburg session" },
+  { to: "/cloud", label: "Agents", note: "The open session" },
   { to: "/desktop", label: "Desktop", note: "Same agent, own window" },
   { to: "/ide", label: "IDE", note: "Editor, Tab, inline edit" },
   { to: "/cli", label: "CLI", note: "Same calls, typed" },
@@ -43,7 +42,7 @@ export function NewsBar() {
       to="/cloud"
       className="block bg-ink px-4 py-2 text-center text-xs font-medium tracking-wide text-bone sm:text-sm"
     >
-      One open agent runtime. Desktop, IDE, CLI, and Cloud share the Johannesburg session.
+      One agent runtime. Desktop, IDE, CLI, and Cloud share the same files.
     </Link>
   );
 }
@@ -83,10 +82,10 @@ export function CenterNav() {
   const [name, setName] = useState("");
 
   return (
-    <header className="border-b border-line bg-[#f6f4ee]">
+    <header className="bg-[#f7f6f3]">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-3">
         <Link to="/" className="mr-2 flex items-center gap-2 text-ink">
-          <Mark className="size-6" />
+          <img src="/makerrr-mark.png" alt="" className="h-8 w-auto rounded bg-black" />
           <span className="text-sm font-semibold tracking-[0.16em]">MAKERRR</span>
         </Link>
         <nav className="flex flex-1 flex-wrap items-center justify-center gap-1">
@@ -110,6 +109,9 @@ export function CenterNav() {
           </Menu>
           <Link to="/enterprise" className="h-10 px-2 text-sm leading-10">
             Enterprise
+          </Link>
+          <Link to="/sandbox" className="h-10 px-2 text-sm leading-10">
+            Sandbox
           </Link>
           <Link to="/pricing" className="h-10 px-2 text-sm leading-10">
             Pricing
@@ -206,7 +208,7 @@ function SignInRow({
         id="desk-name"
         value={name}
         onChange={(event) => setName(event.target.value)}
-        placeholder="Johannesburg desk"
+        placeholder="Your name"
         className="h-11 min-w-0 flex-1 border border-line bg-paper px-3 text-sm"
       />
       <button type="submit" className="h-11 bg-ink px-4 text-sm text-bone">
@@ -218,54 +220,72 @@ function SignInRow({
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-line">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-4">
+    <footer className="border-t border-line bg-[#f3f1eb]">
+      <div className="mx-auto max-w-6xl px-4 py-16 text-center">
+        <p className="text-xs uppercase tracking-widest text-mute">Suppple Group Plc</p>
+      </div>
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 pb-16 sm:grid-cols-2 lg:grid-cols-5">
         <div>
           <p className="text-sm font-semibold">Product</p>
           <ul className="mt-3 space-y-2 text-sm text-mute">
             <li><Link to="/cloud">Agents</Link></li>
-            <li>
-              <Link to="/desktop" search={{ os: "mac" }}>
-                Desktop
-              </Link>
-            </li>
-            <li><Link to="/cli">CLI</Link></li>
-            <li><Link to="/sdk">SDK</Link></li>
+            <li><Link to="/pricing">Teams</Link></li>
+            <li><Link to="/enterprise">Enterprise</Link></li>
             <li><Link to="/pricing">Pricing</Link></li>
+            <li><Link to="/ide">Code review</Link></li>
+            <li><Link to="/cli">CLI</Link></li>
+            <li><Link to="/cloud">Cloud agents</Link></li>
+            <li><Link to="/sdk">SDK</Link></li>
           </ul>
         </div>
         <div>
           <p className="text-sm font-semibold">Resources</p>
           <ul className="mt-3 space-y-2 text-sm text-mute">
+            <li><Link to="/desktop" search={{ os: "mac" }}>Download</Link></li>
             <li><Link to="/docs">Docs</Link></li>
             <li><Link to="/models">Models</Link></li>
             <li><Link to="/board">Board</Link></li>
-            <li><Link to="/ide">IDE</Link></li>
           </ul>
         </div>
         <div>
           <p className="text-sm font-semibold">Company</p>
           <ul className="mt-3 space-y-2 text-sm text-mute">
-            <li><Link to="/enterprise">Enterprise</Link></li>
+            <li><Link to="/enterprise">Contact sales</Link></li>
             <li>Suppple Group Plc</li>
-            <li>Johannesburg</li>
           </ul>
         </div>
         <div>
           <p className="text-sm font-semibold">Legal</p>
-          <p className="mt-3 text-sm text-mute">Based on Cline (Apache-2.0). Makerrr is the product name.</p>
+          <ul className="mt-3 space-y-2 text-sm text-mute">
+            <li>Prices exclude VAT.</li>
+            <li>Based on Cline, Apache-2.0.</li>
+            <li>Card data stays with the payment company.</li>
+          </ul>
+        </div>
+        <div>
+          <p className="text-sm font-semibold">Pay</p>
+          <ul className="mt-3 space-y-2 text-sm text-mute">
+            <li><Link to="/pricing">Stripe and Link</Link></li>
+            <li><Link to="/pricing">Paystack</Link></li>
+            <li><Link to="/pricing">PayPal</Link></li>
+            <li><Link to="/pricing">Flutterwave</Link></li>
+            <li><Link to="/pricing">PayFast, Yoco, Ozow</Link></li>
+          </ul>
         </div>
       </div>
-      <p className="px-4 pb-8 text-center text-xs text-mute">© 2026 Suppple Group Plc. The agent runs on this desk.</p>
+      <p className="px-4 pb-8 text-center text-xs text-mute">© 2026 Suppple Group Plc.</p>
     </footer>
   );
 }
 
 export function SiteFrame({ children }: { children: ReactNode }) {
   useAgentReady();
+  const reduceMotion = useAgent((state) => state.project.reduceMotion);
+  useEffect(() => {
+    document.documentElement.classList.toggle("reduce-motion", reduceMotion);
+  }, [reduceMotion]);
   return (
-    <div className="min-h-screen bg-[#f6f4ee] text-ink">
-      <NewsBar />
+    <div className="min-h-screen bg-[#f7f6f3] text-ink">
       <CenterNav />
       {children}
       <SiteFooter />
@@ -343,16 +363,7 @@ export function PlanCards({
             <h2 className="text-lg font-semibold">{plan.name}</h2>
             {plan.popular ? <span className="text-xs uppercase tracking-wide text-clay">Most popular</span> : null}
           </div>
-          <p className="mt-3 text-3xl font-medium tracking-tight">
-            {priceFor(plan, region)}
-            <span className="text-sm text-mute">
-              {plan.segment === "individual"
-                ? "/month"
-                : plan.segment === "agency"
-                  ? "/developer"
-                  : "/month"}
-            </span>
-          </p>
+          <p className="mt-3 text-3xl font-medium tracking-tight">{priceLabel(plan, region)}</p>
           <p className="mt-1 text-xs text-mute">{plan.seats} seats</p>
           <p className="mt-2 text-sm text-mute">{plan.blurb}</p>
           <p className="mt-3 text-sm">{plan.parallel} agents at a time</p>

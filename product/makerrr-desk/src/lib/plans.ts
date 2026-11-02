@@ -1,10 +1,11 @@
-export type ModelId = "kimi-k3.1-pro" | "grok-4" | "codestral" | "ollama-local";
+export type ModelId = "kimi-k3.1-pro" | "grok-4" | "claude-sonnet" | "gpt-4o" | "codestral" | "ollama-local";
 
 export type PlanId =
   | "free"
   | "developer"
   | "pro"
   | "pro-plus"
+  | "teams"
   | "agency-starter"
   | "agency-growth"
   | "agency-scale"
@@ -27,6 +28,9 @@ export type Plan = {
   segment: Segment;
   price: string;
   prices?: Record<Region, string>;
+  amounts?: Record<Region, number>;
+  unit?: "/month" | "/user";
+  perUser?: boolean;
   seats: string;
   blurb: string;
   requests: number;
@@ -48,7 +52,7 @@ export type Plan = {
   popular?: boolean;
 };
 
-const ALL: ModelId[] = ["kimi-k3.1-pro", "grok-4", "codestral", "ollama-local"];
+const ALL: ModelId[] = ["kimi-k3.1-pro", "grok-4", "claude-sonnet", "gpt-4o", "codestral", "ollama-local"];
 const GROK: ModelId[] = ["grok-4", "ollama-local"];
 const LOCAL: ModelId[] = ["ollama-local"];
 
@@ -57,7 +61,7 @@ const LEGACY: Record<string, PlanId> = {
   premium: "pro",
   super: "pro-plus",
   ultra: "pro-plus",
-  teams: "agency-growth",
+  teams: "teams",
   enterprise: "corporate-enterprise",
 };
 
@@ -90,7 +94,7 @@ export const PLANS: Plan[] = [
     name: "Free",
     segment: "individual",
     price: "R0",
-    prices: { za: "R0", ng: "₦0", ke: "KES 0" },
+    amounts: { za: 0, ng: 0, ke: 0 },
     seats: "1",
     blurb: "Local model only. Enough to try the desk.",
     requests: 8,
@@ -101,7 +105,8 @@ export const PLANS: Plan[] = [
     name: "Developer",
     segment: "individual",
     price: "R99",
-    prices: { za: "R99", ng: "₦2,500", ke: "KES 250" },
+    amounts: { za: 99, ng: 2500, ke: 250 },
+    unit: "/month",
     seats: "1",
     blurb: "Grok on the desk. Tab is on. Cloud stays off.",
     requests: 40,
@@ -114,7 +119,8 @@ export const PLANS: Plan[] = [
     name: "Pro",
     segment: "individual",
     price: "R199",
-    prices: { za: "R199", ng: "₦7,500", ke: "KES 699" },
+    amounts: { za: 199, ng: 7500, ke: 699 },
+    unit: "/month",
     seats: "1",
     blurb: "Cloud agents, review, sandbox, and third-party models at list price.",
     requests: 160,
@@ -132,7 +138,8 @@ export const PLANS: Plan[] = [
     name: "Pro Plus",
     segment: "individual",
     price: "R399",
-    prices: { za: "R399", ng: "₦14,900", ke: "KES 1,399" },
+    amounts: { za: 399, ng: 14900, ke: 1399 },
+    unit: "/month",
     seats: "1",
     blurb: "Parallel agents and a test-writing subagent.",
     requests: 600,
@@ -145,6 +152,31 @@ export const PLANS: Plan[] = [
     sandbox: true,
     subagents: true,
     parallel: 4,
+  }),
+  plan({
+    id: "teams",
+    name: "Teams",
+    segment: "individual",
+    price: "R299",
+    amounts: { za: 299, ng: 11900, ke: 1099 },
+    unit: "/user",
+    perUser: true,
+    seats: "per user",
+    blurb: "One bill, shared credits, private repos, and usage for the whole team.",
+    requests: 400,
+    models: ALL,
+    cloud: true,
+    review: true,
+    tab: true,
+    thirdParty: true,
+    marketplace: true,
+    team: true,
+    sandbox: true,
+    subagents: true,
+    parallel: 8,
+    byok: true,
+    privateRepo: true,
+    analytics: true,
   }),
   plan({
     id: "agency-starter",
@@ -426,9 +458,30 @@ export function planById(id: string) {
   return PLANS.find((item) => item.id === mapped) ?? PLANS[2];
 }
 
+export function money(region: Region, amount: number) {
+  const digits = amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  if (region === "za") return `R${digits}`;
+  if (region === "ng") return `₦${digits}`;
+  return `KES ${digits}`;
+}
+
 export function priceFor(item: Plan, region: Region) {
+  if (item.amounts) return money(region, item.amounts[region]);
   return item.prices?.[region] ?? item.price;
 }
+
+export function priceLabel(item: Plan, region: Region) {
+  const base = priceFor(item, region);
+  return item.unit ? `${base}${item.unit}` : base;
+}
+
+export function teamTotal(item: Plan, region: Region, seats: number) {
+  if (!item.amounts || !item.perUser) return priceLabel(item, region);
+  const count = Math.max(1, seats);
+  return `${money(region, item.amounts[region] * count)}/month for ${count}`;
+}
+
+export const PUBLIC_PLANS: PlanId[] = ["free", "developer", "pro", "pro-plus", "teams"];
 
 export const PAY_PATH = "src/checkout/pay.ts";
 export const TEST_PATH = "src/checkout/pay.test.ts";
@@ -457,7 +510,7 @@ test("rejects a second settle with the same order id", async () => {
 
 export const RULES_DEFAULT = `Settle a checkout once.
 Use an idempotency key on every charge.
-Johannesburg is the default desk.
+The desk stays on your machine until a cloud agent starts.
 `;
 
 export function chargeIsSafe(source: string) {

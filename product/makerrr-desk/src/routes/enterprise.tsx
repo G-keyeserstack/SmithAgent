@@ -59,7 +59,7 @@ function EnterprisePage() {
           onSubmit={(event) => {
             event.preventDefault();
             if (!note.trim()) return;
-            setSent(`Saved for the Johannesburg desk: ${note.trim()}`);
+            setSent(`Saved for this desk: ${note.trim()}`);
             setNote("");
           }}
         >

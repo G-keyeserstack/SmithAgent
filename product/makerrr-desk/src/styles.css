@@ -53,6 +53,12 @@
   background: var(--color-paper);
 }
 
+.reduce-motion,
+.reduce-motion * {
+  transition: none !important;
+  animation: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;

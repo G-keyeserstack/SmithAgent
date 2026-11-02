@@ -1,8 +1,24 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { PlanCards, SiteFrame } from "@/components/chrome";
+import { RAILS, startCheckout, type PayProvider } from "@/lib/billing";
 import { useAgent } from "@/lib/agent-store";
-import { planById, PLANS, priceFor, type PlanId, type Region, type Segment } from "@/lib/plans";
+import { planById, PLANS, priceLabel, PUBLIC_PLANS, teamTotal, type PlanId, type Region, type Segment } from "@/lib/plans";
+
+const AREA: Record<Region, { title: string; body: string }> = {
+  za: {
+    title: "How this works in Johannesburg",
+    body: "Prices are in rand and exclude VAT. Stripe Link, Paystack, Flutterwave, PayPal, PayFast, Yoco, and Ozow can take the payment. The agent edits files on this machine. Cloud agents start only after Pro or above is confirmed.",
+  },
+  ng: {
+    title: "How this works in Nigeria",
+    body: "Prices are in naira. Stripe Link, Paystack, and Flutterwave settle naira. PayPal, PayFast, Yoco, and Ozow stay closed. The agent still edits files on this machine.",
+  },
+  ke: {
+    title: "How this works in Kenya",
+    body: "Prices are in shillings. Stripe Link, Paystack, and Flutterwave settle shillings. Rand-only rails stay closed. The agent still edits files on this machine.",
+  },
+};
 
 export const Route = createFileRoute("/pricing")({ component: PricingPage });
 
@@ -19,25 +35,89 @@ const REGIONS: { id: Region; label: string }[] = [
   { id: "ke", label: "Kenya" },
 ];
 
-const NOTES: Record<Segment, string> = {
-  individual: "Priced for a person. South Africa, Nigeria, and Kenya use local currency. The plan you pick is the plan the desk enforces.",
-  agency: "Per developer, billed once. Shared credits, private repos, BYOK, and usage analytics. Private infrastructure is quoted separately.",
-  startup: "Seat packs for a team that is still small. A venture firm can put portfolio companies on the custom pack.",
-  corporate: "Banks, telcos, insurers, retailers, government technology, and integrators. SSO and private deployment start at Corporate Scale.",
-};
-
 function PricingPage() {
   const [segment, setSegment] = useState<Segment>("individual");
   const account = useAgent((state) => state.account);
   const setRegion = useAgent((state) => state.setRegion);
+  const setTeamSeats = useAgent((state) => state.setTeamSeats);
+  const [email, setEmail] = useState("");
+  const [payPlan, setPayPlan] = useState<PlanId>("pro");
+  const [payNote, setPayNote] = useState("");
+  const [paying, setPaying] = useState(false);
   const current = planById(account.planId);
-  const ids = PLANS.filter((item) => item.segment === segment).map((item) => item.id) as PlanId[];
+  const publicPlans = PUBLIC_PLANS.map((id) => planById(id));
+  const ids = (segment === "individual" ? PUBLIC_PLANS : PLANS.filter((item) => item.segment === segment).map((item) => item.id)) as PlanId[];
+
+  async function pay(provider: PayProvider) {
+    setPaying(true);
+    setPayNote("");
+    const result = await startCheckout({
+      data: {
+        planId: payPlan,
+        region: account.region,
+        seats: account.teamSeats,
+        provider,
+        email,
+        origin: window.location.origin,
+      },
+    });
+    setPaying(false);
+    if ("url" in result) {
+      window.location.assign(result.url);
+      return;
+    }
+    if ("action" in result) {
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = result.action;
+      for (const [key, value] of Object.entries(result.fields)) {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = value;
+        form.append(input);
+      }
+      document.body.append(form);
+      form.submit();
+      return;
+    }
+    setPayNote(result.error);
+  }
+
   return (
     <SiteFrame>
       <main className="mx-auto max-w-6xl px-4 py-12">
         <h1 className="text-5xl font-medium tracking-tight">Pricing</h1>
         <p className="mt-3 max-w-2xl text-sm text-mute">
-          This desk is on {current.name}. {NOTES[segment]}
+          This desk is on {current.name}
+          {current.perUser ? ` · ${teamTotal(current, account.region, account.teamSeats)}` : ""}. Prices exclude VAT. Third-party model tokens are extra.
+        </p>
+        <div className="mt-8 overflow-x-auto">
+          <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-b border-line">
+                <th className="py-3 pr-3 font-medium">Plan</th>
+                <th className="px-3 py-3 font-medium">South Africa</th>
+                <th className="px-3 py-3 font-medium">Nigeria</th>
+                <th className="px-3 py-3 font-medium">Kenya</th>
+              </tr>
+            </thead>
+            <tbody>
+              {publicPlans.map((item) => (
+                <tr key={item.id} className="border-b border-line">
+                  <th className="py-3 pr-3 font-medium">{item.name}</th>
+                  {(["za", "ng", "ke"] as Region[]).map((region) => (
+                    <td key={region} className="px-3 py-3">
+                      {priceLabel(item, region)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-sm text-mute">
+          Teams is {teamTotal(planById("teams"), account.region, account.teamSeats)}. The unit price does not change with seats.
         </p>
         <div className="mt-8 flex flex-wrap gap-2">
           {SEGMENTS.map((item) => (
@@ -52,7 +132,7 @@ function PricingPage() {
           ))}
         </div>
         {segment === "individual" ? (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap items-center gap-2">
             {REGIONS.map((item) => (
               <button
                 key={item.id}
@@ -63,11 +143,78 @@ function PricingPage() {
                 {item.label}
               </button>
             ))}
+            <label className="ml-2 flex items-center gap-2 text-sm">
+              Team seats
+              <input
+                type="number"
+                min={1}
+                max={250}
+                value={account.teamSeats}
+                onChange={(event) => setTeamSeats(Number(event.target.value))}
+                className="h-10 w-20 border border-line px-2"
+              />
+            </label>
           </div>
         ) : null}
+        <section className="mt-8 rounded-2xl border border-line bg-paper p-5">
+          <h2 className="text-lg font-medium">{AREA[account.region].title}</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-mute">{AREA[account.region].body}</p>
+          <p className="mt-3 text-sm">
+            {planById("pro").name} is {priceLabel(planById("pro"), account.region)}. Teams is {teamTotal(planById("teams"), account.region, account.teamSeats)}.
+          </p>
+        </section>
         <div className="mt-6">
           <PlanCards ids={ids} />
         </div>
+        <section className="mt-8 rounded-2xl border border-line bg-paper p-5">
+          <h2 className="text-lg font-medium">Pay</h2>
+          <p className="mt-1 max-w-xl text-sm text-mute">
+            Stripe includes Link. Paystack and Flutterwave cover Nigeria, South Africa, and Kenya. PayPal, PayFast, Yoco, and Ozow settle rand. The amount is calculated on the server. Card details never touch this desk.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {publicPlans
+              .filter((item) => item.amounts && item.id !== "free")
+              .map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setPayPlan(item.id)}
+                  className={`h-10 rounded-full px-3 text-sm ${payPlan === item.id ? "bg-ink text-bone" : "border border-line"}`}
+                >
+                  {item.name} · {item.perUser ? teamTotal(item, account.region, account.teamSeats) : priceLabel(item, account.region)}
+                </button>
+              ))}
+          </div>
+          <label className="mt-4 block text-sm" htmlFor="pay-email">
+            Email for the receipt
+          </label>
+          <input
+            id="pay-email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="you@company.com"
+            className="mt-2 h-11 w-full max-w-md rounded-lg border border-line bg-white px-3 text-sm"
+          />
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {RAILS.map((rail) => {
+              const open = rail.regions.includes(account.region);
+              return (
+                <button
+                  key={rail.id}
+                  type="button"
+                  disabled={paying || !open}
+                  onClick={() => pay(rail.id)}
+                  className="rounded-xl border border-line bg-white px-3 py-3 text-left disabled:opacity-40"
+                >
+                  <span className="block text-sm font-medium">{rail.label}</span>
+                  <span className="mt-1 block text-xs text-mute">{open ? rail.note : "Not available for this country."}</span>
+                </button>
+              );
+            })}
+          </div>
+          {payNote ? <p className="mt-3 text-sm text-clay">{payNote}</p> : null}
+        </section>
         <div className="mt-8 overflow-x-auto">
           <table className="w-full min-w-[36rem] border-collapse text-left text-sm">
             <thead>
@@ -76,7 +223,9 @@ function PricingPage() {
                 {PLANS.filter((item) => item.segment === segment).map((item) => (
                   <th key={item.id} className="px-2 py-3 font-medium">
                     {item.name}
-                    <span className="block text-xs font-normal text-mute">{priceFor(item, account.region)}</span>
+                    <span className="block text-xs font-normal text-mute">
+                      {item.perUser ? teamTotal(item, account.region, account.teamSeats) : priceLabel(item, account.region)}
+                    </span>
                   </th>
                 ))}
               </tr>

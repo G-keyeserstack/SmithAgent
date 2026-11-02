@@ -10,7 +10,7 @@ export function DiffView() {
   if (!open) {
     return (
       <div className="border border-dashed border-line bg-bone p-6 text-sm text-mute">
-        The diff is closed. Start the Johannesburg job to open src/checkout/pay.ts.
+        The diff is closed. Start the job to open src/checkout/pay.ts.
       </div>
     );
   }

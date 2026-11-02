@@ -6,8 +6,10 @@ import { planById } from "@/lib/plans";
 export const Route = createFileRoute("/models")({ component: ModelsPage });
 
 const GROUPS: { title: string; body: string; id?: ModelId }[] = [
-  { title: "Grok", body: "Default on Plus and above. Used for the agent and for Tab on this desk.", id: "grok-4" },
-  { title: "Third-party", body: "Kimi and Codestral bill at list price, outside the monthly plan. Premium and above.", id: "kimi-k3.1-pro" },
+  { title: "Grok", body: "Default on Developer and above. Used for the agent and for Tab on this desk.", id: "grok-4" },
+  { title: "Claude", body: "Sonnet for multi-file plans. Billed at list price on Pro and above.", id: "claude-sonnet" },
+  { title: "GPT", body: "GPT-4o for the same composer. Billed at list price on Pro and above.", id: "gpt-4o" },
+  { title: "Third-party", body: "Kimi bills at list price, outside the monthly plan.", id: "kimi-k3.1-pro" },
   { title: "Fast local", body: "Codestral is the open stand-in for a small completion model.", id: "codestral" },
   { title: "Ollama", body: "On-device. Free includes this and nothing else.", id: "ollama-local" },
   { title: "Bring your own key", body: "No key is sent from this desk. Pick a model and the session bills its list rate." },

@@ -100,7 +100,7 @@ function CliPage() {
     <SiteFrame>
       <main className="mx-auto max-w-3xl px-4 py-8">
         <h1 className="font-display text-5xl leading-none">CLI</h1>
-        <p className="mt-2 text-sm text-mute">Commands hit the same Johannesburg session as every other surface.</p>
+        <p className="mt-2 text-sm text-mute">Commands hit the same session as every other surface.</p>
         <div className="mt-4">
           <BillingLine />
         </div>
