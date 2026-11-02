@@ -1,0 +1,35 @@
+{
+	"nameShort": "Makerrr",
+	"nameLong": "Makerrr",
+	"applicationName": "makerrr",
+	"dataFolderName": ".makerrr",
+	"quality": "stable",
+	"urlProtocol": "makerrr",
+	"serverApplicationName": "makerrr-server",
+	"serverDataFolderName": ".makerrr-server",
+	"darwinBundleIdentifier": "com.makerrr.editor",
+	"win32AppUserModelId": "Makerrr.Editor",
+	"win32DirName": "Makerrr",
+	"win32MutexName": "makerrr",
+	"win32NameVersion": "Makerrr",
+	"win32RegValueName": "Makerrr",
+	"win32ShellNameShort": "Makerrr",
+	"tunnelApplicationName": "makerrr-tunnel",
+	"win32TunnelServiceMutex": "makerrr-tunnelservice",
+	"win32TunnelMutex": "makerrr-tunnel",
+	"licenseUrl": "https://github.com/G-keyeserstack/SmithAgent/blob/main/LICENSE",
+	"documentationUrl": "https://github.com/G-keyeserstack/SmithAgent/tree/main/product/makerrr",
+	"releaseNotesUrl": "https://github.com/G-keyeserstack/SmithAgent/blob/main/CHANGELOG.md",
+	"reportIssueUrl": "https://github.com/G-keyeserstack/SmithAgent/issues/new",
+	"extensionsGallery": {
+		"serviceUrl": "https://open-vsx.org/vscode/gallery",
+		"itemUrl": "https://open-vsx.org/vscode/item",
+		"latestUrlTemplate": "https://open-vsx.org/vscode/gallery/{publisher}/{name}/latest",
+		"resourceUrlTemplate": "https://open-vsx.org/vscode/unpkg/{publisher}/{name}/{version}/{path}",
+		"controlUrl": "https://raw.githubusercontent.com/EclipseFdn/publish-extensions/refs/heads/master/extension-control/extensions.json"
+	},
+	"linkProtectionTrustedDomains": [
+		"https://open-vsx.org",
+		"https://github.com/G-keyeserstack"
+	]
+}

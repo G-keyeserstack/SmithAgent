@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+# Build the first-party Makerrr desktop editor from the pinned Code OSS/VSCodium
+# build tooling, then bundle the Makerrr agent extension into the application.
+set -Eeuo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+EDITOR_DIR="$ROOT/apps/editor"
+BUILD_DIR="$EDITOR_DIR/.build"
+UPSTREAM_DIR="$BUILD_DIR/vscodium"
+VSCODIUM_COMMIT="ca7f7b44b5e5c3faa663f6cdc043998f71936653"
+
+command -v git >/dev/null || { echo "git is required" >&2; exit 1; }
+command -v jq >/dev/null || { echo "jq is required" >&2; exit 1; }
+command -v bun >/dev/null || { echo "Bun is required" >&2; exit 1; }
+command -v node >/dev/null || { echo "Node.js is required" >&2; exit 1; }
+command -v unzip >/dev/null || { echo "unzip is required" >&2; exit 1; }
+
+node "$EDITOR_DIR/scripts/verify-product.mjs"
+
+case "$(uname -s)" in
+  Linux*) OS_NAME="linux"; VSCODE_PLATFORM="linux" ;;
+  Darwin*) OS_NAME="osx"; VSCODE_PLATFORM="darwin" ;;
+  MINGW*|MSYS*|CYGWIN*) OS_NAME="windows"; VSCODE_PLATFORM="win32" ;;
+  *) echo "Unsupported build host: $(uname -s)" >&2; exit 1 ;;
+esac
+
+case "$(uname -m)" in
+  aarch64|arm64) VSCODE_ARCH="arm64" ;;
+  x86_64|AMD64) VSCODE_ARCH="x64" ;;
+  *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;;
+esac
+
+mkdir -p "$BUILD_DIR"
+if [[ ! -d "$UPSTREAM_DIR/.git" ]]; then
+  git clone https://github.com/VSCodium/vscodium.git "$UPSTREAM_DIR"
+fi
+if [[ -n "$(git -C "$UPSTREAM_DIR" status --porcelain)" ]]; then
+  echo "Refusing to overwrite local changes in $UPSTREAM_DIR" >&2
+  exit 1
+fi
+git -C "$UPSTREAM_DIR" fetch --depth 1 origin "$VSCODIUM_COMMIT"
+git -C "$UPSTREAM_DIR" checkout --detach "$VSCODIUM_COMMIT"
+
+# The upstream build helper merges this product.json over the Code OSS defaults.
+cp "$EDITOR_DIR/product.json" "$UPSTREAM_DIR/product.json"
+
+# Build the agent extension first. The packaged editor ships with it enabled.
+(
+  cd "$ROOT/apps/vscode"
+  bunx --bun @vscode/vsce package --no-dependencies --out "$BUILD_DIR/makerrr-agent.vsix"
+)
+
+# Use the upstream's reproducible source preparation and build scripts, but
+# override all user-visible product identifiers and keep Open VSX as the gallery.
+(
+  cd "$UPSTREAM_DIR"
+  export CI_BUILD="no"
+  export SHOULD_BUILD="yes"
+  export SHOULD_BUILD_REH="no"
+  export SHOULD_BUILD_REH_WEB="no"
+  export SKIP_ASSETS="yes"
+  export VSCODE_QUALITY="stable"
+  export VSCODE_SKIP_NODE_VERSION_CHECK="yes"
+  export VSCODE_LATEST="no"
+  export RELEASE_VERSION=""
+  export MS_TAG=""
+  export MS_COMMIT=""
+  export GITHUB_ENV=""
+  export DISABLE_UPDATE="yes"
+  export OS_NAME VSCODE_PLATFORM VSCODE_ARCH
+  export APP_NAME="Makerrr"
+  export APP_NAME_LC="makerrr"
+  export BINARY_NAME="makerrr"
+  export ORG_NAME="Makerrr"
+  export GH_REPO_PATH="G-keyeserstack/SmithAgent"
+  export ASSETS_REPOSITORY="G-keyeserstack/SmithAgent"
+  export TUNNEL_APP_NAME="makerrr-tunnel"
+  export MAX_OLD_SPACE_SIZE="${MAX_OLD_SPACE_SIZE:-8192}"
+  . ./get_repo.sh
+  . ./build.sh
+)
+
+APP_DIR="$UPSTREAM_DIR/VSCode-$VSCODE_PLATFORM-$VSCODE_ARCH"
+if [[ ! -d "$APP_DIR/resources/app/extensions" ]]; then
+  echo "Editor build output not found at $APP_DIR" >&2
+  exit 1
+fi
+
+EXTENSION_DIR="$APP_DIR/resources/app/extensions/makerrr.claude-dev"
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
+unzip -q "$BUILD_DIR/makerrr-agent.vsix" 'extension/*' -d "$TMP_DIR"
+rm -rf "$EXTENSION_DIR"
+mkdir -p "$(dirname "$EXTENSION_DIR")"
+mv "$TMP_DIR/extension" "$EXTENSION_DIR"
+
+echo "Makerrr editor built at: $APP_DIR"
+echo "Bundled agent extension: $EXTENSION_DIR"
