@@ -211,7 +211,16 @@ export function Workbench({ surface, compact = false }: { surface: Surface; comp
                 </button>
               ))}
             </div>
-            <div className="flex flex-wrap gap-2">
+            {(session.planSteps ?? []).length > 0 ? (
+              <ol className="mt-3 space-y-1 text-xs">
+                {session.planSteps.map((step) => (
+                  <li key={step.title}>
+                    {step.done ? "Done" : "Next"} · {step.title}
+                  </li>
+                ))}
+              </ol>
+            ) : null}
+            <div className="mt-3 flex flex-wrap gap-2">
               <button type="submit" className="h-11 bg-ink px-4 text-sm text-bone">
                 Run agent
               </button>

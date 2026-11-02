@@ -1,4 +1,4 @@
-export type ModelId = "kimi-k3.1-pro" | "grok-4" | "codestral" | "ollama-local";
+export type ModelId = "kimi-k3.1-pro" | "grok-4" | "claude-sonnet" | "gpt-4o" | "codestral" | "ollama-local";
 
 export type PlanId =
   | "free"
@@ -52,7 +52,7 @@ export type Plan = {
   popular?: boolean;
 };
 
-const ALL: ModelId[] = ["kimi-k3.1-pro", "grok-4", "codestral", "ollama-local"];
+const ALL: ModelId[] = ["kimi-k3.1-pro", "grok-4", "claude-sonnet", "gpt-4o", "codestral", "ollama-local"];
 const GROK: ModelId[] = ["grok-4", "ollama-local"];
 const LOCAL: ModelId[] = ["ollama-local"];
 

@@ -36,6 +36,8 @@ export const MODELS: {
 }[] = [
   { id: "kimi-k3.1-pro", label: "Kimi K3.1 Pro", inputPerM: 2.4, outputPerM: 8, kind: "third-party" },
   { id: "grok-4", label: "Grok 4", inputPerM: 3, outputPerM: 15, kind: "grok" },
+  { id: "claude-sonnet", label: "Claude Sonnet", inputPerM: 3, outputPerM: 15, kind: "third-party" },
+  { id: "gpt-4o", label: "GPT-4o", inputPerM: 2.5, outputPerM: 10, kind: "third-party" },
   { id: "codestral", label: "Codestral", inputPerM: 0.3, outputPerM: 0.9, kind: "third-party" },
   { id: "ollama-local", label: "Ollama local", inputPerM: 0, outputPerM: 0, kind: "local" },
 ];
@@ -80,6 +82,7 @@ export type Session = {
   shellStatus: ShellStatus;
   shellOutput: string;
   checkpoints: Checkpoint[];
+  planSteps: { title: string; done: boolean }[];
   charged: { start: boolean; diff: boolean; shell: boolean };
 };
 
@@ -216,6 +219,7 @@ function freshSession(): Session {
     shellStatus: "pending",
     shellOutput: "",
     checkpoints: [],
+    planSteps: [],
     charged: { start: false, diff: false, shell: false },
   };
 }
@@ -297,6 +301,16 @@ function stamp(surface: Surface, call: string, detail: string): CallLog {
 
 function logDetail(account: Account, detail: string) {
   return account.privacy ? "Redacted. Privacy mode is on for this desk." : detail;
+}
+
+function draftSteps(text: string) {
+  const steps = ["Read the charge path"];
+  if (/webhook/i.test(text)) steps.push("Add the webhook");
+  if (/idempotenc|retry|double|charge|settle|rosebank|fix/i.test(text)) steps.push("Write the idempotency key");
+  if (/docs|gateway|@docs|@web/i.test(text)) steps.push("Read the docs");
+  steps.push("Review the diff");
+  steps.push("Save a checkpoint");
+  return steps;
 }
 
 export const useAgent = create<AgentState>()(
@@ -755,12 +769,17 @@ export const useAgent = create<AgentState>()(
             const where = hits.length
               ? hits.map((hit) => `${hit.path}:${hit.line} ${hit.text}`).join("\n")
               : "No matching line.";
-            const result =
-              get().session.mode === "ask"
-                ? `Ask (no edits)\n${where}`
-                : `Plan: ${text}\nSwitch to Agent before a file changes.\n${where}`;
+            if (get().session.mode === "ask") {
+              const result = `Ask (no edits)\n${where}`;
+              talk("agent", result);
+              push(surface, "agent.composer()", "Ask only.");
+              return result;
+            }
+            const steps = draftSteps(text).map((title) => ({ title, done: false }));
+            set({ session: { ...get().session, planSteps: steps, surface } });
+            const result = `Plan\n${steps.map((step, index) => `${index + 1}. ${step.title}`).join("\n")}\nSwitch to Agent and run again to apply it.`;
             talk("agent", result);
-            push(surface, "agent.composer()", get().session.mode === "ask" ? "Ask only." : "Plan only.");
+            push(surface, "agent.composer()", "Plan only.");
             return result;
           }
           const blocked = gate(surface, "agent.composer()");
@@ -768,46 +787,57 @@ export const useAgent = create<AgentState>()(
             talk("agent", blocked);
             return blocked;
           }
-          const notes: string[] = [];
           const asking = /^(where|how|what|why|when|who)\b/i.test(text) || text.endsWith("?");
-          const wantsWebhook = !asking && /webhook/i.test(text);
-          const wantsCharge = !asking && /idempotenc|retry|double|charge|settle|rosebank|fix/i.test(text);
-          if (wantsWebhook) {
-            const existing = project.files.some((file) => file.path === WEBHOOK_PATH);
-            const files = existing
-              ? project.files.map((file) =>
-                  file.path === WEBHOOK_PATH ? { ...file, text: polish(WEBHOOK_SOURCE, project.formatHook) } : file,
-                )
-              : [...project.files, { path: WEBHOOK_PATH, text: polish(WEBHOOK_SOURCE, project.formatHook) }];
-            set({ project: { ...get().project, files, activePath: WEBHOOK_PATH } });
-            notes.push("Wrote src/checkout/webhook.ts. It calls settle.");
+          if (asking) {
+            const hits = searchProject(project.files, project.rules, project.notepad, text);
+            const result = hits.length
+              ? hits.map((hit) => `${hit.path}:${hit.line} ${hit.text}`).join("\n")
+              : "No matching line.";
+            talk("agent", result);
+            push(surface, "agent.composer()", "Answered without editing.");
+            return result;
           }
-          if (wantsCharge) {
-            const file = fileByPath(get().project.files, PAY_PATH);
-            if (rulesBlockEdit(get().project.rules)) {
-              notes.push("Rules block edits to pay.ts.");
-            } else {
-              const next = applyIdempotency(file.text);
-              if (next !== file.text) {
-                writePay(next);
-                set({
-                  session: { ...get().session, openDiff: true, diffAccepted: true, surface },
-                });
-                notes.push("Updated src/checkout/pay.ts with an idempotency key.");
+          const model = modelById(get().session.modelId);
+          const notes: string[] = [`${model.label} is running the plan.`];
+          const steps = draftSteps(text);
+          const done: { title: string; done: boolean }[] = [];
+          for (const title of steps) {
+            if (title === "Read the docs") {
+              notes.push(DOCS.map((doc) => `${doc.title}: ${doc.body}`).join("\n"));
+            } else if (title.startsWith("Read")) {
+              const hits = searchProject(get().project.files, get().project.rules, get().project.notepad, "charge");
+              notes.push(hits.length ? `Read ${hits[0].path}:${hits[0].line}` : "Read the open files.");
+            } else if (title.startsWith("Add the webhook")) {
+              const existing = get().project.files.some((file) => file.path === WEBHOOK_PATH);
+              const files = existing
+                ? get().project.files.map((file) =>
+                    file.path === WEBHOOK_PATH ? { ...file, text: polish(WEBHOOK_SOURCE, get().project.formatHook) } : file,
+                  )
+                : [...get().project.files, { path: WEBHOOK_PATH, text: polish(WEBHOOK_SOURCE, get().project.formatHook) }];
+              set({ project: { ...get().project, files, activePath: WEBHOOK_PATH } });
+              notes.push("Wrote src/checkout/webhook.ts.");
+            } else if (title.startsWith("Write")) {
+              if (rulesBlockEdit(get().project.rules)) {
+                notes.push("Rules block edits to pay.ts.");
+              } else {
+                const file = fileByPath(get().project.files, PAY_PATH);
+                const next = applyIdempotency(file.text);
+                if (next !== file.text) {
+                  writePay(next);
+                  set({ session: { ...get().session, openDiff: true, diffAccepted: true, surface } });
+                  notes.push("Updated src/checkout/pay.ts.");
+                } else {
+                  notes.push("The charge already has an idempotency key.");
+                }
               }
+            } else if (title.startsWith("Review")) {
+              notes.push(get().runReview(surface));
+            } else if (title.startsWith("Save")) {
+              notes.push(get().checkpoint("composer", surface));
             }
+            done.push({ title, done: true });
           }
-          const hits = searchProject(get().project.files, get().project.rules, get().project.notepad, text);
-          if (hits.length) {
-            const label = get().project.indexed ? "Index" : "Raw scan (index is off)";
-            notes.push(`${label}\n${hits.slice(0, 3).map((hit) => `${hit.path}:${hit.line} ${hit.text}`).join("\n")}`);
-          }
-          if (/docs|gateway|@web|@docs/i.test(text)) {
-            notes.push(DOCS.map((doc) => `${doc.title}: ${doc.body}`).join("\n"));
-          }
-          if (!notes.length) {
-            notes.push("No file change matched. Ask for the idempotency key, a webhook, or run /security-audit.");
-          }
+          set({ session: { ...get().session, planSteps: done, surface } });
           spend();
           const result = notes.join("\n");
           talk("agent", result);
