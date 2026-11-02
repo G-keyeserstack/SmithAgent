@@ -253,10 +253,13 @@ export class E2ETestHelper {
 	}
 
 	public async signin(webview: Frame): Promise<void> {
-		await webview.getByRole("button", { name: "Login to Cline" }).click({ delay: 100 })
+		const loginButton = webview.getByRole("button", { name: /^(?:login|sign in|continue)(?: to| with)? (?:cline|makerrr)$/i }).or(
+			webview.getByRole("button", { name: /^(?:sign in|continue)$/i }),
+		)
+		await loginButton.first().click({ delay: 100 })
 
-		// Verify start up page is no longer visible
-		await expect(webview.getByRole("button", { name: "Login to Cline" })).not.toBeVisible()
+		// Verify the sign-in screen has been dismissed.
+		await expect(loginButton.first()).not.toBeVisible()
 
 		const closeButton = webview.getByRole("button", { name: "Close" })
 		let shouldCloseModal = false
