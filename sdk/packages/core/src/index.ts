@@ -872,12 +872,14 @@ export type {
 	SemanticSearchOptions,
 	MentionEnricherOptions,
 	MentionEnrichmentResult,
+	OllamaEmbeddingProviderOptions,
 } from "./services/workspace";
 export {
 	buildRepositoryMap,
 	enrichPromptWithMentions,
 	ensureChatWorkspace,
 	getFileIndex,
+	OllamaEmbeddingProvider,
 	prewarmFileIndex,
 	searchWorkspaceCode,
 } from "./services/workspace";

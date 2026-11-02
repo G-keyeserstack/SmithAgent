@@ -1,4 +1,4 @@
-import { buildRepositoryMap, searchWorkspaceCode } from "@cline/core"
+import { buildRepositoryMap, OllamaEmbeddingProvider, searchWorkspaceCode } from "@cline/core"
 import { diagnosticsToProblemsString } from "@integrations/diagnostics"
 import { extractTextFromFile } from "@integrations/misc/extract-text"
 import { openFile } from "@integrations/misc/open-file"
@@ -13,6 +13,7 @@ import { isBinaryFile } from "isbinaryfile"
 import * as path from "path"
 import { HostProvider } from "@/hosts/host-provider"
 import { getLatestTerminalOutput } from "@/hosts/vscode/terminal/get-latest-output"
+import { getProviderSettingsManager } from "@/sdk/provider-migration"
 import { ShowMessageType } from "@/shared/proto/host/window"
 import { DiagnosticSeverity } from "@/shared/proto/index.cline"
 import { Logger } from "@/shared/services/Logger"
@@ -20,6 +21,36 @@ import { isDirectory } from "@/utils/fs"
 import { getCwd } from "@/utils/path"
 import { FileContextTracker } from "../context/context-tracking/FileContextTracker"
 import type { WorkspaceRootManager } from "../workspace"
+
+
+/**
+ * Use local Qwen3 embeddings only when the developer has configured Ollama.
+ * The model is never downloaded automatically; an unavailable model falls
+ * back to the bounded lexical search path.
+ */
+let cachedLocalEmbeddingProvider:
+	| { baseUrl: string; apiKey?: string; provider: OllamaEmbeddingProvider }
+	| undefined
+
+function resolveLocalEmbeddingProvider(): OllamaEmbeddingProvider | undefined {
+	try {
+		const settings = getProviderSettingsManager().getProviderSettings("ollama")
+		if (!settings) return undefined
+		const baseUrl = settings.baseUrl ?? "http://localhost:11434"
+		const apiKey = settings.apiKey
+		if (
+			cachedLocalEmbeddingProvider?.baseUrl === baseUrl &&
+			cachedLocalEmbeddingProvider.apiKey === apiKey
+		) {
+			return cachedLocalEmbeddingProvider.provider
+		}
+		const provider = new OllamaEmbeddingProvider({ baseUrl, apiKey })
+		cachedLocalEmbeddingProvider = { baseUrl, apiKey, provider }
+		return provider
+	} catch {
+		return undefined
+	}
+}
 
 export async function openMention(mention?: string): Promise<void> {
 	if (!mention) {
@@ -133,8 +164,32 @@ export async function parseMentions(
 				continue
 			}
 			try {
-				const searchResult = await searchWorkspaceCode(cwd, query, { topK: 6, maxFiles: 1_200 })
+				const embeddingProvider = resolveLocalEmbeddingProvider()
+				let embeddingFallback = false
+				let searchResult: Awaited<ReturnType<typeof searchWorkspaceCode>>
+				if (embeddingProvider) {
+					try {
+						searchResult = await searchWorkspaceCode(cwd, query, {
+							topK: 6,
+							maxFiles: 300,
+							maxChunks: 256,
+							embeddingProvider,
+						})
+					} catch {
+						embeddingFallback = true
+						searchResult = await searchWorkspaceCode(cwd, query, { topK: 6, maxFiles: 1_200 })
+					}
+				} else {
+					searchResult = await searchWorkspaceCode(cwd, query, { topK: 6, maxFiles: 1_200 })
+				}
+				const retrievalSummary =
+					searchResult.mode === "semantic"
+						? "semantic via " + (searchResult.provider ?? "local embedding model")
+						: embeddingFallback
+							? "lexical fallback (local Qwen3 embeddings unavailable)"
+							: "lexical (configure Ollama and install qwen3-embedding:0.6b for semantic ranking)"
 				const repositoryMap = await buildRepositoryMap(cwd, { maxFiles: 1_200 })
+				const workspaceName = repositoryMap.workspace.split(/[\\/]/).filter(Boolean).at(-1) ?? "workspace"
 				const languageSummary =
 					repositoryMap.languages
 						.slice(0, 6)
@@ -149,12 +204,12 @@ export async function parseMentions(
 					return [heading, metadata, result.snippet.slice(0, 2_400)].join("\n")
 				})
 				const context = [
-					"Repository: " + repositoryMap.workspace + " (" + repositoryMap.fileCount + " indexed files)",
+					"Repository: " + workspaceName + " (" + repositoryMap.fileCount + " indexed files)",
 					"Languages: " + languageSummary,
 					"Key directories:\n" + directorySummary,
 					"Entry points: " + entryPointSummary,
-					"Search mode: " +
-						searchResult.mode +
+					"Retrieval: " +
+						retrievalSummary +
 						". Search runs locally; only the matched snippets below are added to this model request.",
 					"Query: " + query,
 					...(resultBlocks.length > 0 ? resultBlocks : ["No matching code snippets were found."]),
