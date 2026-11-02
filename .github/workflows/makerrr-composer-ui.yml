@@ -6,6 +6,7 @@ on:
       - "apps/vscode/webview-ui/src/components/chat/task-header/**"
       - "apps/vscode/webview-ui/src/components/chat/chat-view/**"
       - "apps/vscode/webview-ui/src/components/chat/SubagentStatusRow*"
+      - "apps/vscode/webview-ui/src/components/chat/SubagentStatusRow*"
       - "apps/vscode/webview-ui/src/components/chat/ChatTextArea.tsx"
       - "apps/vscode/src/core/mentions/**"
       - "apps/vscode/src/shared/context-mentions.ts"
