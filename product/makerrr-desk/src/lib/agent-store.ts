@@ -86,6 +86,7 @@ export type Account = {
   name: string;
   planId: PlanId;
   region: Region;
+  teamSeats: number;
   requestsUsed: number;
   privacy: boolean;
   autoRun: boolean;
@@ -142,6 +143,7 @@ type AgentState = {
   signOut: () => void;
   setPlan: (id: PlanId) => string;
   setRegion: (region: Region) => void;
+  setTeamSeats: (seats: number) => void;
   spawnAgent: (title: string, surface: Surface) => string;
   focusAgent: (id: string, surface: Surface) => string;
   sandboxRun: (surface: Surface) => string;
@@ -196,6 +198,7 @@ function freshAccount(): Account {
     name: "Johannesburg desk",
     planId: "pro",
     region: "za",
+    teamSeats: 5,
     requestsUsed: 0,
     privacy: false,
     autoRun: false,
@@ -749,6 +752,11 @@ export const useAgent = create<AgentState>()(
         },
         setRegion: (region) => {
           set({ account: { ...get().account, region } });
+        },
+        setTeamSeats: (seats) => {
+          if (!Number.isFinite(seats)) return;
+          const count = Math.min(250, Math.max(1, Math.round(seats)));
+          set({ account: { ...get().account, teamSeats: count } });
         },
         spawnAgent: (title, surface) => {
           const plan = planById(get().account.planId);

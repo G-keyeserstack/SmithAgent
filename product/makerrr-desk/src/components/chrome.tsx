@@ -11,7 +11,7 @@ import {
   type ModelId,
   type Surface,
 } from "@/lib/agent-store";
-import { planById, PLANS, priceFor, type PlanId } from "@/lib/plans";
+import { planById, PLANS, priceLabel, type PlanId } from "@/lib/plans";
 
 const PRODUCT = [
   { to: "/cloud", label: "Agents", note: "The Johannesburg session" },
@@ -343,16 +343,7 @@ export function PlanCards({
             <h2 className="text-lg font-semibold">{plan.name}</h2>
             {plan.popular ? <span className="text-xs uppercase tracking-wide text-clay">Most popular</span> : null}
           </div>
-          <p className="mt-3 text-3xl font-medium tracking-tight">
-            {priceFor(plan, region)}
-            <span className="text-sm text-mute">
-              {plan.segment === "individual"
-                ? "/month"
-                : plan.segment === "agency"
-                  ? "/developer"
-                  : "/month"}
-            </span>
-          </p>
+          <p className="mt-3 text-3xl font-medium tracking-tight">{priceLabel(plan, region)}</p>
           <p className="mt-1 text-xs text-mute">{plan.seats} seats</p>
           <p className="mt-2 text-sm text-mute">{plan.blurb}</p>
           <p className="mt-3 text-sm">{plan.parallel} agents at a time</p>

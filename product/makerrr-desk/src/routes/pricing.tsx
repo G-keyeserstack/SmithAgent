@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { PlanCards, SiteFrame } from "@/components/chrome";
 import { useAgent } from "@/lib/agent-store";
-import { planById, PLANS, priceFor, type PlanId, type Region, type Segment } from "@/lib/plans";
+import { planById, PLANS, priceLabel, PUBLIC_PLANS, teamTotal, type PlanId, type Region, type Segment } from "@/lib/plans";
 
 export const Route = createFileRoute("/pricing")({ component: PricingPage });
 
@@ -19,25 +19,48 @@ const REGIONS: { id: Region; label: string }[] = [
   { id: "ke", label: "Kenya" },
 ];
 
-const NOTES: Record<Segment, string> = {
-  individual: "Priced for a person. South Africa, Nigeria, and Kenya use local currency. The plan you pick is the plan the desk enforces.",
-  agency: "Per developer, billed once. Shared credits, private repos, BYOK, and usage analytics. Private infrastructure is quoted separately.",
-  startup: "Seat packs for a team that is still small. A venture firm can put portfolio companies on the custom pack.",
-  corporate: "Banks, telcos, insurers, retailers, government technology, and integrators. SSO and private deployment start at Corporate Scale.",
-};
-
 function PricingPage() {
   const [segment, setSegment] = useState<Segment>("individual");
   const account = useAgent((state) => state.account);
   const setRegion = useAgent((state) => state.setRegion);
+  const setTeamSeats = useAgent((state) => state.setTeamSeats);
   const current = planById(account.planId);
-  const ids = PLANS.filter((item) => item.segment === segment).map((item) => item.id) as PlanId[];
+  const publicPlans = PUBLIC_PLANS.map((id) => planById(id));
+  const ids = (segment === "individual" ? PUBLIC_PLANS : PLANS.filter((item) => item.segment === segment).map((item) => item.id)) as PlanId[];
   return (
     <SiteFrame>
       <main className="mx-auto max-w-6xl px-4 py-12">
         <h1 className="text-5xl font-medium tracking-tight">Pricing</h1>
         <p className="mt-3 max-w-2xl text-sm text-mute">
-          This desk is on {current.name}. {NOTES[segment]}
+          This desk is on {current.name}
+          {current.perUser ? ` · ${teamTotal(current, account.region, account.teamSeats)}` : ""}. Prices exclude VAT. Third-party model tokens are extra.
+        </p>
+        <div className="mt-8 overflow-x-auto">
+          <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-b border-line">
+                <th className="py-3 pr-3 font-medium">Plan</th>
+                <th className="px-3 py-3 font-medium">South Africa</th>
+                <th className="px-3 py-3 font-medium">Nigeria</th>
+                <th className="px-3 py-3 font-medium">Kenya</th>
+              </tr>
+            </thead>
+            <tbody>
+              {publicPlans.map((item) => (
+                <tr key={item.id} className="border-b border-line">
+                  <th className="py-3 pr-3 font-medium">{item.name}</th>
+                  {(["za", "ng", "ke"] as Region[]).map((region) => (
+                    <td key={region} className="px-3 py-3">
+                      {priceLabel(item, region)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-sm text-mute">
+          Teams is {teamTotal(planById("teams"), account.region, account.teamSeats)}. The unit price does not change with seats.
         </p>
         <div className="mt-8 flex flex-wrap gap-2">
           {SEGMENTS.map((item) => (
@@ -52,7 +75,7 @@ function PricingPage() {
           ))}
         </div>
         {segment === "individual" ? (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap items-center gap-2">
             {REGIONS.map((item) => (
               <button
                 key={item.id}
@@ -63,6 +86,17 @@ function PricingPage() {
                 {item.label}
               </button>
             ))}
+            <label className="ml-2 flex items-center gap-2 text-sm">
+              Team seats
+              <input
+                type="number"
+                min={1}
+                max={250}
+                value={account.teamSeats}
+                onChange={(event) => setTeamSeats(Number(event.target.value))}
+                className="h-10 w-20 border border-line px-2"
+              />
+            </label>
           </div>
         ) : null}
         <div className="mt-6">
@@ -76,7 +110,9 @@ function PricingPage() {
                 {PLANS.filter((item) => item.segment === segment).map((item) => (
                   <th key={item.id} className="px-2 py-3 font-medium">
                     {item.name}
-                    <span className="block text-xs font-normal text-mute">{priceFor(item, account.region)}</span>
+                    <span className="block text-xs font-normal text-mute">
+                      {item.perUser ? teamTotal(item, account.region, account.teamSeats) : priceLabel(item, account.region)}
+                    </span>
                   </th>
                 ))}
               </tr>
