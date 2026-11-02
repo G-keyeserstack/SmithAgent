@@ -10,6 +10,7 @@ const keys = [
 	"MAKERRR_LEGACY_CLINE_DATA_DIR",
 	"MAKERRR_SESSION_DATA_DIR",
 	"MAKERRR_DB_DATA_DIR",
+	"CLINE_DIR",
 	"CLINE_DATA_DIR",
 	"CLINE_SESSION_DATA_DIR",
 	"CLINE_DB_DATA_DIR",
@@ -41,7 +42,8 @@ describe("runtime migration path activation", () => {
 		process.env.MAKERRR_DIR = makerrrRoot;
 		delete process.env.MAKERRR_DATA_DIR;
 		delete process.env.MAKERRR_LEGACY_CLINE_DATA_DIR;
-		process.env.CLINE_DATA_DIR = legacyData;
+		process.env.CLINE_DIR = join(root, ".cline");
+		delete process.env.CLINE_DATA_DIR;
 		for (const key of [
 			"MAKERRR_SESSION_DATA_DIR",
 			"MAKERRR_DB_DATA_DIR",

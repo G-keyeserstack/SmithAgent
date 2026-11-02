@@ -210,8 +210,11 @@ export function resolveClineDataDir(): string {
 	if (process.env.MAKERRR_DATA_DIR?.trim()) {
 		return makerrrDataDir;
 	}
-	if (legacyOverride && !hasCommittedRuntimeMigration(makerrrDataDir)) {
-		return legacyOverride;
+	if (!hasCommittedRuntimeMigration(makerrrDataDir)) {
+		const legacyOverride = process.env.CLINE_DATA_DIR?.trim();
+		if (legacyOverride) return legacyOverride;
+		const legacyDataDir = resolveLegacyClineDataDir();
+		if (existsSync(legacyDataDir)) return legacyDataDir;
 	}
 	return makerrrDataDir;
 }
