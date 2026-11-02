@@ -47,3 +47,7 @@ jobs:
       - name: Typecheck the VS Code host and webview
         working-directory: apps/vscode
         run: bun run check-types
+
+      - name: Lint changed editor files
+        working-directory: apps/vscode
+        run: bunx --bun @biomejs/biome check --config-path biome.jsonc --diagnostic-level=error src/extension.ts src/integrations/editor/tab-completion-provider.ts src/integrations/editor/tab-completion-prompt.ts src/integrations/editor/tab-completion-prompt.test.ts
