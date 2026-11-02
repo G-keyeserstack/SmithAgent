@@ -73,7 +73,7 @@ export class OllamaEmbeddingProvider implements EmbeddingProvider {
 	}
 
 	async embed(texts: string[]): Promise<number[][]> {
-		if (texts.length === 0) return [];;
+		if (texts.length === 0) return [];
 
 		const keys = texts.map((text) => this.cacheKey(text));
 		const missing = new Map<string, string>();
@@ -121,7 +121,7 @@ export class OllamaEmbeddingProvider implements EmbeddingProvider {
 			for (let index = 0; index < batch.length; index++) {
 				const key = batch[index]?.[0];
 				const vector = payload.embeddings[index] as number[];
-				if (key !== undefined) this.remember(key, vector);;
+				if (key !== undefined) this.remember(key, vector);
 			}
 		}
 
