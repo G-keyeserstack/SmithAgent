@@ -472,7 +472,11 @@ describe("plugin install command", () => {
 
 		const wrapperManifest = JSON.parse(
 			readFileSync(join(result.installPath, "package.json"), "utf8"),
-		) as { name?: string; cline?: { plugins?: Array<{ paths?: string[] }> } };
+		) as {
+			name?: string;
+			makerrr?: { plugins?: Array<{ paths?: string[] }> };
+			cline?: { plugins?: Array<{ paths?: string[] }> };
+		};
 		expect(wrapperManifest.name).toBe("plugin-package");
 		expect(wrapperManifest.makerrr?.plugins?.[0]?.paths).toHaveLength(1);
 		expect(wrapperManifest.makerrr?.plugins?.[0]?.paths?.[0]).toContain(
