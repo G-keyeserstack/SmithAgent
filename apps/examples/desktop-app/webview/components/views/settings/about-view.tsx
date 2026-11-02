@@ -291,6 +291,20 @@ export function AboutContent({
 						releases={releases}
 					/>
 				</div>
+				<p className="mt-8 border-t pt-4 text-xs text-muted-foreground">
+					Based on Cline (Apache-2.0).{" "}
+					<button
+						className="underline underline-offset-4"
+						onClick={() =>
+							void openExternalUrl(
+								"https://github.com/G-keyeserstack/SmithAgent/blob/main/NOTICE.md",
+							)
+						}
+						type="button"
+					>
+						Attribution and licence
+					</button>
+				</p>
 			</section>
 		</PageFrame>
 	);

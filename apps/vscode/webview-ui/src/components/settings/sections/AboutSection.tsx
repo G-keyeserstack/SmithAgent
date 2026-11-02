@@ -19,7 +19,7 @@ const AboutSection = ({ version, extensionVariant, renderSectionHeader }: AboutS
 			<Section>
 				<div className="flex px-4 flex-col gap-2">
 					<h2 className="text-lg font-semibold">
-						Cline v{version}
+						Makerrr v{version}
 						{extensionVariant && (
 							<span className="ml-2 text-sm font-normal text-description">
 								({VARIANT_LABELS[extensionVariant]})
@@ -27,37 +27,34 @@ const AboutSection = ({ version, extensionVariant, renderSectionHeader }: AboutS
 						)}
 					</h2>
 					<p>
-						An AI assistant that can use your CLI and Editor. Cline can handle complex software development tasks
-						step-by-step with tools that let him create & edit files, explore large projects, use the browser, and
-						execute terminal commands (after you grant permission).
+						Makerrr is a developer-first AI coding agent for your editor, terminal and desktop. It helps plan and
+						complete software development tasks while keeping you in control of file changes and terminal commands.
 					</p>
 
-					<h3 className="text-md font-semibold">Community & Support</h3>
+					<h3 className="text-md font-semibold">Support</h3>
 					<p>
-						<VSCodeLink href="https://x.com/cline">X</VSCodeLink>
-						{" • "}
-						<VSCodeLink href="https://discord.gg/cline">Discord</VSCodeLink>
-						{" • "}
-						<VSCodeLink href="https://www.reddit.com/r/cline/"> r/cline</VSCodeLink>
+						<VSCodeLink href="https://github.com/G-keyeserstack/SmithAgent/issues">Issues & support</VSCodeLink>
 					</p>
 
 					<h3 className="text-md font-semibold">Development</h3>
 					<p>
-						<VSCodeLink href="https://github.com/cline/cline">GitHub</VSCodeLink>
+						<VSCodeLink href="https://github.com/G-keyeserstack/SmithAgent">GitHub</VSCodeLink>
 						{" • "}
-						<VSCodeLink href="https://github.com/cline/cline/issues"> Issues</VSCodeLink>
-						{" • "}
-						<VSCodeLink href="https://github.com/cline/cline/discussions/categories/feature-requests?discussions_q=is%3Aopen+category%3A%22Feature+Requests%22+sort%3Atop">
-							{" "}
-							Feature Requests
+						<VSCodeLink href="https://github.com/G-keyeserstack/SmithAgent/tree/main/docs">
+							Documentation source
 						</VSCodeLink>
 					</p>
 
-					<h3 className="text-md font-semibold">Resources</h3>
+					<h3 className="text-md font-semibold">Website</h3>
 					<p>
-						<VSCodeLink href="https://docs.cline.bot/">Documentation</VSCodeLink>
-						{" • "}
-						<VSCodeLink href="https://cline.bot/">https://cline.bot</VSCodeLink>
+						<VSCodeLink href="https://makerrr.ai/">Makerrr.ai</VSCodeLink>
+					</p>
+
+					<p className="text-xs text-description">
+						Based on Cline (Apache-2.0).{" "}
+						<VSCodeLink href="https://github.com/G-keyeserstack/SmithAgent/blob/main/NOTICE.md">
+							Attribution and licence
+						</VSCodeLink>
 					</p>
 				</div>
 			</Section>
