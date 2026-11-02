@@ -115,7 +115,7 @@ setTimeout(() => {}, 1000);
 
 	it("resolves the Makerrr command through the legacy platform binary package", () => {
 		const target = createExecutableScript(
-			'console.log(process.env.CLINE_BIN_PATH ?? "");\nprocess.exit(Number(process.argv[2] ?? "0"));\n',
+			'console.log(process.env.MAKERRR_BIN_PATH ?? "");\nprocess.exit(Number(process.argv[2] ?? "0"));\n',
 		);
 		const result = runMakerrrWrapper(target, ["0"]);
 		expect(result.error).toBeUndefined();
