@@ -1,0 +1,61 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #0c0d0b;
+  --color-bone: #f3f0e7;
+  --color-paper: #faf8f3;
+  --color-clay: #7a4332;
+  --color-line: #d8d2c6;
+  --color-mute: #5e5a52;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --radius-card: 0.9rem;
+}
+
+@layer base {
+  html,
+  body {
+    background: var(--color-bone);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+}
+
+.folder-tab {
+  margin-bottom: -1px;
+  border: 1px solid var(--color-line);
+  border-bottom-color: transparent;
+  background: color-mix(in oklab, var(--color-bone) 78%, var(--color-ink));
+}
+
+.folder-tab + .folder-tab {
+  margin-left: -1px;
+}
+
+.folder-tab[aria-selected="true"] {
+  z-index: 2;
+  background: var(--color-paper);
+  border-bottom-color: var(--color-paper);
+}
+
+.folder-sheet {
+  border: 1px solid var(--color-line);
+  background: var(--color-paper);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
