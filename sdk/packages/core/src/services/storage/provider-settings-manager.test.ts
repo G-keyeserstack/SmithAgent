@@ -24,7 +24,7 @@ describe("ProviderSettingsManager", () => {
 		}
 	});
 
-	it("hardens an existing provider settings file before loading credentials", () => {
+	it.skipIf(process.platform === "win32")("hardens an existing provider settings file before loading credentials on POSIX", () => {
 		const tempDir = mkdtempSync(
 			path.join(os.tmpdir(), "core-provider-settings-permissions-"),
 		);
