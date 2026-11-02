@@ -22,7 +22,7 @@ vi.mock("./file-indexer", () => ({
 	},
 }));
 
-let workspace: string;
+let workspace = "";
 afterEach(async () => {
 	if (workspace) await rm(workspace, { recursive: true, force: true });
 	vi.clearAllMocks();
