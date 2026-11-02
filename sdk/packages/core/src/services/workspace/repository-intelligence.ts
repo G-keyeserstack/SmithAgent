@@ -36,7 +36,7 @@ const LANGUAGE_BY_EXTENSION: Record<string, string> = {
 };
 
 function isIndexable(relativePath: string): boolean {
-	const normalized = relativePath.replace(/\\/g, "/");
+	const normalized = relativePath.replace(/\/g, "/");
 	const segments = normalized.split("/");
 	return (
 		!SENSITIVE_FILE.test(normalized) &&
@@ -71,7 +71,7 @@ function summarizeDirectory(files: string[]): string[] {
 
 function extractImports(content: string): string[] {
 	const matches = content.matchAll(
-		/(?:from\\s*|import\\s*\\(|require\\s*\\()(["'])(\\.{1,2}\\/[^"']+)\\1/g,
+		/(?:from\s*|import\s*\(|require\s*\()(["'])(\.{1,2}\/[^"']+)\\1/g,
 	);
 	return [...new Set([...matches].map((match) => match[2]))].slice(0, 40);
 }
@@ -108,7 +108,7 @@ export async function buildRepositoryMap(
 		const language = LANGUAGE_BY_EXTENSION[extension] ?? "Text";
 		languageCounts.set(language, (languageCounts.get(language) ?? 0) + 1);
 		if (
-			/^(?:README(?:\\.[^/]*)?|package\\.json|pyproject\\.toml|Cargo\\.toml|go\\.mod|pom\\.xml|Makefile|Dockerfile)$/i.test(
+			/^(?:README(?:\.[^/]*)?|package\.json|pyproject\.toml|Cargo\.toml|go\.mod|pom\.xml|Makefile|Dockerfile)$/i.test(
 				path.basename(relativePath),
 			)
 		) {
@@ -118,7 +118,7 @@ export async function buildRepositoryMap(
 		if (TEXT_FILE.test(relativePath) && !SENSITIVE_FILE.test(relativePath)) {
 			try {
 				const content = await readFile(absolutePath, "utf8");
-				if (Buffer.byteLength(content, "utf8") <= MAX_FILE_BYTES && !content.includes("\\0")) {
+				if (Buffer.byteLength(content, "utf8") <= MAX_FILE_BYTES && !content.includes("\0")) {
 					imports = extractImports(content);
 				}
 			} catch {
@@ -176,11 +176,11 @@ interface CodeChunk {
 }
 
 function chunkFile(relativePath: string, content: string): CodeChunk[] {
-	const lines = content.split(/\\r?\\n/);
+	const lines = content.split(/\r?\n/);
 	const chunks: CodeChunk[] = [];
 	for (let start = 0; start < lines.length; start += CHUNK_LINES - CHUNK_OVERLAP) {
 		const end = Math.min(lines.length, start + CHUNK_LINES);
-		const text = lines.slice(start, end).join("\\n").trim();
+		const text = lines.slice(start, end).join("\n").trim();
 		if (text) chunks.push({ path: relativePath, startLine: start + 1, endLine: end, text });
 		if (end === lines.length) break;
 	}
@@ -220,7 +220,7 @@ async function readCodeChunks(cwd: string, maxFiles: number): Promise<CodeChunk[
 		if (!absolutePath) continue;
 		try {
 			const content = await readFile(absolutePath, "utf8");
-			if (Buffer.byteLength(content, "utf8") > MAX_FILE_BYTES || content.includes("\\0")) continue;
+			if (Buffer.byteLength(content, "utf8") > MAX_FILE_BYTES || content.includes("\0")) continue;
 			chunks.push(...chunkFile(relativePath, content));
 			if (chunks.length >= MAX_CHUNKS) break;
 		} catch {
