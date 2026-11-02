@@ -111,6 +111,9 @@ export function CenterNav() {
           <Link to="/enterprise" className="h-10 px-2 text-sm leading-10">
             Enterprise
           </Link>
+          <Link to="/sandbox" className="h-10 px-2 text-sm leading-10">
+            Sandbox
+          </Link>
           <Link to="/pricing" className="h-10 px-2 text-sm leading-10">
             Pricing
           </Link>

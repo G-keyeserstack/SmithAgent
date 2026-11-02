@@ -125,7 +125,7 @@ function HomeRest() {
             <li>A risky command that is not blocked, such as `curl` or `npm publish`, is sandboxed. You see the result, and the file is not written.</li>
             <li>Anything else waits until you add it to the allow list, or turn auto-run on.</li>
           </ol>
-          <p className="mt-4 text-sm">Open Desk controls to change the lists and run a command.</p>
+          <p className="mt-4 text-sm"><Link to="/sandbox" className="text-ink">Open sandbox settings</Link></p>
         </article>
         <article className="rounded-2xl border border-line bg-paper p-5">
           <h2 className="text-2xl font-medium">How to run it</h2>

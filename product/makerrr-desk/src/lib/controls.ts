@@ -10,6 +10,18 @@ export function classifyCommand(command: string, allow: string[], block: string[
   return "ask";
 }
 
+export function reviewLists(allow: string[], block: string[]): string[] {
+  const notes: string[] = [];
+  if (allow.length === 0) notes.push("The allow list is empty. Ordinary commands will ask before they run.");
+  if (block.length === 0) notes.push("The block list is empty. Nothing is refused before the risky-command check.");
+  for (const item of allow) {
+    if (item.trim().length < 3) notes.push(`“${item}” is too short. It would allow more commands than you mean.`);
+    if (RISKY.some((pattern) => pattern.test(item))) notes.push(`“${item}” is on the allow list, but it looks risky. The allow list is checked before the sandbox.`);
+    if (block.some((blocked) => blocked.trim() && item.includes(blocked.trim()))) notes.push(`“${item}” also matches the block list. The block list still wins.`);
+  }
+  return notes;
+}
+
 export function ruleApplies(rules: string, path: string): boolean {
   const globs = [...rules.matchAll(/^globs:\s*(.+)$/gm)].map((match) => match[1].trim());
   if (globs.length === 0) return true;
