@@ -89,6 +89,7 @@ export type Session = {
 export type Account = {
   signedIn: boolean;
   name: string;
+  email: string;
   planId: PlanId;
   region: Region;
   teamSeats: number;
@@ -98,6 +99,12 @@ export type Account = {
   network: boolean;
   mcp: boolean;
   privateDeploy: boolean;
+};
+
+export type DeskUser = {
+  email: string;
+  name: string;
+  passwordHash: string;
 };
 
 export type FleetJob = {
@@ -143,6 +150,7 @@ type AgentState = {
   account: Account;
   project: Project;
   fleet: FleetJob[];
+  directory: DeskUser[];
   calls: CallLog[];
   startJob: (surface: Surface) => string;
   setModel: (id: ModelId, surface: Surface) => string;
@@ -156,7 +164,8 @@ type AgentState = {
   hold: (surface: Surface) => void;
   finish: (surface: Surface) => void;
   resume: (surface: Surface) => void;
-  signIn: (name: string) => void;
+  signIn: (email: string, password: string) => Promise<string>;
+  register: (email: string, password: string, name: string) => Promise<string>;
   signOut: () => void;
   setPlan: (id: PlanId) => string;
   setRegion: (region: Region) => void;
@@ -224,10 +233,17 @@ function freshSession(): Session {
   };
 }
 
+async function digestPassword(email: string, password: string) {
+  const data = new TextEncoder().encode(`${email}\0${password}`);
+  const buf = await crypto.subtle.digest("SHA-256", data);
+  return [...new Uint8Array(buf)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 function freshAccount(): Account {
   return {
-    signedIn: true,
+    signedIn: false,
     name: "",
+    email: "",
     planId: "pro",
     region: "za",
     teamSeats: 5,
@@ -365,8 +381,15 @@ export const useAgent = create<AgentState>()(
         account: freshAccount(),
         project: freshProject(),
         fleet: [],
+        directory: [],
         calls: [],
         startJob: (surface) => {
+          if (!get().account.signedIn) {
+            const detail = "Sign in before starting a job.";
+            push(surface, "agent.startJob()", detail);
+            set({ project: { ...get().project, notice: detail } });
+            return detail;
+          }
           const blocked = gate(surface, "agent.startJob()");
           if (blocked) return blocked;
           const plan = planById(get().account.planId);
@@ -593,12 +616,30 @@ export const useAgent = create<AgentState>()(
           set({ session: { ...current, column: "running", surface, openDiff: true } });
           push(surface, "agent.resume()", "This session is running again.");
         },
-        signIn: (name) => {
-          const cleaned = name.trim() || "your desk";
-          set({ account: { ...get().account, signedIn: true, name: cleaned } });
+        signIn: async (email, password) => {
+          const cleaned = email.trim().toLowerCase();
+          const user = get().directory.find((item) => item.email === cleaned);
+          if (!user) return "No desk for that email. Create one.";
+          const passwordHash = await digestPassword(cleaned, password);
+          if (passwordHash !== user.passwordHash) return "That password does not match.";
+          set({ account: { ...get().account, signedIn: true, name: user.name, email: user.email } });
+          return "";
+        },
+        register: async (email, password, name) => {
+          const cleaned = email.trim().toLowerCase();
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleaned)) return "Enter a valid email.";
+          if (password.length < 8) return "Use at least 8 characters.";
+          if (get().directory.some((item) => item.email === cleaned)) return "That email already has a desk.";
+          const passwordHash = await digestPassword(cleaned, password);
+          const user = { email: cleaned, name: name.trim() || cleaned.split("@")[0], passwordHash };
+          set({
+            directory: [...get().directory, user],
+            account: { ...get().account, signedIn: true, name: user.name, email: user.email },
+          });
+          return "";
         },
         signOut: () => {
-          set({ account: { ...get().account, signedIn: false, name: "" } });
+          set({ account: { ...get().account, signedIn: false, name: "", email: "" } });
         },
         setPlan: (id) => {
           const plan = planById(id);
@@ -1146,6 +1187,7 @@ export const useAgent = create<AgentState>()(
           session: { ...current.session, ...saved.session },
           account: { ...current.account, ...saved.account },
           fleet: saved.fleet ?? current.fleet,
+          directory: saved.directory ?? current.directory,
           project: {
             ...current.project,
             ...saved.project,

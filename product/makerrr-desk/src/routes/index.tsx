@@ -29,15 +29,25 @@ function Home() {
     <SiteFrame>
       <main>
         <section className="mx-auto max-w-6xl px-4 pb-8 pt-16 sm:pt-24">
-          <h1 className="max-w-3xl text-[2.6rem] font-medium leading-[1.05] tracking-tight text-ink sm:text-6xl">
-            Makerrr is your coding agent for building ambitious software.
+          <p className="text-sm text-mute">Makerrr for Desktop</p>
+          <h1 className="mt-3 max-w-3xl text-[2.6rem] font-medium leading-[1.05] tracking-tight text-ink sm:text-6xl">
+            The open agent
           </h1>
+          <p className="mt-4 max-w-xl text-lg text-mute">
+            One agent runtime. Use it in the editor, the terminal, or the cloud desk.
+          </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to="/desktop" search={{ os: "mac" }} className="inline-flex h-12 items-center rounded-full bg-ink px-5 text-sm text-bone">
-              Download for macOS
+              Download for Mac
             </Link>
-            <Link to="/enterprise" className="inline-flex h-12 items-center rounded-full bg-[#e6e3db] px-5 text-sm">
-              Request a demo
+            <Link to="/desktop" search={{ os: "windows" }} className="inline-flex h-12 items-center rounded-full border border-line px-5 text-sm">
+              Download for Windows
+            </Link>
+            <Link to="/desktop" search={{ os: "linux" }} className="inline-flex h-12 items-center rounded-full border border-line px-5 text-sm">
+              Download for Linux
+            </Link>
+            <Link to="/sign-in" className="inline-flex h-12 items-center rounded-full bg-[#e6e3db] px-5 text-sm">
+              Sign in
             </Link>
           </div>
         </section>
@@ -48,7 +58,38 @@ function Home() {
             <Link to="/ide" className="text-ink">Open the IDE</Link>
           </p>
         </section>
-        <section className="mx-auto max-w-5xl px-4 pb-16">
+        <section className="mx-auto grid max-w-6xl gap-4 px-4 pb-16 sm:grid-cols-2">
+          <article className="rounded-2xl border border-line bg-paper p-5">
+            <p className="text-xs uppercase tracking-widest text-mute">Desktop</p>
+            <h2 className="mt-2 text-2xl font-medium">The agent in its own window</h2>
+            <p className="mt-2 text-sm text-mute">No editor required. The same session, Plan and Agent, and the file diff.</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link to="/desktop" search={{ os: "mac" }} className="inline-flex h-10 items-center rounded-full bg-ink px-4 text-sm text-bone">Mac</Link>
+              <Link to="/desktop" search={{ os: "windows" }} className="inline-flex h-10 items-center rounded-full border border-line px-4 text-sm">Windows</Link>
+              <Link to="/desktop" search={{ os: "linux" }} className="inline-flex h-10 items-center rounded-full border border-line px-4 text-sm">Linux</Link>
+            </div>
+          </article>
+          <article className="rounded-2xl border border-line bg-paper p-5">
+            <p className="text-xs uppercase tracking-widest text-mute">IDE</p>
+            <h2 className="mt-2 text-2xl font-medium">Inside the editor</h2>
+            <p className="mt-2 text-sm text-mute">Tab, inline edit, and review run on the open file. This desk is the working editor surface.</p>
+            <Link to="/ide" className="mt-4 inline-flex h-10 items-center rounded-full bg-ink px-4 text-sm text-bone">Open the IDE</Link>
+          </article>
+          <article className="rounded-2xl border border-line bg-paper p-5">
+            <p className="text-xs uppercase tracking-widest text-mute">CLI</p>
+            <h2 className="mt-2 text-2xl font-medium">From the terminal</h2>
+            <p className="mt-2 text-sm text-mute">The same calls, typed. A published global package is not on npm yet.</p>
+            <pre className="mt-4 overflow-x-auto rounded-lg bg-ink p-3 text-xs text-bone">npm install{"\n"}npm run dev</pre>
+            <Link to="/cli" className="mt-4 inline-flex text-sm">Open the CLI</Link>
+          </article>
+          <article className="rounded-2xl border border-line bg-paper p-5">
+            <p className="text-xs uppercase tracking-widest text-mute">SDK</p>
+            <h2 className="mt-2 text-2xl font-medium">Embed the runtime</h2>
+            <p className="mt-2 text-sm text-mute">The calls the desktop, IDE, and CLI already use.</p>
+            <Link to="/sdk" className="mt-4 inline-flex h-10 items-center rounded-full bg-ink px-4 text-sm text-bone">Open the SDK</Link>
+          </article>
+        </section>
+        <section className="mx-auto max-w-6xl px-4 pb-16">
           <div className="flex items-end overflow-x-auto" role="tablist">
             {TABS.map((item) => (
               <button

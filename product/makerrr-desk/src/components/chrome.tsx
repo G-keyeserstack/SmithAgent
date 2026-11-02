@@ -42,7 +42,7 @@ export function NewsBar() {
       to="/cloud"
       className="block bg-ink px-4 py-2 text-center text-xs font-medium tracking-wide text-bone sm:text-sm"
     >
-      One agent runtime. Desktop, IDE, CLI, and Cloud share the same files.
+      One agent runtime. Desktop, Cloud, IDE, and CLI share the same files.
     </Link>
   );
 }
@@ -78,8 +78,6 @@ function Menu({
 export function CenterNav() {
   const account = useAgent((state) => state.account);
   const signOut = useAgent((state) => state.signOut);
-  const [signing, setSigning] = useState(false);
-  const [name, setName] = useState("");
 
   return (
     <header className="bg-[#f7f6f3]">
@@ -89,10 +87,13 @@ export function CenterNav() {
           <span className="text-sm font-semibold tracking-[0.16em]">MAKERRR</span>
         </Link>
         <nav className="flex flex-1 flex-wrap items-center justify-center gap-1">
-          <Menu label="Models">
-            <ModelMenu />
-          </Menu>
-          <Menu label="Product">
+          <Link to="/desktop" search={{ os: "mac" }} className="h-10 px-2 text-sm leading-10">Desktop</Link>
+          <Link to="/cloud" className="h-10 px-2 text-sm leading-10">Cloud</Link>
+          <Link to="/ide" className="h-10 px-2 text-sm leading-10">IDE</Link>
+          <Link to="/cli" className="h-10 px-2 text-sm leading-10">CLI</Link>
+          <Link to="/sdk" className="h-10 px-2 text-sm leading-10">SDK</Link>
+          <Link to="/docs" className="h-10 px-2 text-sm leading-10">Docs</Link>
+          <Menu label="More">
             {PRODUCT.map((item) =>
               item.to === "/desktop" ? (
                 <Link key={item.label} to="/desktop" search={{ os: "mac" }} className="block rounded-lg px-3 py-2 hover:bg-bone">
@@ -106,17 +107,6 @@ export function CenterNav() {
                 </Link>
               ),
             )}
-          </Menu>
-          <Link to="/enterprise" className="h-10 px-2 text-sm leading-10">
-            Enterprise
-          </Link>
-          <Link to="/sandbox" className="h-10 px-2 text-sm leading-10">
-            Sandbox
-          </Link>
-          <Link to="/pricing" className="h-10 px-2 text-sm leading-10">
-            Pricing
-          </Link>
-          <Menu label="Resources">
             {RESOURCES.map((item) => (
               <Link key={item.to} to={item.to} className="block rounded-lg px-3 py-2 text-sm hover:bg-bone">
                 {item.label}
@@ -127,12 +117,12 @@ export function CenterNav() {
         <div className="flex items-center gap-2">
           {account.signedIn ? (
             <button type="button" onClick={() => signOut()} className="h-10 px-2 text-sm">
-              {account.name || "Desk"}
+              {account.name || account.email}
             </button>
           ) : (
-            <button type="button" onClick={() => setSigning((value) => !value)} className="h-10 px-2 text-sm">
+            <Link to="/sign-in" className="h-10 px-2 text-sm leading-10">
               Sign in
-            </button>
+            </Link>
           )}
           <Link
             to="/enterprise"
@@ -149,72 +139,7 @@ export function CenterNav() {
           </Link>
         </div>
       </div>
-      {signing && !account.signedIn ? <SignInRow onDone={() => setSigning(false)} name={name} setName={setName} /> : null}
     </header>
-  );
-}
-
-function ModelMenu() {
-  const modelId = useAgent((state) => state.session.modelId);
-  const setModel = useAgent((state) => state.setModel);
-  const plan = planById(useAgent((state) => state.account.planId));
-  return (
-    <div>
-      {MODELS.map((model) => {
-        const allowed = plan.models.includes(model.id);
-        return (
-          <button
-            key={model.id}
-            type="button"
-            disabled={!allowed}
-            onClick={() => setModel(model.id, "desktop")}
-            className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-bone disabled:opacity-40"
-          >
-            <span>{model.label}</span>
-            <span className="text-xs text-mute">{model.id === modelId ? "Billing" : model.kind}</span>
-          </button>
-        );
-      })}
-      <Link to="/models" className="block px-3 py-2 text-xs text-clay">
-        All models
-      </Link>
-    </div>
-  );
-}
-
-function SignInRow({
-  onDone,
-  name,
-  setName,
-}: {
-  onDone: () => void;
-  name: string;
-  setName: (value: string) => void;
-}) {
-  const signIn = useAgent((state) => state.signIn);
-  return (
-    <form
-      className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 pb-3"
-      onSubmit={(event) => {
-        event.preventDefault();
-        signIn(name);
-        onDone();
-      }}
-    >
-      <label className="text-sm text-mute" htmlFor="desk-name">
-        Desk name
-      </label>
-      <input
-        id="desk-name"
-        value={name}
-        onChange={(event) => setName(event.target.value)}
-        placeholder="Your name"
-        className="h-11 min-w-0 flex-1 border border-line bg-paper px-3 text-sm"
-      />
-      <button type="submit" className="h-11 bg-ink px-4 text-sm text-bone">
-        Continue
-      </button>
-    </form>
   );
 }
 

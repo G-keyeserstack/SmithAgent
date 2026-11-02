@@ -21,7 +21,9 @@ import { Route as EnterpriseRouteImport } from './routes/enterprise'
 import { Route as IdeRouteImport } from './routes/ide'
 import { Route as ModelsRouteImport } from './routes/models'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as SandboxRouteImport } from './routes/sandbox'
 import { Route as SdkRouteImport } from './routes/sdk'
+import { Route as SignInRouteImport } from './routes/sign-in'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -83,9 +85,19 @@ const PricingRoute = PricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SandboxRoute = SandboxRouteImport.update({
+  id: '/sandbox',
+  path: '/sandbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SdkRoute = SdkRouteImport.update({
   id: '/sdk',
   path: '/sdk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -102,7 +114,9 @@ export interface FileRoutesByFullPath {
   '/ide': typeof IdeRoute
   '/models': typeof ModelsRoute
   '/pricing': typeof PricingRoute
+  '/sandbox': typeof SandboxRoute
   '/sdk': typeof SdkRoute
+  '/sign-in': typeof SignInRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -117,7 +131,9 @@ export interface FileRoutesByTo {
   '/ide': typeof IdeRoute
   '/models': typeof ModelsRoute
   '/pricing': typeof PricingRoute
+  '/sandbox': typeof SandboxRoute
   '/sdk': typeof SdkRoute
+  '/sign-in': typeof SignInRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -133,7 +149,9 @@ export interface FileRoutesById {
   '/ide': typeof IdeRoute
   '/models': typeof ModelsRoute
   '/pricing': typeof PricingRoute
+  '/sandbox': typeof SandboxRoute
   '/sdk': typeof SdkRoute
+  '/sign-in': typeof SignInRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -150,7 +168,9 @@ export interface FileRouteTypes {
     | '/ide'
     | '/models'
     | '/pricing'
+    | '/sandbox'
     | '/sdk'
+    | '/sign-in'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -165,7 +185,9 @@ export interface FileRouteTypes {
     | '/ide'
     | '/models'
     | '/pricing'
+    | '/sandbox'
     | '/sdk'
+    | '/sign-in'
   id:
     | '__root__'
     | '/'
@@ -180,7 +202,9 @@ export interface FileRouteTypes {
     | '/ide'
     | '/models'
     | '/pricing'
+    | '/sandbox'
     | '/sdk'
+    | '/sign-in'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -196,7 +220,9 @@ export interface RootRouteChildren {
   IdeRoute: typeof IdeRoute
   ModelsRoute: typeof ModelsRoute
   PricingRoute: typeof PricingRoute
+  SandboxRoute: typeof SandboxRoute
   SdkRoute: typeof SdkRoute
+  SignInRoute: typeof SignInRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -285,11 +311,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sandbox': {
+      id: '/sandbox'
+      path: '/sandbox'
+      fullPath: '/sandbox'
+      preLoaderRoute: typeof SandboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sdk': {
       id: '/sdk'
       path: '/sdk'
       fullPath: '/sdk'
       preLoaderRoute: typeof SdkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -308,7 +348,9 @@ const rootRouteChildren: RootRouteChildren = {
   IdeRoute: IdeRoute,
   ModelsRoute: ModelsRoute,
   PricingRoute: PricingRoute,
+  SandboxRoute: SandboxRoute,
   SdkRoute: SdkRoute,
+  SignInRoute: SignInRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
