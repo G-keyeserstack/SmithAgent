@@ -127,7 +127,7 @@ export async function parseMentions(
 		}
 
 		if (mention === "codebase") {
-			const query = text.replace(/@codebase\\b/gi, "").trim().slice(0, 500)
+			const query = text.replace(/@codebase\b/gi, "").trim().slice(0, 500)
 			if (!query) {
 				parsedText += "\n\n<codebase_search status=\"missing-query\">Add a natural-language question after @codebase, for example: @codebase where are OAuth refresh tokens stored?</codebase_search>"
 				continue
