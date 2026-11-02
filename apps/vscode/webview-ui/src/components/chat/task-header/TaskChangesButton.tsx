@@ -71,7 +71,7 @@ export function TaskChangesButton({ enabled, refreshKey }: TaskChangesButtonProp
 				onClick={() => void openChanges()}
 				title="Open the multi-file diff from the latest checkpoint"
 				type="button">
-				<GitCompareArrows aria-hidden="true" className="size-3" />
+				<GitCompareIcon aria-hidden="true" className="size-3" />
 				{opening ? "Opening…" : `Review ${changedFiles} ${changedFiles === 1 ? "file" : "files"}`}
 			</button>
 			{error && <span className="mt-1 max-w-48 text-right text-[10px] text-error" role="alert">{error}</span>}
