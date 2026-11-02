@@ -86,6 +86,7 @@ export enum ContextMenuOptionType {
 	Terminal = "terminal",
 	URL = "url",
 	Git = "git",
+	Codebase = "codebase",
 	NoResults = "noResults",
 }
 
@@ -100,6 +101,7 @@ export interface ContextMenuQueryItem {
 function getContextMenuEntries(): ContextMenuOptionType[] {
 	const entries = [
 		ContextMenuOptionType.URL,
+		ContextMenuOptionType.Codebase,
 		ContextMenuOptionType.Problems,
 		ContextMenuOptionType.Git,
 		ContextMenuOptionType.Folder,
@@ -187,6 +189,14 @@ export function getContextMenuOptions(
 		})
 	} else if ("git-changes".startsWith(lowerQuery)) {
 		suggestions.push(workingChanges)
+	}
+	if ("codebase".startsWith(lowerQuery)) {
+		suggestions.push({
+			type: ContextMenuOptionType.Codebase,
+			value: "codebase",
+			label: "Search codebase",
+			description: "Search local repository code and add matching snippets to model context",
+		})
 	}
 	if ("problems".startsWith(lowerQuery)) {
 		suggestions.push({ type: ContextMenuOptionType.Problems })

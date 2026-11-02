@@ -1,3 +1,4 @@
+import * as coreModule from "@cline/core"
 import { FileContextTracker } from "@core/context/context-tracking/FileContextTracker"
 import * as extractTextModule from "@integrations/misc/extract-text"
 import { UrlContentFetcher } from "@services/browser/UrlContentFetcher"
@@ -221,6 +222,49 @@ Error fetching content: Network error
 
 			expect(result).to.equal(expectedOutput)
 			expect(showMessageStub.called).to.be.true
+		})
+	})
+
+	describe("Codebase mention", () => {
+		it("adds local search results and a repository map to Composer context", async () => {
+			const searchStub = sandbox.stub(coreModule, "searchWorkspaceCode").resolves({
+				mode: "lexical",
+				results: [{
+					path: "src/auth/tokens.ts",
+					startLine: 12,
+					endLine: 18,
+					snippet: "export function refreshToken() {}",
+					score: 0.82,
+				}],
+			})
+			const mapStub = sandbox.stub(coreModule, "buildRepositoryMap").resolves({
+				workspace: "project",
+				generatedAt: 1,
+				fileCount: 24,
+				languages: [{ language: "TypeScript", files: 18 }],
+				directories: ["src/auth/ (8 files)"],
+				entryPoints: ["package.json", "src/index.ts"],
+				files: [],
+			})
+			const result = await parseMentions(
+				"Find where refresh tokens are handled @codebase",
+				cwd,
+				urlContentFetcherStub,
+			)
+
+			expect(searchStub.calledWith(cwd, "Find where refresh tokens are handled", { topK: 6, maxFiles: 1_200 })).to.be.true
+			expect(mapStub.calledWith(cwd, { maxFiles: 1_200 })).to.be.true
+			expect(result).to.contain('<codebase_search mode="lexical"')
+			expect(result).to.contain("src/auth/tokens.ts")
+			expect(result).to.contain("Search runs locally")
+		})
+
+		it("asks for a query instead of indexing the workspace when @codebase has no question", async () => {
+			const searchStub = sandbox.stub(coreModule, "searchWorkspaceCode")
+			const result = await parseMentions("@codebase", cwd, urlContentFetcherStub)
+
+			expect(searchStub.called).to.be.false
+			expect(result).to.contain('status="missing-query"')
 		})
 	})
 

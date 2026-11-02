@@ -410,6 +410,8 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						insertValue = value || ""
 					} else if (type === ContextMenuOptionType.File || type === ContextMenuOptionType.Folder) {
 						insertValue = value || ""
+					} else if (type === ContextMenuOptionType.Codebase) {
+						insertValue = "codebase"
 					} else if (type === ContextMenuOptionType.Problems) {
 						insertValue = "problems"
 					} else if (type === ContextMenuOptionType.Terminal) {
