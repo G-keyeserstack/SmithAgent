@@ -13,7 +13,7 @@ vi.mock("./file-indexer", () => ({
 					if (["node_modules", ".git", ".makerrr"].includes(entry.name)) continue;
 					await walk(path.join(directory, entry.name));
 				} else {
-					files.push(path.relative(cwd, path.join(directory, entry.name)).replace(/\\\\/g, "/"));
+					files.push(path.relative(cwd, path.join(directory, entry.name)).replace(/\\/g, "/"));
 				}
 			}
 		};
