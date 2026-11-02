@@ -7,3 +7,13 @@ export type {
 	MentionEnrichmentResult,
 } from "./mention-enricher";
 export { enrichPromptWithMentions } from "./mention-enricher";
+
+export type {
+	CodeSearchResponse,
+	CodeSearchResult,
+	EmbeddingProvider,
+	RepositoryMap,
+	RepositoryMapOptions,
+	SemanticSearchOptions,
+} from "./repository-intelligence";
+export { buildRepositoryMap, searchWorkspaceCode } from "./repository-intelligence";
