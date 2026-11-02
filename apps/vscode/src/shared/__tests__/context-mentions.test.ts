@@ -98,6 +98,7 @@ describe("Mention Regex", () => {
 				["@problems", "@problems"],
 				["@git-changes", "@git-changes"],
 				["@terminal", "@terminal"],
+				["@codebase", "@codebase"],
 			]
 
 			cases.forEach(([input, expected]) => {
