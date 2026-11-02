@@ -10,6 +10,7 @@ This app uses the MIT-licensed Code OSS workbench and the VSCodium community bui
 - Applies Makerrr application identity and isolated `~/.makerrr` user-data paths.
 - Uses Open VSX for extension discovery; it does not depend on the Microsoft Marketplace.
 - Builds and bundles the existing Makerrr agent extension into the editor distribution.
+- Includes opt-in, model-backed Tab completions using the developer's selected Act-mode provider. The feature is disabled by default, respects workspace trust, sends a bounded cursor context window, and supports cancellation.
 - Uses the upstream telemetry-removal build steps and does not configure Microsoft's telemetry endpoints.
 - Keeps the underlying agent SDK, tools, MCP and local execution in the existing repository rather than reimplementing them in the editor shell.
 
@@ -31,6 +32,11 @@ Set `MAX_OLD_SPACE_SIZE` to change the Node.js build heap. The build output rema
 
 ## Current boundaries
 
-This is the first desktop-editor foundation, not a finished Cursor-equivalent release. The existing agent is bundled, but dedicated first-party Tab autocomplete, Composer UX, codebase indexing UI, multi-agent orchestration UI, cloud workspace UX, signed installers, auto-update infrastructure, notarisation and cross-platform release CI remain to be implemented and validated. Do not distribute this build as a stable release until the editor and extension build matrix is green.
+This is the first desktop-editor foundation, not a finished Cursor-equivalent release. First-party Tab completions are implemented as an opt-in preview and still require latency, quality, provider-compatibility and cross-platform acceptance testing. Composer UX, local codebase indexing UI, multi-agent orchestration UI, cloud workspace UX, signed installers, Makerrr-owned auto-update infrastructure, notarisation and cross-platform release CI remain to be implemented and validated. Do not distribute this build as a stable release until the editor and extension build matrix is green.
 
 The upstream Code OSS and VSCodium build-tool licences and the Cline-derived Apache-2.0 notices remain applicable. See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
+
+
+## Tab completions (preview)
+
+Enable **Makerrr: Toggle Tab Completions** from the Command Palette or set `makerrr.tabCompletion.enabled` to `true`. Suggestions use the selected Act-mode model/provider. The feature is disabled by default, only runs in trusted file-based workspaces, and sends at most the configured number of source characters around the cursor (6,000 by default; adjustable from 1,000 to 12,000). It sends only the file's basename, not the absolute local path. Requests are cancelled when typing continues or the extension shuts down. Provider privacy and retention policies still apply to code sent to that provider.

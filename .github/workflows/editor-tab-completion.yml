@@ -1,0 +1,53 @@
+name: Makerrr Tab Completion
+
+on:
+  pull_request:
+    paths:
+      - "apps/vscode/src/integrations/editor/tab-completion-*"
+      - "apps/vscode/src/extension.ts"
+      - "apps/vscode/package.json"
+      - ".github/workflows/editor-tab-completion.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/vscode/src/integrations/editor/tab-completion-*"
+      - "apps/vscode/src/extension.ts"
+      - "apps/vscode/package.json"
+      - ".github/workflows/editor-tab-completion.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tab-completion:
+    name: Tab completion tests and VS Code typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run Tab completion regression tests
+        working-directory: apps/vscode
+        run: bunx --bun vitest run --config vitest.config.ts src/integrations/editor/tab-completion-prompt.test.ts
+
+      - name: Typecheck the VS Code host and webview
+        working-directory: apps/vscode
+        run: bun run check-types
+
+      - name: Lint changed editor files
+        working-directory: apps/vscode
+        run: bunx --bun @biomejs/biome check --config-path biome.jsonc --diagnostic-level=error src/extension.ts src/integrations/editor/tab-completion-provider.ts src/integrations/editor/tab-completion-prompt.ts src/integrations/editor/tab-completion-prompt.test.ts
