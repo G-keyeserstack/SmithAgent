@@ -45,7 +45,7 @@ jobs:
 
       - name: Run Tab completion regression tests
         working-directory: apps/vscode
-        run: bunx --bun vitest run --config vitest.config.ts src/integrations/editor/tab-completion-prompt.test.ts
+        run: bunx --bun vitest run src/integrations/editor/tab-completion-prompt.test.ts
 
       - name: Typecheck the VS Code host and webview
         working-directory: apps/vscode
