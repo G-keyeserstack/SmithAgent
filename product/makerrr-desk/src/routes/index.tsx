@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { SiteFrame } from "@/components/chrome";
 import { HeroWindow } from "@/components/hero-window";
 import { PACKS, HUBS } from "@/lib/platform";
@@ -24,19 +24,6 @@ const OS: { id: DeskOs; label: string }[] = [
 function Home() {
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("desktop");
   const current = TABS.find((item) => item.id === tab) ?? TABS[0];
-  const demo = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    const video = demo.current;
-    if (!video) return;
-    video.muted = true;
-    const start = () => {
-      void video.play().catch(() => undefined);
-    };
-    start();
-    video.addEventListener("canplay", start);
-    return () => video.removeEventListener("canplay", start);
-  }, []);
 
   return (
     <SiteFrame>
@@ -54,27 +41,11 @@ function Home() {
             </Link>
           </div>
         </section>
-        <section className="px-3 pb-20 sm:px-6">
+        <section className="px-3 pb-8 sm:px-6">
           <HeroWindow />
-        </section>
-        <section className="mx-auto max-w-6xl px-4 pb-16">
-          <div className="overflow-hidden rounded-2xl border border-line bg-black">
-            <video
-              ref={demo}
-              className="aspect-video w-full"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="auto"
-              src="/makerrr-agent.mp4"
-            >
-              <track kind="captions" />
-            </video>
-          </div>
-          <p className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-mute">
-            <span>The agent reads the codebase before it edits.</span>
-            <Link to="/controls" className="text-ink">Open the desk controls</Link>
+          <p className="mx-auto mt-3 flex max-w-5xl flex-wrap items-center justify-between gap-3 px-2 text-sm text-mute">
+            <span>The agent types the charge fix in the frame. The clip underneath plays on its own.</span>
+            <Link to="/ide" className="text-ink">Open the IDE</Link>
           </p>
         </section>
         <section className="mx-auto max-w-5xl px-4 pb-16">

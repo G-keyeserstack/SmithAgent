@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Mark } from "@/components/mark";
 import {
   formatUsd,
   modelById,
@@ -86,7 +85,7 @@ export function CenterNav() {
     <header className="bg-[#f7f6f3]">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-3">
         <Link to="/" className="mr-2 flex items-center gap-2 text-ink">
-          <Mark className="size-6" />
+          <img src="/makerrr-mark.png" alt="" className="h-8 w-auto rounded bg-black" />
           <span className="text-sm font-semibold tracking-[0.16em]">MAKERRR</span>
         </Link>
         <nav className="flex flex-1 flex-wrap items-center justify-center gap-1">
