@@ -26,3 +26,9 @@ npm run dev
 Open the IDE, switch to Act, and run the agent. The default plan is Premium so cloud, review, and Tab are on. Free locks cloud and third-party models.
 
 Signed desktop installers are not in this folder. Download in the app opens the same desk.
+
+## Cloud
+
+Pro and above can fan out a second agent. Each agent keeps its own copy of the files. Focus one from Mission control and the editor follows. Ask never writes. Sandbox runs the test on a proposed edit and leaves the file alone. Pro Plus can send a test-writing subagent.
+
+Pricing is split: individuals (South Africa, Nigeria, Kenya), agencies, startups, and corporate teams. The plan on the desk is the plan that gates cloud, Tab, review, and models.
