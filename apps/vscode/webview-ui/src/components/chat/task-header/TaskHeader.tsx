@@ -112,7 +112,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 	}, [isHighlightedTextExpanded])
 
 	// Simplified computed values
-	const { selectedModelInfo } = useNormalizedApiConfiguration(mode)
+	const { selectedModelInfo, selectedProvider, selectedModelId } = useNormalizedApiConfiguration(mode)
 	const modeFields = getModeSpecificFields(apiConfiguration, mode)
 
 	// Local providers report no cost; the openai-compatible provider can
@@ -212,6 +212,10 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 							<MakerrrUsageMeter
 								cacheReadTokens={cacheReads}
 								cacheWriteTokens={cacheWrites}
+								contextTokens={lastApiReqTotalTokens}
+								contextWindow={selectedModelInfo?.contextWindow}
+								model={selectedModelId || undefined}
+								provider={selectedProvider}
 								costKind={currentCloudTask ? "cloud-reported" : "estimated"}
 								costUsd={isCostAvailable ? totalCost : undefined}
 								inputTokens={tokensIn}
