@@ -156,6 +156,9 @@ describe("McpOAuthManager credential persistence", () => {
 		const provider = await createManager().getOrCreateProvider(SERVER_NAME, SERVER_URL)
 		mocks.state.writeError = new Error("read-only settings file")
 
+		if (typeof provider.invalidateCredentials !== "function") {
+			throw new Error("OAuth provider does not expose credential invalidation")
+		}
 		await expect(provider.invalidateCredentials("tokens")).rejects.toThrow("read-only settings file")
 	})
 
