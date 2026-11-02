@@ -140,6 +140,13 @@ export const OllamaProvider = ({ showModelOptions, isPopup, currentMode }: Ollam
 				selectedModelId={selectedModel.modelId || ""}
 			/>
 
+			<p className="text-xs text-description">
+				For semantic <code>@codebase</code> search, install the local Qwen3 embedding model on this Ollama server:
+				{" "}
+				<code>ollama pull qwen3-embedding:0.6b</code>. Makerrr will use it for local code ranking when available; it
+				will not download the model automatically. If it is unavailable, codebase search falls back to lexical ranking.
+			</p>
+
 			{/* Show status message based on model availability */}
 			{ollamaModels.length === 0 && (
 				<p className="text-sm mt-1 text-description italic">
@@ -222,7 +229,7 @@ export const OllamaProvider = ({ showModelOptions, isPopup, currentMode }: Ollam
 					quickstart guide.
 				</VSCodeLink>{" "}
 				<span style={{ color: "var(--vscode-errorForeground)" }}>
-					(<span style={{ fontWeight: 500 }}>Note:</span> Cline uses complex prompts, so behavior can vary across
+					(<span style={{ fontWeight: 500 }}>Note:</span> Makerrr Bot uses complex prompts, so behavior can vary across
 					models. Less capable models may not work as expected.)
 				</span>
 			</p>

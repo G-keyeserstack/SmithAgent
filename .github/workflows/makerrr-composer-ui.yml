@@ -11,8 +11,10 @@ on:
       - "apps/vscode/src/shared/__tests__/context-mentions.test.ts"
       - "apps/vscode/src/services/telemetry/TelemetryService.ts"
       - "apps/vscode/webview-ui/src/utils/context-mentions.ts"
-      - "apps/vscode/webview-ui/src/utils/__tests__/context-mentions.test.ts"
+      - "apps/vscode/webview-ui/src/utils/__tests__/context-mentions.test.ts src/components/chat/SubagentStatusRow.test.tsx"
       - "apps/vscode/webview-ui/src/components/chat/ContextMenu.tsx"
+      - "apps/vscode/webview-ui/src/components/chat/SubagentStatusRow.tsx"
+      - "apps/vscode/webview-ui/src/components/chat/SubagentStatusRow.test.tsx"
 
       - "apps/vscode/webview-ui/src/services/**"
       - ".github/workflows/makerrr-composer-ui.yml"

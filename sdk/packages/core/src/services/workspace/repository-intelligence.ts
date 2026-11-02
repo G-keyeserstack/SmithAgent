@@ -152,6 +152,7 @@ export interface SemanticSearchOptions {
 	embeddingProvider?: EmbeddingProvider;
 	topK?: number;
 	maxFiles?: number;
+	maxChunks?: number;
 }
 
 export interface CodeSearchResult {
@@ -211,7 +212,8 @@ function cosineSimilarity(left: number[], right: number[]): number {
 	return leftNorm === 0 || rightNorm === 0 ? 0 : dot / Math.sqrt(leftNorm * rightNorm);
 }
 
-async function readCodeChunks(cwd: string, maxFiles: number): Promise<CodeChunk[]> {
+async function readCodeChunks(cwd: string, maxFiles: number, maxChunks = MAX_CHUNKS): Promise<CodeChunk[]> {
+	const boundedMaxChunks = Math.max(1, Math.min(maxChunks, MAX_CHUNKS));
 	const indexed = await getFileIndex(cwd);
 	const candidates = [...indexed].filter(isIndexable).sort().slice(0, maxFiles);
 	const chunks: CodeChunk[] = [];
@@ -222,12 +224,12 @@ async function readCodeChunks(cwd: string, maxFiles: number): Promise<CodeChunk[
 			const content = await readFile(absolutePath, "utf8");
 			if (Buffer.byteLength(content, "utf8") > MAX_FILE_BYTES || content.includes("\0")) continue;
 			chunks.push(...chunkFile(relativePath, content));
-			if (chunks.length >= MAX_CHUNKS) break;
+			if (chunks.length >= boundedMaxChunks) break;
 		} catch {
 			// Ignore files removed or made unreadable during indexing.
 		}
 	}
-	return chunks.slice(0, MAX_CHUNKS);
+	return chunks.slice(0, boundedMaxChunks);
 }
 
 /**
@@ -244,7 +246,11 @@ export async function searchWorkspaceCode(
 	const normalizedQuery = query.trim();
 	if (!normalizedQuery) return { mode: options.embeddingProvider ? "semantic" : "lexical", results: [] };
 	const topK = Math.max(1, Math.min(options.topK ?? 10, 50));
-	const chunks = await readCodeChunks(cwd, Math.max(1, Math.min(options.maxFiles ?? MAX_FILES, MAX_FILES)));
+	const chunks = await readCodeChunks(
+		cwd,
+		Math.max(1, Math.min(options.maxFiles ?? MAX_FILES, MAX_FILES)),
+		options.maxChunks,
+	);
 	if (chunks.length === 0) return { mode: options.embeddingProvider ? "semantic" : "lexical", results: [] };
 
 	if (options.embeddingProvider) {

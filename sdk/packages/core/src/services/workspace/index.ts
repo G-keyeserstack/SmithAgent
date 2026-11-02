@@ -17,3 +17,4 @@ export type {
 	SemanticSearchOptions,
 } from "./repository-intelligence";
 export { buildRepositoryMap, searchWorkspaceCode } from "./repository-intelligence";
+export { OllamaEmbeddingProvider, type OllamaEmbeddingProviderOptions } from "./ollama-embedding-provider";
