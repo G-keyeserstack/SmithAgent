@@ -9,8 +9,10 @@ on:
     workflow_dispatch:
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-    cancel-in-progress: true
+    # Keep the complete OS matrix for a commit. A new PR event must not cancel
+    # Linux/macOS/Windows jobs halfway through their validation.
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ github.sha }}
+    cancel-in-progress: false
 
 permissions:
     contents: read
