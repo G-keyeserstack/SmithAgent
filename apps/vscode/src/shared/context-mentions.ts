@@ -59,6 +59,7 @@ export const mentionRegex = new RegExp(
 		`|[a-f0-9]{7,40}\\b` + // Git commit hashes
 		`|problems\\b` + // Exact word 'problems'
 		`|terminal\\b` + // Exact word 'terminal'
+		`|codebase\\b` + // Repository code search
 		`|git-changes\\b` + // Exact word 'git-changes'
 		`)` +
 		`(?=[.,;:!?()]*(?=[\\s\\r\\n]|$))`, // Lookahead for trailing punctuation (multiple allowed)
