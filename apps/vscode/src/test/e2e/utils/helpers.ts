@@ -400,8 +400,10 @@ export const e2e = test
 						CLINE_ENVIRONMENT: "local",
 						// Prevent OAuth E2E from launching a browser that can outlive VS Code on Linux.
 						CLINE_CAPTURE_BROWSER: "true",
-						CLINE_DIR: clineTestDir, // Isolate test data from user's ~/.cline
-						CLINE_DATA_DIR: clineDataDir, // Keep SDK/shared storage off the user's real Cline data dir
+						MAKERRR_DIR: clineTestDir, // Isolate test data from the user's Makerrr home.
+						MAKERRR_DATA_DIR: clineDataDir, // Keep SDK/shared storage off the user's real Makerrr data dir.
+						CLINE_DIR: clineTestDir, // Legacy Cline compatibility for upstream extension paths.
+						CLINE_DATA_DIR: clineDataDir, // Legacy Cline compatibility for upstream extension paths.
 						GRPC_RECORDER_FILE_NAME: E2ETestHelper.generateTestFileName(testInfo.title, testInfo.project.name),
 						// GRPC_RECORDER_ENABLED: "true",
 						// GRPC_RECORDER_TESTS_FILTERS_ENABLED: "true"
