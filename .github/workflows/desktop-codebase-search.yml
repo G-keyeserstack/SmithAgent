@@ -60,7 +60,8 @@ jobs:
         run: bunx --bun vitest run --config vitest.config.ts src/hosts/vscode/codebase-search.test.ts
 
       - name: Test SDK repository intelligence
-        run: bunx --bun vitest run --config sdk/packages/core/vitest.config.ts sdk/packages/core/src/services/workspace/repository-intelligence.test.ts
+        working-directory: sdk/packages/core
+        run: bunx --bun vitest run --config vitest.config.ts src/services/workspace/repository-intelligence.test.ts
 
       - name: Lint desktop codebase search
         working-directory: apps/vscode
