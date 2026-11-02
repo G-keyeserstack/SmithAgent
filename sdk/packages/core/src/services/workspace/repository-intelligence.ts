@@ -36,7 +36,7 @@ const LANGUAGE_BY_EXTENSION: Record<string, string> = {
 };
 
 function isIndexable(relativePath: string): boolean {
-	const normalized = relativePath.replace(/\/g, "/");
+	const normalized = relativePath.replace(/\\/g, "/");
 	const segments = normalized.split("/");
 	return (
 		!SENSITIVE_FILE.test(normalized) &&

@@ -2,7 +2,7 @@ import * as vscode from "vscode"
 import type { Controller } from "@/core/controller"
 import { buildApiHandlerWithHostContext } from "@/sdk/sdk-api-handler"
 import { Logger } from "@/shared/services/Logger"
-import { createTabCompletionPrompt, normalizeTabCompletion } from "./tab-completion-prompt"
+import { createTabCompletionPrompt, normalizeTabCompletion } from "@/integrations/editor/tab-completion-prompt"
 
 const SUPPORTED_LANGUAGES = new Set([
 	"c",

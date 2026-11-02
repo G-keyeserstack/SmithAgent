@@ -1,0 +1,54 @@
+name: MCP OAuth Persistence
+
+on:
+  pull_request:
+    paths:
+      - "apps/vscode/src/services/mcp/McpOAuthManager.ts"
+      - "apps/vscode/src/services/mcp/McpOAuthManager.test.ts"
+      - ".github/workflows/mcp-oauth-persistence.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/vscode/src/services/mcp/McpOAuthManager.ts"
+      - "apps/vscode/src/services/mcp/McpOAuthManager.test.ts"
+      - ".github/workflows/mcp-oauth-persistence.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  oauth-persistence:
+    name: MCP OAuth persistence regression tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build local SDK workspace packages
+        run: bun run build:sdk
+
+      - name: Run MCP OAuth persistence tests
+        working-directory: apps/vscode
+        run: bunx --bun vitest run --config vitest.config.ts src/services/mcp/McpOAuthManager.test.ts
+
+      - name: Typecheck the VS Code host and webview
+        working-directory: apps/vscode
+        run: bun run check-types
+
+      - name: Lint MCP OAuth changes
+        working-directory: apps/vscode
+        run: bunx --bun @biomejs/biome check --config-path biome.jsonc --diagnostic-level=error src/services/mcp/McpOAuthManager.ts src/services/mcp/McpOAuthManager.test.ts

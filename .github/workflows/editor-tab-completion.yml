@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "apps/vscode/src/integrations/editor/tab-completion-*"
+      - "apps/vscode/src/hosts/vscode/tab-completion-provider.ts"
       - "apps/vscode/src/extension.ts"
       - "apps/vscode/package.json"
       - ".github/workflows/editor-tab-completion.yml"
@@ -53,4 +54,4 @@ jobs:
 
       - name: Lint changed editor files
         working-directory: apps/vscode
-        run: bunx --bun @biomejs/biome check --config-path biome.jsonc --diagnostic-level=error src/extension.ts src/integrations/editor/tab-completion-provider.ts src/integrations/editor/tab-completion-prompt.ts src/integrations/editor/tab-completion-prompt.test.ts
+        run: bunx --bun @biomejs/biome check --config-path biome.jsonc --diagnostic-level=error src/extension.ts src/hosts/vscode/tab-completion-provider.ts src/integrations/editor/tab-completion-prompt.ts src/integrations/editor/tab-completion-prompt.test.ts
