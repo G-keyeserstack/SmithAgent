@@ -236,8 +236,11 @@ export function Workbench({ surface, compact = false }: { surface: Surface; comp
               <button type="button" onClick={() => api.composer("/security-audit", surface)} className="h-11 border border-line px-3 text-sm">
                 /security-audit
               </button>
-              <button type="button" onClick={() => api.composer("/write-tests", surface)} className="h-11 border border-line px-3 text-sm">
-                /write-tests
+              <button type="button" onClick={() => setHeard(api.sandboxRun(surface))} className="h-11 border border-line px-3 text-sm">
+                Sandbox
+              </button>
+              <button type="button" onClick={() => setHeard(api.delegateTests(surface))} className="h-11 border border-line px-3 text-sm">
+                Subagent
               </button>
             </div>
             {heard ? <p className="text-xs text-mute">{heard}</p> : null}

@@ -14,11 +14,12 @@ import {
   TEST_SOURCE,
   type ModelId,
   type PlanId,
+  type Region,
   type ReviewNote,
 } from "@/lib/plans";
 
 export type { ModelId };
-export type Mode = "plan" | "act";
+export type Mode = "plan" | "act" | "ask";
 export type Column = "queued" | "running" | "held" | "done";
 export type ShellStatus = "pending" | "approved" | "denied";
 export type Surface = "cloud" | "desktop" | "ide" | "cli" | "sdk";
@@ -84,11 +85,24 @@ export type Account = {
   signedIn: boolean;
   name: string;
   planId: PlanId;
+  region: Region;
   requestsUsed: number;
   privacy: boolean;
   autoRun: boolean;
   network: boolean;
   mcp: boolean;
+  privateDeploy: boolean;
+};
+
+export type FleetJob = {
+  id: string;
+  title: string;
+  brief: string;
+  column: Column;
+  mode: Mode;
+  branch: string;
+  files: ProjectFile[];
+  surface: Surface;
 };
 
 export type ChatLine = { id: string; role: "you" | "agent"; text: string };
@@ -110,6 +124,7 @@ type AgentState = {
   session: Session;
   account: Account;
   project: Project;
+  fleet: FleetJob[];
   calls: CallLog[];
   startJob: (surface: Surface) => string;
   setModel: (id: ModelId, surface: Surface) => string;
@@ -126,6 +141,12 @@ type AgentState = {
   signIn: (name: string) => void;
   signOut: () => void;
   setPlan: (id: PlanId) => string;
+  setRegion: (region: Region) => void;
+  spawnAgent: (title: string, surface: Surface) => string;
+  focusAgent: (id: string, surface: Surface) => string;
+  sandboxRun: (surface: Surface) => string;
+  printState: (surface: Surface) => string;
+  delegateTests: (surface: Surface) => string;
   updateFile: (path: string, text: string) => void;
   openFile: (path: string) => void;
   setRules: (rules: string) => void;
@@ -135,7 +156,7 @@ type AgentState = {
   runReview: (surface: Surface) => string;
   indexRepo: (surface: Surface) => string;
   installRule: (pack: string, surface: Surface) => string;
-  setFlag: (key: "privacy" | "autoRun" | "network" | "mcp", value: boolean) => string;
+  setFlag: (key: "privacy" | "autoRun" | "network" | "mcp" | "privateDeploy", value: boolean) => string;
   readFile: (surface: Surface) => string;
   composer: (prompt: string, surface: Surface) => string;
   setHook: (key: "formatHook" | "secretHook", value: boolean) => void;
@@ -173,12 +194,14 @@ function freshAccount(): Account {
   return {
     signedIn: true,
     name: "Johannesburg desk",
-    planId: "premium",
+    planId: "pro",
+    region: "za",
     requestsUsed: 0,
     privacy: false,
     autoRun: false,
     network: true,
     mcp: true,
+    privateDeploy: false,
   };
 }
 
@@ -284,6 +307,7 @@ export const useAgent = create<AgentState>()(
         session: freshSession(),
         account: freshAccount(),
         project: freshProject(),
+        fleet: [],
         calls: [],
         startJob: (surface) => {
           const blocked = gate(surface, "agent.startJob()");
@@ -344,7 +368,11 @@ export const useAgent = create<AgentState>()(
           push(
             surface,
             `agent.setMode("${mode}")`,
-            mode === "act" ? "Act can accept the diff and approve the shell." : "Plan only. The diff and shell stay locked.",
+            mode === "act"
+              ? "Agent mode can edit files and approve the shell."
+              : mode === "ask"
+                ? "Ask is read-only. It will not change a file."
+                : "Plan only. The diff and shell stay locked.",
           );
         },
         openDiff: (surface) => {
@@ -599,8 +627,12 @@ export const useAgent = create<AgentState>()(
         },
         setFlag: (key, value) => {
           const plan = planById(get().account.planId);
-          if ((key === "autoRun" || key === "network" || key === "mcp") && !plan.controls) {
-            return "Those controls are on Enterprise.";
+          if ((key === "autoRun" || key === "network" || key === "mcp" || key === "privateDeploy") && !plan.controls) {
+            return "Those controls are on Corporate Scale and Enterprise.";
+          }
+          if (key === "privateDeploy" && value) {
+            set({ account: { ...get().account, privateDeploy: true, network: false } });
+            return "Private deployment is on. The shell stays on this desk.";
           }
           set({ account: { ...get().account, [key]: value } });
           return "Saved.";
@@ -651,16 +683,17 @@ export const useAgent = create<AgentState>()(
             push(surface, "agent.composer()", result);
             return result;
           }
-          if (get().session.mode === "plan") {
-            const hits = project.indexed
-              ? searchProject(project.files, project.rules, project.notepad, text)
-              : [];
+          if (get().session.mode !== "act") {
+            const hits = searchProject(project.files, project.rules, project.notepad, text);
             const where = hits.length
-              ? hits.map((hit) => `${hit.path}:${hit.line}`).join(", ")
-              : "Index the repo if you want file hits.";
-            const result = `Plan: ${text}\nI will not edit until you switch to Act. ${where}`;
+              ? hits.map((hit) => `${hit.path}:${hit.line} ${hit.text}`).join("\n")
+              : "No matching line.";
+            const result =
+              get().session.mode === "ask"
+                ? `Ask (no edits)\n${where}`
+                : `Plan: ${text}\nSwitch to Agent before a file changes.\n${where}`;
             talk("agent", result);
-            push(surface, "agent.composer()", "Plan only.");
+            push(surface, "agent.composer()", get().session.mode === "ask" ? "Ask only." : "Plan only.");
             return result;
           }
           const blocked = gate(surface, "agent.composer()");
@@ -714,6 +747,172 @@ export const useAgent = create<AgentState>()(
           push(surface, "agent.composer()", result);
           return result;
         },
+        setRegion: (region) => {
+          set({ account: { ...get().account, region } });
+        },
+        spawnAgent: (title, surface) => {
+          const plan = planById(get().account.planId);
+          if (!plan.cloud) {
+            const detail = "Parallel cloud agents start on Pro.";
+            set({ project: { ...get().project, notice: detail } });
+            return detail;
+          }
+          const running =
+            (get().session.column === "running" || get().session.column === "queued" ? 1 : 0) +
+            get().fleet.filter((job) => job.column === "running" || job.column === "queued").length;
+          if (running >= plan.parallel) {
+            const detail = `${plan.name} runs ${plan.parallel} agent${plan.parallel === 1 ? "" : "s"} at a time.`;
+            set({ project: { ...get().project, notice: detail } });
+            return detail;
+          }
+          const current = get().session;
+          const project = get().project;
+          const saved: FleetJob = {
+            id: current.id,
+            title: current.title,
+            brief: current.brief,
+            column: current.column,
+            mode: current.mode,
+            branch: current.id,
+            files: project.files.map((file) => ({ ...file })),
+            surface: current.surface,
+          };
+          const id = `agent-${Date.now().toString(36)}`;
+          const webhook = /webhook/i.test(title);
+          const files = freshFiles().map((file) =>
+            file.path === PAY_PATH && !webhook ? { ...file, text: applyIdempotency(file.text) } : file,
+          );
+          const nextFiles = webhook
+            ? [...files, { path: WEBHOOK_PATH, text: polish(WEBHOOK_SOURCE, true) }]
+            : files;
+          set({
+            fleet: [saved, ...get().fleet.filter((job) => job.id !== current.id)].slice(0, 8),
+            session: {
+              ...freshSession(),
+              id,
+              title: title.trim() || "Parallel agent",
+              brief: `Branch ${id}. This copy does not overwrite the other agent.`,
+              column: "running",
+              mode: "act",
+              surface,
+              openDiff: true,
+              diffAccepted: true,
+            },
+            project: {
+              ...project,
+              files: nextFiles,
+              activePath: webhook ? WEBHOOK_PATH : PAY_PATH,
+              notice: `${title.trim() || "Parallel agent"} is running on its own files.`,
+              reviews: reviewFile(fileByPath(nextFiles, PAY_PATH).text),
+            },
+          });
+          push(surface, "agent.spawn()", id);
+          return id;
+        },
+        focusAgent: (id, surface) => {
+          if (id === get().session.id) return "Already on this agent.";
+          const job = get().fleet.find((item) => item.id === id);
+          if (!job) return "No agent with that id.";
+          const current = get().session;
+          const project = get().project;
+          const saved: FleetJob = {
+            id: current.id,
+            title: current.title,
+            brief: current.brief,
+            column: current.column,
+            mode: current.mode,
+            branch: current.id,
+            files: project.files.map((file) => ({ ...file })),
+            surface,
+          };
+          set({
+            fleet: [saved, ...get().fleet.filter((item) => item.id !== id && item.id !== current.id)].slice(0, 8),
+            session: {
+              ...current,
+              id: job.id,
+              title: job.title,
+              brief: job.brief,
+              column: job.column,
+              mode: job.mode,
+              surface,
+              openDiff: true,
+              diffAccepted: fileByPath(job.files, PAY_PATH).text.includes("idempotencyKey"),
+            },
+            project: {
+              ...project,
+              files: job.files,
+              activePath: PAY_PATH,
+              reviews: reviewFile(fileByPath(job.files, PAY_PATH).text),
+              notice: `Focused ${job.title}.`,
+            },
+          });
+          push(surface, "agent.focus()", job.title);
+          return job.title;
+        },
+        sandboxRun: (surface) => {
+          const plan = planById(get().account.planId);
+          if (!plan.sandbox) return "The sandbox is on Pro and above.";
+          if (!get().account.network && !get().account.privateDeploy) {
+            return "Network is off, and private deployment is not the reason. Turn network on or use a corporate plan.";
+          }
+          const file = fileByPath(get().project.files, PAY_PATH);
+          const proposed = applyIdempotency(file.text);
+          const result = runCheckoutTest(proposed, get().project.rules);
+          const output = `sandbox (file not written)\n${result.output}`;
+          set({
+            session: { ...get().session, surface, shellOutput: output, shellStatus: "pending" },
+          });
+          push(surface, "agent.sandbox()", output);
+          return output;
+        },
+        printState: (surface) => {
+          const session = get().session;
+          const text = JSON.stringify(
+            {
+              id: session.id,
+              column: session.column,
+              mode: session.mode,
+              model: session.modelId,
+              plan: get().account.planId,
+              idempotent: fileByPath(get().project.files, PAY_PATH).text.includes("idempotencyKey"),
+              fleet: get().fleet.map((job) => ({ id: job.id, title: job.title, column: job.column })),
+            },
+            null,
+            2,
+          );
+          set({ project: { ...get().project, notice: text } });
+          push(surface, "agent.print()", text);
+          return text;
+        },
+        delegateTests: (surface) => {
+          const plan = planById(get().account.planId);
+          if (!plan.subagents) return "Subagents start on Pro Plus.";
+          if (get().session.mode !== "act") return "Switch to Agent before the test writer edits.";
+          const project = get().project;
+          const test = fileByPath(project.files, TEST_PATH);
+          const extra = test.text.includes("idempotencyKey is required")
+            ? test.text
+            : `${test.text.trim()}\n\ntest("idempotencyKey is required", () => {\n  expect(true).toBe(true)\n})\n`;
+          const files = project.files.some((file) => file.path === TEST_PATH)
+            ? project.files.map((file) => (file.path === TEST_PATH ? { ...file, text: extra } : file))
+            : [...project.files, { path: TEST_PATH, text: extra }];
+          const card: FleetJob = {
+            id: `sub-${Date.now().toString(36)}`,
+            title: "Test writer",
+            brief: "Subagent. Only the test file.",
+            column: "done",
+            mode: "act",
+            branch: "subagent/tests",
+            files,
+            surface,
+          };
+          set({
+            fleet: [card, ...get().fleet].slice(0, 8),
+            project: { ...project, files, activePath: TEST_PATH, notice: "Test writer added a check and stopped." },
+          });
+          push(surface, "agent.delegate()", "Test writer finished.");
+          return "Test writer finished.";
+        },
       };
     },
     {
@@ -726,6 +925,7 @@ export const useAgent = create<AgentState>()(
           ...saved,
           session: { ...current.session, ...saved.session },
           account: { ...current.account, ...saved.account },
+          fleet: saved.fleet ?? current.fleet,
           project: {
             ...current.project,
             ...saved.project,

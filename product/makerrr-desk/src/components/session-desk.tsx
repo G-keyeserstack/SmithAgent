@@ -68,7 +68,11 @@ export function ShellCard({ surface }: { surface: Surface }) {
         <pre className="mt-3 whitespace-pre-wrap text-xs text-ink">{session.shellOutput}</pre>
       ) : (
         <p className="mt-3 text-xs text-mute">
-          {session.mode === "plan" ? "Plan mode will not run this." : "Waiting for approval."}
+          {session.mode === "plan"
+            ? "Plan mode will not run this."
+            : session.mode === "ask"
+              ? "Ask mode will not run this."
+              : "Waiting for approval."}
         </p>
       )}
     </section>
@@ -117,17 +121,21 @@ export function ModeSwitch({ surface }: { surface: Surface }) {
   const setMode = useAgent((state) => state.setMode);
   return (
     <div className="flex h-11 overflow-hidden border border-line">
-      {(["plan", "act"] as const).map((value) => (
+      {(
+        [
+          ["agent", "act"],
+          ["plan", "plan"],
+          ["ask", "ask"],
+        ] as const
+      ).map(([label, value]) => (
         <button
           key={value}
           type="button"
           aria-pressed={mode === value}
           onClick={() => setMode(value, surface)}
-          className={
-            mode === value ? "bg-ink px-4 text-sm text-bone" : "bg-paper px-4 text-sm text-ink"
-          }
+          className={mode === value ? "bg-ink px-3 text-sm text-bone" : "bg-paper px-3 text-sm text-ink"}
         >
-          {value === "plan" ? "Plan" : "Act"}
+          {label === "agent" ? "Agent" : label === "plan" ? "Plan" : "Ask"}
         </button>
       ))}
     </div>

@@ -14,7 +14,7 @@ function EnterprisePage() {
   const [note, setNote] = useState("");
   const [sent, setSent] = useState("");
 
-  function toggle(key: "privacy" | "autoRun" | "network" | "mcp") {
+  function toggle(key: "privacy" | "autoRun" | "network" | "mcp" | "privateDeploy") {
     const result = setFlag(key, !account[key]);
     setSent(result);
   }
@@ -33,6 +33,7 @@ function EnterprisePage() {
               ["autoRun", "Auto-run", "After a cloud or agent start in Act, run the test without a second click."],
               ["network", "Network", "Allow the test command. Off keeps the shell closed."],
               ["mcp", "MCP", "Allow file reads and writes from the agent."],
+              ["privateDeploy", "Private deployment", "Keeps the shell on this desk. Quoted separately from the seat price."],
             ] as const
           ).map(([key, label, body]) => (
             <button
@@ -50,7 +51,7 @@ function EnterprisePage() {
           ))}
         </div>
         {sent ? <p className="mt-4 text-sm">{sent}</p> : null}
-        <button type="button" onClick={() => setPlan("enterprise")} className="mt-6 h-11 bg-ink px-4 text-sm text-bone">
+        <button type="button" onClick={() => setPlan("corporate-enterprise")} className="mt-6 h-11 bg-ink px-4 text-sm text-bone">
           Use Enterprise on this desk
         </button>
         <form

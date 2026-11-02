@@ -18,7 +18,7 @@ function CliPage() {
   const [line, setLine] = useState("");
   const [history, setHistory] = useState<string[]>([
     "makerrr — same agent as Desktop, IDE, Cloud, and the SDK",
-    "try: start · plan · act · ask · diff · approve · review · hold · finish · status",
+    "try: agent · plan · ask · sandbox · print · fanout · start",
   ]);
 
   function push(text: string) {
@@ -33,13 +33,26 @@ function CliPage() {
     const arg = rest.join(" ");
     const key = command.toLowerCase();
     if (key === "start") {
-      api.startJob("cli");
-      push("started Johannesburg session");
-    } else if (key === "plan" || key === "act") {
-      api.setMode(key, "cli");
-      push(`mode ${key}`);
-    } else if (key === "ask" || key === "edit") {
-      push(api.composer(arg || "Add an idempotency key on the Rosebank charge", "cli"));
+      push(api.startJob("cli"));
+    } else if (key === "agent" || key === "act") {
+      api.setMode("act", "cli");
+      push(arg ? api.composer(arg, "cli") : "mode agent");
+    } else if (key === "plan") {
+      api.setMode("plan", "cli");
+      push(arg ? api.composer(arg, "cli") : "mode plan");
+    } else if (key === "ask") {
+      api.setMode("ask", "cli");
+      push(api.composer(arg || "Where is the charge?", "cli"));
+    } else if (key === "sandbox") {
+      push(api.sandboxRun("cli"));
+    } else if (key === "print") {
+      push(api.printState("cli"));
+    } else if (key === "fanout") {
+      push(api.spawnAgent(arg || "Webhook handler", "cli"));
+    } else if (key === "focus") {
+      push(api.focusAgent(arg, "cli"));
+    } else if (key === "delegate") {
+      push(api.delegateTests("cli"));
     } else if (key === "review") {
       push(api.runReview("cli"));
     } else if (key === "diff") {
@@ -76,7 +89,7 @@ function CliPage() {
     } else if (key === "status") {
       push(`${session.column} · ${session.mode} · ${session.location} · ${modelById(session.modelId).label}`);
     } else if (key === "help") {
-      push("start plan act ask diff accept approve deny review checkpoint restore hold finish resume model status");
+      push("agent plan ask sandbox print fanout focus delegate start diff accept approve deny review hold finish model status");
     } else {
       push(`unknown command: ${command}`);
     }

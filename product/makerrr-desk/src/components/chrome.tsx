@@ -11,7 +11,7 @@ import {
   type ModelId,
   type Surface,
 } from "@/lib/agent-store";
-import { planById, PLANS, type PlanId } from "@/lib/plans";
+import { planById, PLANS, priceFor, type PlanId } from "@/lib/plans";
 
 const PRODUCT = [
   { to: "/cloud", label: "Agents", note: "The Johannesburg session" },
@@ -330,6 +330,7 @@ export function PlanCards({
   ids: PlanId[];
 }) {
   const current = useAgent((state) => state.account.planId);
+  const region = useAgent((state) => state.account.region);
   const setPlan = useAgent((state) => state.setPlan);
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -343,17 +344,24 @@ export function PlanCards({
             {plan.popular ? <span className="text-xs uppercase tracking-wide text-clay">Most popular</span> : null}
           </div>
           <p className="mt-3 text-3xl font-medium tracking-tight">
-            {plan.price}
-            <span className="text-sm text-mute">{plan.id === "teams" ? "/user/month" : plan.id === "enterprise" ? "" : "/month"}</span>
+            {priceFor(plan, region)}
+            <span className="text-sm text-mute">
+              {plan.segment === "individual"
+                ? "/month"
+                : plan.segment === "agency"
+                  ? "/developer"
+                  : "/month"}
+            </span>
           </p>
+          <p className="mt-1 text-xs text-mute">{plan.seats} seats</p>
           <p className="mt-2 text-sm text-mute">{plan.blurb}</p>
-          <p className="mt-3 text-sm">{plan.usage} usage</p>
+          <p className="mt-3 text-sm">{plan.parallel} agents at a time</p>
           <button
             type="button"
             onClick={() => setPlan(plan.id)}
             className={`mt-5 h-11 text-sm ${current === plan.id ? "border border-ink" : "bg-ink text-bone"}`}
           >
-            {current === plan.id ? "Current plan" : plan.id === "enterprise" ? "Contact sales" : `Get ${plan.name}`}
+            {current === plan.id ? "Current plan" : plan.price === "Custom" || plan.price === "Talk to us" ? "Contact sales" : `Get ${plan.name}`}
           </button>
         </article>
       ))}
