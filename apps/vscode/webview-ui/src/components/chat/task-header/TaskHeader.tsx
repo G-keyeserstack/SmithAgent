@@ -14,6 +14,7 @@ import DeleteTaskButton from "./buttons/DeleteTaskButton"
 import NewTaskButton from "./buttons/NewTaskButton"
 import OpenDiskConversationHistoryButton from "./buttons/OpenDiskConversationHistoryButton"
 import ContextWindow from "./ContextWindow"
+import { MakerrrUsageMeter } from "./MakerrrUsageMeter"
 import { highlightText } from "./Highlights"
 import TaskWorkingDirectoryBadge from "./TaskWorkingDirectoryBadge"
 
@@ -206,13 +207,14 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 									workspaceRoots={workspaceRoots}
 								/>
 							)}
-							{isCostAvailable && (
-								<div
-									className="mx-1 px-1 py-0.25 rounded-full inline-flex shrink-0 text-badge-background bg-badge-foreground/80 items-center"
-									id="price-tag">
-									<span className="text-xs sm:text-sm">${totalCost?.toFixed(4)}</span>
-								</div>
-							)}
+							<MakerrrUsageMeter
+								cacheReadTokens={cacheReads}
+								cacheWriteTokens={cacheWrites}
+								costKind={currentCloudTask ? "cloud-reported" : "estimated"}
+								costUsd={isCostAvailable ? totalCost : undefined}
+								inputTokens={tokensIn}
+								outputTokens={tokensOut}
+							/>
 						</div>
 					</div>
 					<NewTaskButton className={cn(BUTTON_CLASS, "shrink-0 mt-1")} onClick={onClose} />
