@@ -482,6 +482,9 @@ describe("plugin install command", () => {
 		expect(wrapperManifest.makerrr?.plugins?.[0]?.paths?.[0]).toContain(
 			"package/index.ts",
 		);
+		expect(wrapperManifest.cline?.plugins?.[0]?.paths).toEqual(
+			wrapperManifest.makerrr?.plugins?.[0]?.paths,
+		);
 		const packageManifest = JSON.parse(
 			readFileSync(join(result.installPath, "package", "package.json"), "utf8"),
 		) as {
