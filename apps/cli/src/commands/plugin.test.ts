@@ -429,6 +429,9 @@ describe("plugin install command", () => {
 			JSON.stringify(
 				{
 					name: "plugin-package",
+					makerrr: {
+						plugins: [{ paths: ["./index.ts"], capabilities: ["tools"] }],
+					},
 					cline: {
 						plugins: [{ paths: ["./index.ts"], capabilities: ["tools"] }],
 					},
@@ -481,6 +484,9 @@ describe("plugin install command", () => {
 		expect(wrapperManifest.makerrr?.plugins?.[0]?.paths).toHaveLength(1);
 		expect(wrapperManifest.makerrr?.plugins?.[0]?.paths?.[0]).toContain(
 			"package/index.ts",
+		);
+		expect(wrapperManifest.cline?.plugins?.[0]?.paths).toEqual(
+			wrapperManifest.makerrr?.plugins?.[0]?.paths,
 		);
 		const packageManifest = JSON.parse(
 			readFileSync(join(result.installPath, "package", "package.json"), "utf8"),

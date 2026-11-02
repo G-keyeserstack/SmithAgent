@@ -85,6 +85,9 @@ export type ParsedPluginSource =
 export type PluginInstallSourceType = "npm" | "git" | "local" | "remote";
 
 interface PluginPackageManifest {
+	makerrr?: {
+		plugins?: Array<{ paths?: string[] } | string>;
+	};
 	cline?: {
 		plugins?: Array<{ paths?: string[] } | string>;
 	};
@@ -108,11 +111,8 @@ const DEPENDENCY_FIELDS = [
 	"peerDependencies",
 ] as const;
 const WRAPPER_PACKAGE_JSON = {
-	name: "cline-installed-plugin",
+	name: "makerrr-installed-plugin",
 	private: true,
-	cline: {
-		plugins: [] as Array<{ paths: string[] }>,
-	},
 };
 
 function resolveHomePath(value: string): string {
@@ -579,16 +579,20 @@ function readPackageManifest(
 }
 
 function getManifestPaths(manifest: PluginPackageManifest | null): string[] {
-	const entries = manifest?.cline?.plugins;
-	if (!Array.isArray(entries)) {
-		return [];
-	}
-	return entries.flatMap((entry) => {
-		if (typeof entry === "string") {
-			return [entry];
-		}
-		return entry.paths ?? [];
-	});
+	const entries = [
+		...(manifest?.makerrr?.plugins ?? []),
+		...(manifest?.cline?.plugins ?? []),
+	];
+	return [
+		...new Set(
+			entries.flatMap((entry) => {
+				if (typeof entry === "string") {
+					return [entry];
+				}
+				return entry.paths ?? [];
+			}),
+		),
+	];
 }
 
 async function removeHostProvidedSdkDependencies(
@@ -736,6 +740,10 @@ async function writeWrapperManifest(
 			{
 				...WRAPPER_PACKAGE_JSON,
 				name: packageName,
+				makerrr: {
+					plugins: [{ paths: entryPaths }],
+				},
+				// Retain the legacy key so existing Cline hosts can read the wrapper.
 				cline: {
 					plugins: [{ paths: entryPaths }],
 				},
