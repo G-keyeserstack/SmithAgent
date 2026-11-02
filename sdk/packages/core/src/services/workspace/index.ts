@@ -9,11 +9,11 @@ export type {
 export { enrichPromptWithMentions } from "./mention-enricher";
 
 export type {
-\tCodeSearchResponse,
-\tCodeSearchResult,
-\tEmbeddingProvider,
-\tRepositoryMap,
-\tRepositoryMapOptions,
-\tSemanticSearchOptions,
+	CodeSearchResponse,
+	CodeSearchResult,
+	EmbeddingProvider,
+	RepositoryMap,
+	RepositoryMapOptions,
+	SemanticSearchOptions,
 } from "./repository-intelligence";
 export { buildRepositoryMap, searchWorkspaceCode } from "./repository-intelligence";
