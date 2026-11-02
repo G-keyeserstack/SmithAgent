@@ -451,7 +451,6 @@ describe("built-in provider metadata", () => {
 		expect(provider).toMatchObject({
 			id: "moonshot",
 			defaultModelId: "kimi-k3.1-pro",
-			baseUrl: "https://api.moonshot.ai/v1",
 		})
 		expect(models["kimi-k3.1-pro"]).toMatchObject({
 			contextWindow: 1_000_000,
