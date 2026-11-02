@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SiteFrame } from "@/components/chrome";
 import { HeroWindow } from "@/components/hero-window";
 import { PACKS, HUBS } from "@/lib/platform";
@@ -24,6 +24,19 @@ const OS: { id: DeskOs; label: string }[] = [
 function Home() {
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("desktop");
   const current = TABS.find((item) => item.id === tab) ?? TABS[0];
+  const demo = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = demo.current;
+    if (!video) return;
+    video.muted = true;
+    const start = () => {
+      void video.play().catch(() => undefined);
+    };
+    start();
+    video.addEventListener("canplay", start);
+    return () => video.removeEventListener("canplay", start);
+  }, []);
 
   return (
     <SiteFrame>
@@ -47,6 +60,7 @@ function Home() {
         <section className="mx-auto max-w-6xl px-4 pb-16">
           <div className="overflow-hidden rounded-2xl border border-line bg-black">
             <video
+              ref={demo}
               className="aspect-video w-full"
               autoPlay
               muted
