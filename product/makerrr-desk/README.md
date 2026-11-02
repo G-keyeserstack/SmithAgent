@@ -18,7 +18,7 @@ Voice: **Voice** listens and runs the task. The reply is spoken back. **Read rep
 ## Run
 
 ```bash
-cd apps/desk
+cd product/makerrr-desk
 npm install
 npm run dev
 ```
