@@ -66,20 +66,16 @@ function readOAuthState(serverName: string, settingsPath: string): McpServerOAut
  * Scoped write of one server's OAuth state. The updater runs against the
  * server's current state under a cross-process lock and returns the next state;
  * concurrent writers are never clobbered wholesale. Lock acquisition yields the
- * event loop. Failures are logged but non-fatal, so a missing server entry
- * (e.g. deleted in another window) does not crash the MCP SDK provider callbacks
- * that invoke this mid-connection.
+ * event loop. Persistence failures propagate to the caller: reporting an OAuth
+ * exchange or refresh as successful when its tokens were not saved can strand
+ * the user with an unusable session.
  */
 async function patchOAuthState(
 	serverName: string,
 	settingsPath: string,
 	updater: (current: McpServerOAuthState) => McpServerOAuthState,
 ): Promise<void> {
-	try {
-		await updateMcpServerOAuthStateAsync(serverName, updater, { filePath: settingsPath })
-	} catch (error) {
-		Logger.warn(`[McpOAuth] Failed to persist OAuth state for ${serverName}: ${error}`)
-	}
+	await updateMcpServerOAuthStateAsync(serverName, updater, { filePath: settingsPath })
 }
 
 /**
@@ -310,9 +306,14 @@ export class McpOAuthManager {
 					clientInformation: state.clientInformation ?? legacy.client_info,
 					lastAuthenticatedAt: legacy.tokens_saved_at ?? Date.now(),
 				}))
+				// Verify durable state before deleting the only recoverable copy.
+				const persisted = readOAuthState(serverName, settingsPath)
+				if (persisted.tokens?.access_token !== legacy.tokens.access_token) {
+					throw new Error(`OAuth token migration verification failed for ${serverName}`)
+				}
 			}
 
-			// Drop the migrated entry so this only happens once per server.
+			// Drop the migrated entry only after the shared settings write is verified. so this only happens once per server.
 			delete secrets[serverHash]
 			StateManager.get().setSecret("mcpOAuthSecrets", Object.keys(secrets).length ? JSON.stringify(secrets) : undefined)
 		} catch (error) {
