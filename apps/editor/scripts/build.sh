@@ -109,7 +109,7 @@ if (!source.includes(marker)) {
   throw new Error("Pinned VSCodium prepare_vscode.sh no longer contains the expected preinstall hook");
 }
 if (!source.includes(install)) {
-  source = source.replace(marker, install + "\\n\\n" + marker);
+  source = source.replace(marker, install + "\n\n" + marker);
   fs.writeFileSync(preparePath, source);
 }
 NODE
