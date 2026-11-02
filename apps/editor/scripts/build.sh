@@ -66,6 +66,8 @@ cp "$EDITOR_DIR/product.json" "$UPSTREAM_DIR/product.json"
   export MS_TAG=""
   export MS_COMMIT=""
   export GITHUB_ENV=""
+  export BUILD_SOURCEVERSION=""
+  export npm_config_arch=""
   export DISABLE_UPDATE="yes"
   export OS_NAME VSCODE_PLATFORM VSCODE_ARCH
   export APP_NAME="Makerrr"
@@ -76,8 +78,12 @@ cp "$EDITOR_DIR/product.json" "$UPSTREAM_DIR/product.json"
   export ASSETS_REPOSITORY="G-keyeserstack/SmithAgent"
   export TUNNEL_APP_NAME="makerrr-tunnel"
   export MAX_OLD_SPACE_SIZE="${MAX_OLD_SPACE_SIZE:-8192}"
+  # The upstream scripts do not run with Bash nounset enabled. Keep errexit
+  # and pipefail, but disable -u only while sourcing the pinned upstream code.
+  set +u
   . ./get_repo.sh
   . ./build.sh
+  set -u
 )
 
 APP_DIR="$UPSTREAM_DIR/VSCode-$VSCODE_PLATFORM-$VSCODE_ARCH"
