@@ -96,6 +96,24 @@ mv "$UPSTREAM_DIR/product.json.makerrr" "$UPSTREAM_DIR/product.json"
   # and pipefail, but disable -u only while sourcing the pinned upstream code.
   set +u
   . ./get_repo.sh
+
+  # VS Code invokes node-gyp from build/npm/gyp before its main npm ci.
+  # The root Bun install does not populate this isolated, lockfile-pinned package.
+  node - "$UPSTREAM_DIR/prepare_vscode.sh" <<'NODE'
+const fs = require("node:fs");
+const preparePath = process.argv[2];
+let source = fs.readFileSync(preparePath, "utf8");
+const marker = "node build/npm/preinstall.ts";
+const install = "npm ci --prefix build/npm/gyp --ignore-scripts --no-audit --no-fund";
+if (!source.includes(marker)) {
+  throw new Error("Pinned VSCodium prepare_vscode.sh no longer contains the expected preinstall hook");
+}
+if (!source.includes(install)) {
+  source = source.replace(marker, install + "\\n\\n" + marker);
+  fs.writeFileSync(preparePath, source);
+}
+NODE
+
   . ./build.sh
   set -u
 )
