@@ -13,12 +13,12 @@ import { isBinaryFile } from "isbinaryfile"
 import * as path from "path"
 import { HostProvider } from "@/hosts/host-provider"
 import { getLatestTerminalOutput } from "@/hosts/vscode/terminal/get-latest-output"
+import { getProviderSettingsManager } from "@/sdk/provider-migration"
 import { ShowMessageType } from "@/shared/proto/host/window"
 import { DiagnosticSeverity } from "@/shared/proto/index.cline"
 import { Logger } from "@/shared/services/Logger"
 import { isDirectory } from "@/utils/fs"
 import { getCwd } from "@/utils/path"
-import { getProviderSettingsManager } from "@/sdk/provider-migration"
 import { FileContextTracker } from "../context/context-tracking/FileContextTracker"
 import type { WorkspaceRootManager } from "../workspace"
 
@@ -154,7 +154,7 @@ export async function parseMentions(
 			try {
 				const embeddingProvider = resolveLocalEmbeddingProvider()
 				let embeddingFallback = false
-				let searchResult
+				let searchResult: Awaited<ReturnType<typeof searchWorkspaceCode>>
 				if (embeddingProvider) {
 					try {
 						searchResult = await searchWorkspaceCode(cwd, query, {
