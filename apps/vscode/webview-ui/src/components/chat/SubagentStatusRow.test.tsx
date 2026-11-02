@@ -74,7 +74,7 @@ describe("SubagentStatusRow Makerrr Bot identity", () => {
 	it("shows live per-agent tool, token, cost and latest-action usage", () => {
 		const item = createStatusItem({ latestToolCall: "Editing src/api.ts" })
 		render(<SubagentStatusRow isLast message={createSubagentStatusMessage(createStatus([item]))} />)
-		expect(screen.getByText("3 tools called · 1,650 tokens · $0.0125")).toBeTruthy()
+		expect(screen.getByText("3 tools · 1,200 input / 450 output · 1,650 context · $0.01")).toBeTruthy()
 		expect(screen.getByText("Editing src/api.ts")).toBeTruthy()
 	})
 
@@ -116,7 +116,7 @@ describe("SubagentStatusRow Makerrr Bot identity", () => {
 		} as ClineMessage
 		render(<SubagentStatusRow message={message} isLast />)
 		expect(screen.getByText("Makerrr Bot wants to delegate to a subagent:")).toBeTruthy()
-		expect(screen.getByText("3 tools called · 1,600 tokens · $0.04")).toBeTruthy()
+		expect(screen.getByText("3 tools · 1,200 input / 400 output · 1,600 context · $0.04")).toBeTruthy()
 	})
 
 	it("reports malformed subagent messages without crashing", () => {
