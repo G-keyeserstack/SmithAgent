@@ -47,7 +47,6 @@ cp "$EDITOR_DIR/product.json" "$UPSTREAM_DIR/product.json"
 # Build the agent extension first. The packaged editor ships with it enabled.
 (
   cd "$ROOT/apps/vscode"
-  bun run package
   bunx --bun @vscode/vsce package --no-dependencies --out "$BUILD_DIR/makerrr-agent.vsix"
 )
 
@@ -62,6 +61,12 @@ cp "$EDITOR_DIR/product.json" "$UPSTREAM_DIR/product.json"
   export SKIP_ASSETS="yes"
   export VSCODE_QUALITY="stable"
   export VSCODE_SKIP_NODE_VERSION_CHECK="yes"
+  export VSCODE_LATEST="no"
+  export RELEASE_VERSION=""
+  export MS_TAG=""
+  export MS_COMMIT=""
+  export GITHUB_ENV=""
+  export DISABLE_UPDATE="yes"
   export OS_NAME VSCODE_PLATFORM VSCODE_ARCH
   export APP_NAME="Makerrr"
   export APP_NAME_LC="makerrr"
