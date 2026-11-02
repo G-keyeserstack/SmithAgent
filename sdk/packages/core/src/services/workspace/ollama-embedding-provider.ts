@@ -20,6 +20,7 @@ function normalizeBaseUrl(baseUrl: string): string {
 	if (parsed.username || parsed.password) {
 		throw new Error("Ollama embedding endpoint must not contain credentials")
 	}
+	parsed.pathname = parsed.pathname.replace(/\/v1\/?$/, "") || "/"
 	return parsed.toString().replace(/\/$/, "")
 }
 
