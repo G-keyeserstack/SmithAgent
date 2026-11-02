@@ -5,6 +5,7 @@ on:
     paths:
       - "apps/vscode/webview-ui/src/components/chat/task-header/**"
       - "apps/vscode/webview-ui/src/components/chat/chat-view/**"
+      - "apps/vscode/webview-ui/src/components/chat/SubagentStatusRow*"
       - "apps/vscode/webview-ui/src/components/chat/ChatTextArea.tsx"
       - "apps/vscode/src/core/mentions/**"
       - "apps/vscode/src/shared/context-mentions.ts"
@@ -73,7 +74,7 @@ jobs:
 
       - name: Run Composer usage and checkpoint review tests
         working-directory: apps/vscode/webview-ui
-        run: bunx --bun vitest run src/components/chat/task-header/MakerrrUsageMeter.test.tsx src/components/chat/task-header/TaskChangesButton.test.tsx src/utils/__tests__/context-mentions.test.ts
+        run: bunx --bun vitest run src/components/chat/task-header/MakerrrUsageMeter.test.tsx src/components/chat/task-header/TaskChangesButton.test.tsx src/components/chat/SubagentStatusRow.test.tsx src/utils/__tests__/context-mentions.test.ts
 
       - name: Typecheck and build webview
         working-directory: apps/vscode/webview-ui
