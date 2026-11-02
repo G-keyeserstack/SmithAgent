@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Makerrr">
+  <rect width="32" height="32" rx="6" fill="#f3f0e7"/>
+  <g fill="none" stroke="#0c0d0b" stroke-width="2" stroke-linejoin="miter" stroke-linecap="butt">
+    <rect x="4.5" y="11" width="11" height="11"/>
+    <rect x="16.5" y="13" width="11" height="11"/>
+    <path d="M9.5 11 V6.5 H22 V13"/>
+  </g>
+</svg>
