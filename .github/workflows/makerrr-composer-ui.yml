@@ -72,7 +72,7 @@ jobs:
       - name: Build local SDK workspace packages
         run: bun run build:sdk
 
-      - name: Run Composer usage and checkpoint review tests
+      - name: Run Composer usage, checkpoint review and delegation tests
         working-directory: apps/vscode/webview-ui
         run: bunx --bun vitest run src/components/chat/task-header/MakerrrUsageMeter.test.tsx src/components/chat/task-header/TaskChangesButton.test.tsx src/components/chat/SubagentStatusRow.test.tsx src/utils/__tests__/context-mentions.test.ts
 
