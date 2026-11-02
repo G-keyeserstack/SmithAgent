@@ -15,6 +15,7 @@ import NewTaskButton from "./buttons/NewTaskButton"
 import OpenDiskConversationHistoryButton from "./buttons/OpenDiskConversationHistoryButton"
 import ContextWindow from "./ContextWindow"
 import { MakerrrUsageMeter } from "./MakerrrUsageMeter"
+import { TaskChangesButton } from "./TaskChangesButton"
 import { highlightText } from "./Highlights"
 import TaskWorkingDirectoryBadge from "./TaskWorkingDirectoryBadge"
 
@@ -76,6 +77,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 		workspaceRoots,
 		platform,
 		currentCloudTask,
+		enableCheckpointsSetting,
 	} = useExtensionState()
 
 	const [isHighlightedTextExpanded, setIsHighlightedTextExpanded] = useState(false)
@@ -215,6 +217,12 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 								inputTokens={tokensIn}
 								outputTokens={tokensOut}
 							/>
+							{enableCheckpointsSetting && !currentCloudTask && (
+								<TaskChangesButton
+									enabled
+									refreshKey={`${currentTaskItem?.id ?? task.ts}:${tokensIn}:${tokensOut}:${task.partial === true}`}
+								/>
+							)}
 						</div>
 					</div>
 					<NewTaskButton className={cn(BUTTON_CLASS, "shrink-0 mt-1")} onClick={onClose} />
