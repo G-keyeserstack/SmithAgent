@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { classifyCommand, TOUR } from "@/lib/controls";
+import { PACKS, reviewPull as reviewPullText, shadowResult, triageLog } from "@/lib/platform";
 import { DOCS, polish, searchProject, WEBHOOK_PATH, WEBHOOK_SOURCE } from "@/lib/search";
 import {
   applyIdempotency,
@@ -127,6 +128,11 @@ export type Project = {
   tourStep: number;
   imageNote: string;
   themeName: string;
+  digest: string;
+  shadowLog: string;
+  prStatus: string;
+  ciNote: string;
+  hubs: Record<string, "off" | "waiting">;
 };
 
 type AgentState = {
@@ -178,6 +184,12 @@ type AgentState = {
   importSettings: (raw: string) => string;
   tourNext: () => string;
   attachImage: (name: string) => string;
+  installPack: (id: string, surface: Surface) => string;
+  connectHub: (name: string) => string;
+  runShadow: (surface: Surface) => string;
+  reviewPull: (surface: Surface) => string;
+  writeDigest: (surface: Surface) => string;
+  triageCi: (surface: Surface) => string;
 };
 
 function freshFiles(): ProjectFile[] {
@@ -243,6 +255,11 @@ function freshProject(): Project {
     tourStep: 0,
     imageNote: "",
     themeName: "",
+    digest: "",
+    shadowLog: "",
+    prStatus: "",
+    ciNote: "",
+    hubs: {},
   };
 }
 
@@ -988,6 +1005,75 @@ export const useAgent = create<AgentState>()(
           set({ project: { ...get().project, imageNote: note } });
           return note;
         },
+        installPack: (id, surface) => {
+          const pack = PACKS.find((item) => item.id === id);
+          if (!pack) return "Unknown pack.";
+          const project = get().project;
+          if (project.rules.includes(pack.body)) return `${pack.name} is already installed.`;
+          const rules = `${project.rules.trim()}\n${pack.body}\n`;
+          set({
+            project: {
+              ...project,
+              rules,
+              formatHook: id === "format-hook" ? true : project.formatHook,
+              secretHook: id === "secret-hook" ? true : project.secretHook,
+            },
+          });
+          push(surface, "marketplace.install()", pack.name);
+          return `${pack.name} installed.`;
+        },
+        connectHub: (name) => {
+          const hubs = { ...get().project.hubs, [name]: "waiting" as const };
+          set({ project: { ...get().project, hubs, notice: `${name} is waiting for a token. Nothing was stored.` } });
+          return `${name} is waiting for a token.`;
+        },
+        runShadow: (surface) => {
+          const project = get().project;
+          const output = shadowResult(project.files, project.rules);
+          const card: FleetJob = {
+            id: `shadow-${Date.now().toString(36)}`,
+            title: "Shadow workspace",
+            brief: output,
+            column: "done",
+            mode: "act",
+            branch: "shadow/checkout",
+            files: project.files.map((file) => ({ ...file })),
+            surface,
+          };
+          set({
+            fleet: [card, ...get().fleet].slice(0, 8),
+            project: { ...project, shadowLog: output },
+          });
+          push(surface, "agent.shadow()", "Shadow run finished. The editor was not changed.");
+          return output;
+        },
+        reviewPull: (surface) => {
+          const text = reviewPullText(get().project.files);
+          set({ project: { ...get().project, prStatus: text } });
+          push(surface, "agent.reviewPull()", text);
+          return text;
+        },
+        writeDigest: (surface) => {
+          const project = get().project;
+          const session = get().session;
+          const text = [
+            `Session ${session.column}.`,
+            `${get().fleet.length} worktrees.`,
+            project.prStatus || "No pull request review yet.",
+            project.shadowLog ? "A shadow run is on the board." : "No shadow run yet.",
+          ].join(" ");
+          set({ project: { ...project, digest: text } });
+          push(surface, "agent.digest()", text);
+          return text;
+        },
+        triageCi: (surface) => {
+          const project = get().project;
+          const file = fileByPath(project.files, PAY_PATH);
+          const text = triageLog(get().session.shellOutput || project.shadowLog, file.text.includes("idempotencyKey"));
+          set({ project: { ...project, ciNote: text } });
+          push(surface, "agent.triage()", text);
+          return text;
+        },
         delegateTests: (surface) => {
           const plan = planById(get().account.planId);
           if (!plan.subagents) return "Subagents start on Pro Plus.";
@@ -1044,6 +1130,11 @@ export const useAgent = create<AgentState>()(
             tourStep: saved.project?.tourStep ?? current.project.tourStep,
             imageNote: saved.project?.imageNote ?? "",
             themeName: saved.project?.themeName ?? "",
+            digest: saved.project?.digest ?? "",
+            shadowLog: saved.project?.shadowLog ?? "",
+            prStatus: saved.project?.prStatus ?? "",
+            ciNote: saved.project?.ciNote ?? "",
+            hubs: saved.project?.hubs ?? {},
           },
         };
       },
