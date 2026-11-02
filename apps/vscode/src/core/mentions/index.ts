@@ -1,3 +1,4 @@
+import { buildRepositoryMap, searchWorkspaceCode } from "@cline/core"
 import { diagnosticsToProblemsString } from "@integrations/diagnostics"
 import { extractTextFromFile } from "@integrations/misc/extract-text"
 import { openFile } from "@integrations/misc/open-file"
@@ -38,7 +39,10 @@ export async function openMention(mention?: string): Promise<void> {
 		} else {
 			openFile(absPath)
 		}
-	} else if (mention === "problems") {
+	} else if (mention === "codebase") {
+			return "Repository codebase search (see below for relevant files and repository map)"
+		}
+		if (mention === "problems") {
 		await HostProvider.workspace.openProblemsPanel({})
 	} else if (mention === "terminal") {
 		await HostProvider.workspace.openTerminalPanel({})
@@ -122,7 +126,38 @@ export async function parseMentions(
 			continue
 		}
 
-		if (mention.startsWith("http")) {
+		if (mention === "codebase") {
+			const query = text.replace(/@codebase\\b/gi, "").trim().slice(0, 500)
+			if (!query) {
+				parsedText += "\n\n<codebase_search status=\"missing-query\">Add a natural-language question after @codebase, for example: @codebase where are OAuth refresh tokens stored?</codebase_search>"
+				continue
+			}
+			try {
+				const searchResult = await searchWorkspaceCode(cwd, query, { topK: 6, maxFiles: 1_200 })
+				const repositoryMap = await buildRepositoryMap(cwd, { maxFiles: 1_200 })
+				const languageSummary = repositoryMap.languages.slice(0, 6).map((item) => item.language + ": " + item.files).join(", ") || "not detected"
+				const directorySummary = repositoryMap.directories.slice(0, 10).join("\n") || "not detected"
+				const entryPointSummary = repositoryMap.entryPoints.slice(0, 12).join(", ") || "not detected"
+				const resultBlocks = searchResult.results.slice(0, 6).map((result, index) =>
+					"### Result " + (index + 1) + ": " + result.path + "\nLines " + result.startLine + "-" + result.endLine + " · " + searchResult.mode + " score " + result.score.toFixed(3) + "\n" + result.snippet.slice(0, 2_400),
+				)
+				const context = [
+					"Repository: " + repositoryMap.workspace + " (" + repositoryMap.fileCount + " indexed files)",
+					"Languages: " + languageSummary,
+					"Key directories:\n" + directorySummary,
+					"Entry points: " + entryPointSummary,
+					"Search mode: " + searchResult.mode + ". Search runs locally; only the matched snippets below are added to this model request.",
+					"Query: " + query,
+					...(resultBlocks.length > 0 ? resultBlocks : ["No matching code snippets were found."]),
+				].join("\n\n").slice(0, 18_000)
+				parsedText += "\n\n<codebase_search mode=\"" + searchResult.mode + "\" results=\"" + searchResult.results.length + "\">\n" + context + "\n</codebase_search>"
+				telemetryService.captureMentionUsed("codebase", context.length)
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error)
+				parsedText += "\n\n<codebase_search status=\"error\">Repository search failed: " + message + "</codebase_search>"
+				telemetryService.captureMentionFailed("codebase", "unknown", message)
+			}
+		} else if (mention.startsWith("http")) {
 			let result: string
 			if (launchBrowserError) {
 				result = `Error fetching content: ${launchBrowserError.message}`
