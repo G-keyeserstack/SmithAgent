@@ -45,7 +45,10 @@ export function TaskChangesButton({ enabled, refreshKey }: TaskChangesButtonProp
 		}
 	}, [enabled, refreshKey])
 
-	if (!enabled || changedFiles === 0) return null
+	if (!enabled) return null
+	if (changedFiles === 0) {
+		return error ? <span className="text-[10px] text-error" role="alert">Could not load workspace changes: {error}</span> : null
+	}
 
 	const openChanges = async () => {
 		if (opening) return
