@@ -15,7 +15,7 @@ import { AccountServiceClient } from "@/services/grpc-client"
 import ViewHeader from "../common/ViewHeader"
 import VSCodeButtonLink from "../common/VSCodeButtonLink"
 import { updateSetting } from "../settings/utils/settingsHandlers"
-import { AccountWelcomeView } from "./AccountWelcomeView"
+import { MakerrrPricingCard } from "./MakerrrPricingCard"
 import { ClinePassCard } from "./ClinePassCard"
 import { CreditBalance } from "./CreditBalance"
 import CreditsHistoryTable from "./CreditsHistoryTable"
@@ -52,6 +52,7 @@ const AccountView = ({ onDone, clineUser, organizations, activeOrganization }: A
 		<div className="fixed inset-0 flex flex-col overflow-hidden">
 			<ViewHeader environment={environment} onDone={onDone} showEnvironmentSuffix title="Account" />
 			<div className="grow flex flex-col px-5 overflow-y-auto">
+				<MakerrrPricingCard />
 				{clineUser?.uid ? (
 					<ClineAccountView
 						activeOrganization={activeOrganization}

@@ -6,8 +6,9 @@ import { HostProvider } from "@/hosts/host-provider"
 import { ExtensionRegistryInfo } from "@/registry"
 import { telemetryService } from "@/services/telemetry"
 import type { ExtensionMessage } from "@/shared/ExtensionMessage"
+import type { WebviewMessage } from "@/shared/WebviewMessage"
 import { Logger } from "@/shared/services/Logger"
-import { WebviewMessage } from "@/shared/WebviewMessage"
+import { startMakerrrCheckout } from "../../services/makerrr-billing/checkout"
 
 /*
 https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
@@ -182,6 +183,21 @@ export class VscodeWebviewProvider extends WebviewProvider implements vscode.Web
 				if (message.grpc_request_cancel) {
 					await handleGrpcRequestCancel(postMessageToWebview, message.grpc_request_cancel)
 				}
+				break
+			}
+			case "makerrr_checkout": {
+				const request = message.makerrr_checkout
+				if (!request) break
+				const result = await startMakerrrCheckout({
+					planId: request.planId,
+					region: request.region,
+					seats: request.seats ?? 1,
+					provider: request.provider,
+					email: request.email,
+					origin: "https://github.com/G-keyeserstack/SmithAgent",
+				})
+				if ("url" in result) await vscode.env.openExternal(vscode.Uri.parse(result.url))
+				else void vscode.window.showErrorMessage(result.error)
 				break
 			}
 			default: {

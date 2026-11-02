@@ -5,6 +5,21 @@ import { RAILS, startCheckout, type PayProvider } from "@/lib/billing";
 import { useAgent } from "@/lib/agent-store";
 import { planById, PLANS, priceLabel, PUBLIC_PLANS, teamTotal, type PlanId, type Region, type Segment } from "@/lib/plans";
 
+const AREA: Record<Region, { title: string; body: string }> = {
+  za: {
+    title: "How this works in Johannesburg",
+    body: "Prices are in rand and exclude VAT. Stripe Link, Paystack, Flutterwave, PayPal, PayFast, Yoco, and Ozow can take the payment. The agent edits files on this machine. Cloud agents start only after Pro or above is confirmed.",
+  },
+  ng: {
+    title: "How this works in Nigeria",
+    body: "Prices are in naira. Stripe Link, Paystack, and Flutterwave settle naira. PayPal, PayFast, Yoco, and Ozow stay closed. The agent still edits files on this machine.",
+  },
+  ke: {
+    title: "How this works in Kenya",
+    body: "Prices are in shillings. Stripe Link, Paystack, and Flutterwave settle shillings. Rand-only rails stay closed. The agent still edits files on this machine.",
+  },
+};
+
 export const Route = createFileRoute("/pricing")({ component: PricingPage });
 
 const SEGMENTS: { id: Segment; label: string }[] = [
@@ -141,6 +156,13 @@ function PricingPage() {
             </label>
           </div>
         ) : null}
+        <section className="mt-8 rounded-2xl border border-line bg-paper p-5">
+          <h2 className="text-lg font-medium">{AREA[account.region].title}</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-mute">{AREA[account.region].body}</p>
+          <p className="mt-3 text-sm">
+            {planById("pro").name} is {priceLabel(planById("pro"), account.region)}. Teams is {teamTotal(planById("teams"), account.region, account.teamSeats)}.
+          </p>
+        </section>
         <div className="mt-6">
           <PlanCards ids={ids} />
         </div>

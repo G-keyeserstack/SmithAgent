@@ -7,7 +7,7 @@ import { planById } from "@/lib/plans";
 
 export const Route = createFileRoute("/checkout")({
   validateSearch: (search: Record<string, unknown>) => ({
-    provider: (["stripe", "paystack", "paypal", "flutterwave", "payfast", "yoco", "ozow"].includes(String(search.provider))
+    provider: (["stripe", "link", "paystack", "paypal", "flutterwave", "payfast", "yoco", "ozow"].includes(String(search.provider))
       ? search.provider
       : "stripe") as PayProvider,
     plan: typeof search.plan === "string" ? search.plan : "",

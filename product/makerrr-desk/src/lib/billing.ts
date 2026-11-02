@@ -2,10 +2,11 @@ import { createHash } from "node:crypto";
 import { createServerFn } from "@tanstack/react-start";
 import { planById, type PlanId, type Region } from "@/lib/plans";
 
-export type PayProvider = "stripe" | "paystack" | "paypal" | "flutterwave" | "payfast" | "yoco" | "ozow";
+export type PayProvider = "stripe" | "link" | "paystack" | "paypal" | "flutterwave" | "payfast" | "yoco" | "ozow";
 
 export const RAILS: { id: PayProvider; label: string; regions: Region[]; note: string }[] = [
-  { id: "stripe", label: "Stripe", regions: ["za", "ng", "ke"], note: "Cards and Link." },
+  { id: "link", label: "Stripe Link", regions: ["za", "ng", "ke"], note: "Stripe Checkout with Link as the only payment method." },
+  { id: "stripe", label: "Stripe", regions: ["za", "ng", "ke"], note: "Cards. Link stays inside the Stripe page." },
   { id: "paystack", label: "Paystack", regions: ["za", "ng", "ke"], note: "Cards and bank in Nigeria, South Africa, and Kenya." },
   { id: "flutterwave", label: "Flutterwave", regions: ["za", "ng", "ke"], note: "Cards and bank across Nigeria, South Africa, and Kenya." },
   { id: "paypal", label: "PayPal", regions: ["za"], note: "South African rand only." },
@@ -92,7 +93,7 @@ export const startCheckout = createServerFn({ method: "POST" })
     const label = `Makerrr ${priced.name}${priced.perUser ? ` · ${priced.seats} seats` : ""}`;
     const back = `${priced.origin}/checkout?provider=${data.provider}&plan=${priced.planId}`;
 
-    if (data.provider === "stripe") {
+    if (data.provider === "stripe" || data.provider === "link") {
       const key = process.env.STRIPE_SECRET_KEY?.trim();
       if (!key) return missing("Stripe");
       const form = new URLSearchParams();
@@ -100,7 +101,8 @@ export const startCheckout = createServerFn({ method: "POST" })
       form.set("customer_email", priced.email);
       form.set("success_url", `${back}&session_id={CHECKOUT_SESSION_ID}`);
       form.set("cancel_url", `${priced.origin}/pricing?cancelled=1`);
-      form.set("automatic_payment_methods[enabled]", "true");
+      if (data.provider === "link") form.set("payment_method_types[0]", "link");
+      else form.set("automatic_payment_methods[enabled]", "true");
       form.set("line_items[0][quantity]", "1");
       form.set("line_items[0][price_data][currency]", priced.currency);
       form.set("line_items[0][price_data][unit_amount]", String(priced.minor));
