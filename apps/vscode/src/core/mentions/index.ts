@@ -135,26 +135,43 @@ export async function parseMentions(
 			try {
 				const searchResult = await searchWorkspaceCode(cwd, query, { topK: 6, maxFiles: 1_200 })
 				const repositoryMap = await buildRepositoryMap(cwd, { maxFiles: 1_200 })
-				const languageSummary = repositoryMap.languages.slice(0, 6).map((item) => item.language + ": " + item.files).join(", ") || "not detected"
+				const languageSummary =
+					repositoryMap.languages
+						.slice(0, 6)
+						.map((item) => item.language + ": " + item.files)
+						.join(", ") || "not detected"
 				const directorySummary = repositoryMap.directories.slice(0, 10).join("\n") || "not detected"
 				const entryPointSummary = repositoryMap.entryPoints.slice(0, 12).join(", ") || "not detected"
-				const resultBlocks = searchResult.results.slice(0, 6).map((result, index) =>
-					"### Result " + (index + 1) + ": " + result.path + "\nLines " + result.startLine + "-" + result.endLine + " · " + searchResult.mode + " score " + result.score.toFixed(3) + "\n" + result.snippet.slice(0, 2_400),
-				)
+				const resultBlocks = searchResult.results.slice(0, 6).map((result, index) => {
+					const heading = "### Result " + (index + 1) + ": " + result.path
+					const metadata =
+						"Lines " + result.startLine + "-" + result.endLine + " · " + searchResult.mode + " score " + result.score.toFixed(3)
+					return [heading, metadata, result.snippet.slice(0, 2_400)].join("\n")
+				})
 				const context = [
 					"Repository: " + repositoryMap.workspace + " (" + repositoryMap.fileCount + " indexed files)",
 					"Languages: " + languageSummary,
 					"Key directories:\n" + directorySummary,
 					"Entry points: " + entryPointSummary,
-					"Search mode: " + searchResult.mode + ". Search runs locally; only the matched snippets below are added to this model request.",
+					"Search mode: " +
+						searchResult.mode +
+						". Search runs locally; only the matched snippets below are added to this model request.",
 					"Query: " + query,
 					...(resultBlocks.length > 0 ? resultBlocks : ["No matching code snippets were found."]),
 				].join("\n\n").slice(0, 18_000)
-				parsedText += "\n\n<codebase_search mode=\"" + searchResult.mode + "\" results=\"" + searchResult.results.length + "\">\n" + context + "\n</codebase_search>"
+				parsedText +=
+					"\n\n<codebase_search mode=\"" +
+					searchResult.mode +
+					"\" results=\"" +
+					searchResult.results.length +
+					"\">\n" +
+					context +
+					"\n</codebase_search>"
 				telemetryService.captureMentionUsed("codebase", context.length)
 			} catch (error) {
 				const message = error instanceof Error ? error.message : String(error)
-				parsedText += "\n\n<codebase_search status=\"error\">Repository search failed: " + message + "</codebase_search>"
+				parsedText +=
+					"\n\n<codebase_search status=\"error\">Repository search failed: " + message + "</codebase_search>"
 				telemetryService.captureMentionFailed("codebase", "unknown", message)
 			}
 		} else if (mention.startsWith("http")) {
