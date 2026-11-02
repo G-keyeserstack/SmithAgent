@@ -681,6 +681,24 @@ describe("Cline plugin discovery boundary", () => {
 		expect(discoverPluginModulePaths(root)).toEqual([entryPath]);
 	});
 
+	it("deduplicates modules declared by canonical and legacy plugin manifests", () => {
+		const root = createTempRoot();
+		const packageDir = join(root, "makerrr-plugin");
+		writeFile(
+			join(packageDir, "package.json"),
+			JSON.stringify({
+				makerrr: { plugins: [{ paths: ["entry.ts"] }] },
+				cline: { plugins: [{ paths: ["entry.ts"] }] },
+			}),
+		);
+		const entryPath = writeFile(
+			join(packageDir, "entry.ts"),
+			"export default {};",
+		);
+
+		expect(discoverPluginModulePaths(root)).toEqual([entryPath]);
+	});
+
 	it("resolves no module entries for an Agent Plugin directory", () => {
 		const root = createTempRoot();
 		writeAgentPlugin(root);
