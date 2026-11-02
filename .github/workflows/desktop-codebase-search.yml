@@ -1,0 +1,71 @@
+name: Makerrr Desktop Codebase Search
+
+on:
+  pull_request:
+    paths:
+      - "apps/vscode/src/hosts/vscode/codebase-search.ts"
+      - "apps/vscode/src/hosts/vscode/codebase-search.test.ts"
+      - "apps/vscode/src/extension.ts"
+      - "apps/vscode/package.json"
+      - "sdk/packages/core/src/services/workspace/**"
+      - ".github/workflows/desktop-codebase-search.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/vscode/src/hosts/vscode/codebase-search.ts"
+      - "apps/vscode/src/hosts/vscode/codebase-search.test.ts"
+      - "apps/vscode/src/extension.ts"
+      - "apps/vscode/package.json"
+      - "sdk/packages/core/src/services/workspace/**"
+      - ".github/workflows/desktop-codebase-search.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop-codebase-search:
+    name: Desktop codebase search (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Install locked workspace dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build shared SDK packages
+        run: bun run build:sdk
+
+      - name: Verify Makerrr desktop identity
+        run: bun run editor:verify
+
+      - name: Test desktop codebase search interaction
+        working-directory: apps/vscode
+        run: bunx --bun vitest run --config vitest.config.ts src/hosts/vscode/codebase-search.test.ts
+
+      - name: Test SDK repository intelligence
+        run: bunx --bun vitest run --config sdk/packages/core/vitest.config.ts sdk/packages/core/src/services/workspace/repository-intelligence.test.ts
+
+      - name: Lint desktop codebase search
+        working-directory: apps/vscode
+        run: bunx --bun @biomejs/biome check --config-path biome.jsonc --diagnostic-level=error src/hosts/vscode/codebase-search.ts src/hosts/vscode/codebase-search.test.ts src/extension.ts
+
+      - name: Typecheck the VS Code host and webview
+        working-directory: apps/vscode
+        run: bun run check-types

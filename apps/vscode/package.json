@@ -231,6 +231,12 @@
 				"title": "Toggle Tab Completions",
 				"category": "Makerrr",
 				"icon": "$(sparkle)"
+			},
+			{
+				"command": "makerrr.searchCodebase",
+				"title": "Search Codebase",
+				"category": "Makerrr",
+				"icon": "$(search)"
 			}
 		],
 		"keybindings": [
@@ -253,6 +259,12 @@
 				"win": "ctrl+'",
 				"linux": "ctrl+'",
 				"when": "!editorHasSelection"
+			},
+			{
+				"command": "makerrr.searchCodebase",
+				"key": "ctrl+alt+f",
+				"mac": "cmd+alt+f",
+				"when": "workspaceFolderCount > 0"
 			}
 		],
 		"menus": {
@@ -280,6 +292,11 @@
 				{
 					"command": "cline.settingsButtonClicked",
 					"group": "navigation@6",
+					"when": "view == claude-dev.SidebarProvider"
+				},
+				{
+					"command": "makerrr.searchCodebase",
+					"group": "navigation@4",
 					"when": "view == claude-dev.SidebarProvider"
 				}
 			],

@@ -1,0 +1,65 @@
+name: Makerrr Composer UI
+
+on:
+  pull_request:
+    paths:
+      - "apps/vscode/webview-ui/src/components/chat/task-header/**"
+      - "apps/vscode/webview-ui/src/components/chat/chat-view/**"
+      - "apps/vscode/webview-ui/src/components/chat/ChatTextArea.tsx"
+      - "apps/vscode/webview-ui/src/services/**"
+      - ".github/workflows/makerrr-composer-ui.yml"
+      - "sdk/packages/ui/**"
+      - "sdk/packages/core/**"
+      - "sdk/packages/shared/**"
+      - "package.json"
+      - "bun.lock"
+  push:
+    branches: [main]
+    paths:
+      - "apps/vscode/webview-ui/src/components/chat/task-header/**"
+      - "apps/vscode/webview-ui/src/components/chat/chat-view/**"
+      - "apps/vscode/webview-ui/src/components/chat/ChatTextArea.tsx"
+      - "apps/vscode/webview-ui/src/services/**"
+      - ".github/workflows/makerrr-composer-ui.yml"
+      - "sdk/packages/ui/**"
+      - "sdk/packages/core/**"
+      - "sdk/packages/shared/**"
+      - "package.json"
+      - "bun.lock"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  composer-ui:
+    name: Composer usage and checkpoint review UI
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build local SDK workspace packages
+        run: bun run build:sdk
+
+      - name: Run Composer usage and checkpoint review tests
+        working-directory: apps/vscode/webview-ui
+        run: bunx --bun vitest run src/components/chat/task-header/MakerrrUsageMeter.test.tsx src/components/chat/task-header/TaskChangesButton.test.tsx
+
+      - name: Typecheck and build webview
+        working-directory: apps/vscode/webview-ui
+        run: bun run build
