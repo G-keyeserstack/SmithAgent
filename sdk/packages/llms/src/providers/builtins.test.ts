@@ -444,6 +444,27 @@ describe("built-in provider metadata", () => {
 		});
 	});
 
+	it("exposes the current Kimi K3.1 models with official context and usage rates", async () => {
+		const provider = await getProvider("moonshot")
+		const models = await getModelsForProvider("moonshot")
+
+		expect(provider).toMatchObject({
+			id: "moonshot",
+			defaultModelId: "kimi-k3.1-pro",
+			baseUrl: "https://api.moonshot.ai/v1",
+		})
+		expect(models["kimi-k3.1-pro"]).toMatchObject({
+			contextWindow: 1_000_000,
+			capabilities: expect.arrayContaining(["tools", "images", "video", "reasoning-effort"]),
+			reasoningOptions: [{ type: "effort", values: ["low", "high", "max"] }],
+			pricing: { input: 2, output: 10, cacheWrite: 2, cacheRead: 0.2 },
+		})
+		expect(models["kimi-k3.1-pro-highspeed"]).toMatchObject({
+			contextWindow: 1_000_000,
+			pricing: { input: 4, output: 20, cacheWrite: 4, cacheRead: 0.2 },
+		})
+	})
+
 	it("serves the ai& default model from the catalog instead of the stub fallback", async () => {
 		const provider = await getProvider("aiand");
 		const models = await getModelsForProvider("aiand");
