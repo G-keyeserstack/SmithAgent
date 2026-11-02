@@ -34,8 +34,8 @@ describe("plugin install command", () => {
 	let home = "";
 	let workspace = "";
 	let originalHome: string | undefined;
-	let originalClineDir: string | undefined;
-	let originalClineDataDir: string | undefined;
+	let originalMakerrrDir: string | undefined;
+	let originalMakerrrDataDir: string | undefined;
 	let originalMcpSettingsPath: string | undefined;
 
 	beforeEach(() => {
@@ -43,14 +43,14 @@ describe("plugin install command", () => {
 		home = join(root, "home");
 		workspace = join(root, "workspace");
 		originalHome = process.env.HOME;
-		originalClineDir = process.env.CLINE_DIR;
-		originalClineDataDir = process.env.CLINE_DATA_DIR;
+		originalMakerrrDir = process.env.MAKERRR_DIR;
+		originalMakerrrDataDir = process.env.MAKERRR_DATA_DIR;
 		originalMcpSettingsPath = process.env.CLINE_MCP_SETTINGS_PATH;
 		process.env.HOME = home;
-		process.env.CLINE_DIR = join(home, ".cline");
-		process.env.CLINE_DATA_DIR = join(home, ".cline", "data");
+		process.env.MAKERRR_DIR = join(home, ".makerrr");
+		process.env.MAKERRR_DATA_DIR = join(home, ".makerrr", "data");
 		setHomeDir(home);
-		setClineDir(process.env.CLINE_DIR);
+		setClineDir(process.env.MAKERRR_DIR);
 	});
 
 	function runGitCommand(cwd: string, args: string[]): void {
@@ -84,15 +84,15 @@ describe("plugin install command", () => {
 		} else {
 			process.env.HOME = originalHome;
 		}
-		if (originalClineDir === undefined) {
-			delete process.env.CLINE_DIR;
+		if (originalMakerrrDir === undefined) {
+			delete process.env.MAKERRR_DIR;
 		} else {
-			process.env.CLINE_DIR = originalClineDir;
+			process.env.MAKERRR_DIR = originalMakerrrDir;
 		}
-		if (originalClineDataDir === undefined) {
-			delete process.env.CLINE_DATA_DIR;
+		if (originalMakerrrDataDir === undefined) {
+			delete process.env.MAKERRR_DATA_DIR;
 		} else {
-			process.env.CLINE_DATA_DIR = originalClineDataDir;
+			process.env.MAKERRR_DATA_DIR = originalMakerrrDataDir;
 		}
 		if (originalMcpSettingsPath === undefined) {
 			delete process.env.CLINE_MCP_SETTINGS_PATH;
@@ -184,11 +184,11 @@ describe("plugin install command", () => {
 
 		const result = await installPlugin({ source });
 
-		expect(result.installPath).toContain(join(home, ".cline", "plugins"));
+		expect(result.installPath).toContain(join(home, ".makerrr", "plugins"));
 		expect(result.entryPaths).toHaveLength(1);
 		expect(existsSync(result.entryPaths[0] ?? "")).toBe(true);
 		const discovered = discoverPluginModulePaths(
-			join(home, ".cline", "plugins"),
+			join(home, ".makerrr", "plugins"),
 		);
 		expect(discovered).toEqual(result.entryPaths);
 	});
@@ -210,7 +210,7 @@ describe("plugin install command", () => {
 
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 		expect(result.installPath).toContain(
-			join(workspace, ".cline", "plugins", "_installed", "remote"),
+			join(workspace, ".makerrr", "plugins", "_installed", "remote"),
 		);
 		expect(result.entryPaths).toHaveLength(1);
 		expect(existsSync(result.entryPaths[0] ?? "")).toBe(true);
@@ -218,7 +218,7 @@ describe("plugin install command", () => {
 			"remote-weather",
 		);
 		expect(
-			discoverPluginModulePaths(join(workspace, ".cline", "plugins")),
+			discoverPluginModulePaths(join(workspace, ".makerrr", "plugins")),
 		).toEqual(result.entryPaths);
 	});
 
@@ -241,7 +241,7 @@ describe("plugin install command", () => {
 		});
 
 		expect(result.installPath).toContain(
-			join(workspace, ".cline", "plugins", "_installed", "official"),
+			join(workspace, ".makerrr", "plugins", "_installed", "official"),
 		);
 		expect(result.entryPaths).toHaveLength(1);
 		expect(readFileSync(result.entryPaths[0] ?? "", "utf8")).toContain(
@@ -256,7 +256,7 @@ describe("plugin install command", () => {
 			existsSync(join(result.installPath, "package", "other-plugin")),
 		).toBe(false);
 		expect(
-			discoverPluginModulePaths(join(workspace, ".cline", "plugins")),
+			discoverPluginModulePaths(join(workspace, ".makerrr", "plugins")),
 		).toEqual(result.entryPaths);
 	});
 
@@ -338,7 +338,7 @@ describe("plugin install command", () => {
 		});
 
 		expect(result.installPath).toContain(
-			join(workspace, ".cline", "plugins", "_installed", "local"),
+			join(workspace, ".makerrr", "plugins", "_installed", "local"),
 		);
 		const wrapperManifest = JSON.parse(
 			readFileSync(join(result.installPath, "package.json"), "utf8"),
@@ -472,10 +472,14 @@ describe("plugin install command", () => {
 
 		const wrapperManifest = JSON.parse(
 			readFileSync(join(result.installPath, "package.json"), "utf8"),
-		) as { name?: string; cline?: { plugins?: Array<{ paths?: string[] }> } };
+		) as {
+			name?: string;
+			makerrr?: { plugins?: Array<{ paths?: string[] }> };
+			cline?: { plugins?: Array<{ paths?: string[] }> };
+		};
 		expect(wrapperManifest.name).toBe("plugin-package");
-		expect(wrapperManifest.cline?.plugins?.[0]?.paths).toHaveLength(1);
-		expect(wrapperManifest.cline?.plugins?.[0]?.paths?.[0]).toContain(
+		expect(wrapperManifest.makerrr?.plugins?.[0]?.paths).toHaveLength(1);
+		expect(wrapperManifest.makerrr?.plugins?.[0]?.paths?.[0]).toContain(
 			"package/index.ts",
 		);
 		const packageManifest = JSON.parse(
@@ -498,7 +502,7 @@ describe("plugin install command", () => {
 			existsSync(join(result.installPath, "package", "node_modules")),
 		).toBe(false);
 		const discovered = discoverPluginModulePaths(
-			join(workspace, ".cline", "plugins"),
+			join(workspace, ".makerrr", "plugins"),
 		);
 		expect(discovered).toEqual(result.entryPaths);
 		expect(discovered.some((path) => path.includes("noise.ts"))).toBe(false);
@@ -683,7 +687,7 @@ describe("plugin install command", () => {
 			});
 			expect(code).toBe(0);
 			const parsed = JSON.parse(stdout.join("")) as { installPath: string };
-			expect(parsed.installPath).toContain(join(home, ".cline", "plugins"));
+			expect(parsed.installPath).toContain(join(home, ".makerrr", "plugins"));
 			expect("mcpOAuthCandidates" in parsed).toBe(false);
 		} finally {
 			process.stdout.write = originalWrite;
@@ -736,7 +740,7 @@ export default {
 				installPath: string;
 				mcpOAuthCandidates?: unknown;
 			};
-			expect(parsed.installPath).toContain(join(home, ".cline", "plugins"));
+			expect(parsed.installPath).toContain(join(home, ".makerrr", "plugins"));
 			expect(parsed.mcpOAuthCandidates).toBeUndefined();
 		} finally {
 			process.stdout.write = originalWrite;
@@ -1046,7 +1050,7 @@ export default {
 			expect(code).toBe(0);
 			const parsed = JSON.parse(stdout.join("")) as { installPath: string };
 			expect(parsed.installPath).toContain(
-				join(workspace, ".cline", "plugins", "_installed", "official"),
+				join(workspace, ".makerrr", "plugins", "_installed", "official"),
 			);
 		} finally {
 			process.stdout.write = originalWrite;
@@ -1067,10 +1071,10 @@ export default {
 		});
 
 		expect(resolvePluginConfigSearchPaths(workspace)[0]).toBe(
-			join(workspace, ".cline", "plugins"),
+			join(workspace, ".makerrr", "plugins"),
 		);
 		expect(
-			discoverPluginModulePaths(join(workspace, ".cline", "plugins")),
+			discoverPluginModulePaths(join(workspace, ".makerrr", "plugins")),
 		).toHaveLength(1);
 	});
 });

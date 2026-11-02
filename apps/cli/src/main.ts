@@ -1,7 +1,7 @@
 import { fstatSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, join } from "node:path";
-import { createSearchExecutor, type ToolPolicy } from "@cline/core";
+import type { ToolPolicy } from "@cline/core";
 
 import { CLINE_DEFAULT_MODEL_ID, registerDisposable } from "@cline/shared";
 import type { Command } from "commander";
@@ -319,6 +319,7 @@ export async function runCli(): Promise<void> {
 				pattern: string,
 				options: { cwd?: string; maxResults: number; contextLines: number },
 			) => {
+				const { createSearchExecutor } = await import("@cline/core");
 				const search = createSearchExecutor({
 					maxResults: options.maxResults,
 					contextLines: options.contextLines,
