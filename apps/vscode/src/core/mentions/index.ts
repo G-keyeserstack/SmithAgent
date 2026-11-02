@@ -39,10 +39,7 @@ export async function openMention(mention?: string): Promise<void> {
 		} else {
 			openFile(absPath)
 		}
-	} else if (mention === "codebase") {
-			return "Repository codebase search (see below for relevant files and repository map)"
-		}
-		if (mention === "problems") {
+	} else if (mention === "problems") {
 		await HostProvider.workspace.openProblemsPanel({})
 	} else if (mention === "terminal") {
 		await HostProvider.workspace.openTerminalPanel({})
@@ -84,6 +81,9 @@ export async function parseMentions(
 			return mentionPath.endsWith("/")
 				? `'${mentionPath}' (see below for folder content)`
 				: `'${mentionPath}' (see below for file content)`
+		}
+		if (mention === "codebase") {
+			return "Repository codebase search (see below for relevant files and repository map)"
 		}
 		if (mention === "problems") {
 			return `Workspace Problems (see below for diagnostics)`
