@@ -20,6 +20,23 @@ describe("MakerrrUsageMeter", () => {
 		expect(screen.getByText("Cloud-reported usage")).toBeTruthy()
 	})
 
+	it("shows the active provider, model and context consumption", () => {
+		render(
+			<MakerrrUsageMeter
+				inputTokens={4000}
+				outputTokens={500}
+				provider="moonshot"
+				model="kimi-k3.1-pro"
+				contextTokens={4500}
+				contextWindow={10000}
+			/>,
+		)
+		expect(screen.getByText("Provider")).toBeTruthy()
+		expect(screen.getByText("moonshot")).toBeTruthy()
+		expect(screen.getByText("kimi-k3.1-pro")).toBeTruthy()
+		expect(screen.getByText("4.5K / 10K (45.0%)")).toBeTruthy()
+	})
+
 	it("renders nothing when there is no usage to report", () => {
 		const { container } = render(<MakerrrUsageMeter inputTokens={0} outputTokens={0} />)
 		expect(container.firstChild).toBeNull()
