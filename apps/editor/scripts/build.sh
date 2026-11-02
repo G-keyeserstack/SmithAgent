@@ -101,7 +101,7 @@ mv "$UPSTREAM_DIR/product.json.makerrr" "$UPSTREAM_DIR/product.json"
   # The root Bun install does not populate this isolated, lockfile-pinned package.
   node - "$UPSTREAM_DIR/prepare_vscode.sh" <<'NODE'
 const fs = require("node:fs");
-const preparePath = process.argv[2];
+const preparePath = process.argv[1];
 let source = fs.readFileSync(preparePath, "utf8");
 const marker = "node build/npm/preinstall.ts";
 const install = "npm ci --prefix build/npm/gyp --ignore-scripts --no-audit --no-fund";
