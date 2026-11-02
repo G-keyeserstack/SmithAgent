@@ -88,7 +88,6 @@ export interface RepositoryMap {
 
 export interface RepositoryMapOptions {
 	maxFiles?: number;
-	maxChunks?: number;
 }
 
 export async function buildRepositoryMap(
@@ -153,6 +152,7 @@ export interface SemanticSearchOptions {
 	embeddingProvider?: EmbeddingProvider;
 	topK?: number;
 	maxFiles?: number;
+	maxChunks?: number;
 }
 
 export interface CodeSearchResult {
