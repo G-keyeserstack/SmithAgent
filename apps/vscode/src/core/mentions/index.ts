@@ -189,6 +189,7 @@ export async function parseMentions(
 							? "lexical fallback (local Qwen3 embeddings unavailable)"
 							: "lexical (configure Ollama and install qwen3-embedding:0.6b for semantic ranking)"
 				const repositoryMap = await buildRepositoryMap(cwd, { maxFiles: 1_200 })
+				const workspaceName = repositoryMap.workspace.split(/[\\/]/).filter(Boolean).at(-1) ?? "workspace"
 				const languageSummary =
 					repositoryMap.languages
 						.slice(0, 6)
@@ -203,7 +204,7 @@ export async function parseMentions(
 					return [heading, metadata, result.snippet.slice(0, 2_400)].join("\n")
 				})
 				const context = [
-					"Repository: " + repositoryMap.workspace + " (" + repositoryMap.fileCount + " indexed files)",
+					"Repository: " + workspaceName + " (" + repositoryMap.fileCount + " indexed files)",
 					"Languages: " + languageSummary,
 					"Key directories:\n" + directorySummary,
 					"Entry points: " + entryPointSummary,
