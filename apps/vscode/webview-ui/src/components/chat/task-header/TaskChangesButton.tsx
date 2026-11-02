@@ -1,5 +1,5 @@
 import { EmptyRequest } from "@shared/proto/cline/common"
-import { GitCompareArrows } from "lucide-react"
+import { GitCompareIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { CheckpointsServiceClient } from "@/services/grpc-client"
 
@@ -26,6 +26,7 @@ export function TaskChangesButton({ enabled, refreshKey }: TaskChangesButtonProp
 		}
 		let cancelled = false
 		setChecking(true)
+		setError(null)
 		CheckpointsServiceClient.checkpointLatestChangesCount(EmptyRequest.create({}))
 			.then((result) => {
 				if (!cancelled) setChangedFiles(Math.max(0, result.value ?? 0))
