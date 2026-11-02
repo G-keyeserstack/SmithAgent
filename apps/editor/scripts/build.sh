@@ -54,6 +54,10 @@ trap cleanup EXIT
 jq -s '.[0] * .[1]' "$UPSTREAM_DIR/product.json" "$EDITOR_DIR/product.json" > "$UPSTREAM_DIR/product.json.makerrr"
 mv "$UPSTREAM_DIR/product.json.makerrr" "$UPSTREAM_DIR/product.json"
 
+# Build local SDK packages first: the VS Code extension typecheck and bundle
+# resolve @cline/core, @cline/shared and @cline/llms from these workspace builds.
+(cd "$ROOT" && bun run build:sdk)
+
 # Build the agent extension first. The packaged editor ships with it enabled.
 (
   cd "$ROOT/apps/vscode"
