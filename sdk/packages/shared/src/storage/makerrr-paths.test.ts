@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -142,6 +142,40 @@ describe("legacy Cline settings migration", () => {
 		expect(result.items).toHaveLength(3);
 		expect(existsSync(join(destination, "sessions.db"))).toBe(false);
 		expect(existsSync(join(source, "sessions.db"))).toBe(true);
+	});
+
+	it("refuses symlinked legacy settings sources and Makerrr destinations", () => {
+		if (process.platform === "win32") {
+			return;
+		}
+		const root = tempRoot();
+		const source = join(root, "cline-data");
+		const realSettings = join(root, "real-settings");
+		const destination = join(root, "makerrr-settings");
+		const outsideDestination = join(root, "outside-destination");
+		mkdirSync(realSettings, { recursive: true });
+		mkdirSync(outsideDestination, { recursive: true });
+		writeFileSync(join(realSettings, "global-settings.json"), '{"theme":"dark"}');
+		mkdirSync(source, { recursive: true });
+		symlinkSync(realSettings, join(source, "settings"), "dir");
+
+		const sourceResult = migrateLegacyClineSettings({
+			sourceDataDir: source,
+			destinationSettingsDir: destination,
+		});
+		expect(sourceResult.items[0]?.status).toBe("failed");
+		expect(existsSync(destination)).toBe(false);
+
+		const safeSource = join(root, "safe-cline-data");
+		mkdirSync(join(safeSource, "settings"), { recursive: true });
+		writeFileSync(join(safeSource, "settings", "global-settings.json"), '{"theme":"dark"}');
+		symlinkSync(outsideDestination, destination, "dir");
+		const destinationResult = migrateLegacyClineSettings({
+			sourceDataDir: safeSource,
+			destinationSettingsDir: destination,
+		});
+		expect(destinationResult.items[0]?.status).toBe("failed");
+		expect(existsSync(join(outsideDestination, "global-settings.json"))).toBe(false);
 	});
 
 	it("previews migration without creating destination files", () => {

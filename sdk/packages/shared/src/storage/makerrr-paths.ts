@@ -1,12 +1,13 @@
 import {
 	existsSync,
 	lstatSync,
+	lstatSync,
 	mkdirSync,
 	readFileSync,
 	writeFileSync,
 } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 /**
  * Makerrr's canonical global configuration root.
@@ -60,6 +61,16 @@ export function resolveLegacyClineDataDir(): string {
 	return configured || join(resolveLegacyClineDir(), "data");
 }
 
+function assertRealDirectory(path: string, label: string): void {
+	if (!existsSync(path)) {
+		return;
+	}
+	const stats = lstatSync(path);
+	if (stats.isSymbolicLink() || !stats.isDirectory()) {
+		throw new Error(`${label} must be a real directory, not a symlink or file`);
+	}
+}
+
 export type LegacySettingsMigrationItem = {
 	source: string;
 	destination: string;
@@ -109,6 +120,11 @@ export function migrateLegacyClineSettings(options?: {
 			continue;
 		}
 		try {
+			assertRealDirectory(sourceDir, "Legacy Cline data directory");
+			assertRealDirectory(dirname(source), "Legacy Cline settings directory");
+			assertRealDirectory(destinationDir, "Makerrr settings destination");
+			assertRealDirectory(dirname(destinationDir), "Makerrr data directory");
+			assertRealDirectory(resolveMakerrrDir(), "Makerrr configuration root");
 			const sourceStats = lstatSync(source);
 			if (!sourceStats.isFile() || sourceStats.isSymbolicLink()) {
 				throw new Error("Source is not a regular, non-symlink file");
@@ -118,6 +134,7 @@ export function migrateLegacyClineSettings(options?: {
 				continue;
 			}
 			mkdirSync(destinationDir, { recursive: true, mode: 0o700 });
+			assertRealDirectory(destinationDir, "Makerrr settings destination");
 			// Settings may contain provider credentials. Create the destination
 			// exclusively with owner-only permissions; never overwrite an existing file.
 			writeFileSync(destination, readFileSync(source), {

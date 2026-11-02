@@ -11,15 +11,16 @@
 - Runtime data root: `~/.makerrr/data/`.
 - Project configuration root: `.makerrr/`.
 - New global Documents-based context files use `Documents/Makerrr/`; `Documents/Cline/` remains discoverable.
-- Explicit overrides: `MAKERRR_DIR`, `MAKERRR_DATA_DIR`, `MAKERRR_GLOBAL_SETTINGS_PATH`, `MAKERRR_PROVIDER_SETTINGS_PATH`, `MAKERRR_MCP_SETTINGS_PATH`.
+- Explicit overrides: `MAKERRR_DIR`, `MAKERRR_DATA_DIR`, `MAKERRR_GLOBAL_SETTINGS_PATH`, `MAKERRR_PROVIDER_SETTINGS_PATH`, `MAKERRR_MCP_SETTINGS_PATH`; explicit Makerrr data roots take precedence over legacy data discovery.
+- `MAKERRR_SANDBOX` and Makerrr-prefixed sandbox data paths are honored, with Cline-prefixed fallbacks for existing integrations.
 - Explicit legacy `CLINE_DIR` and `CLINE_DATA_DIR` values are captured as compatibility/migration sources.
 - Shared SDK storage now defaults to Makerrr for CLI, VS Code, desktop and other clients using the shared path resolver.
-- Global and workspace discovery now prefers Makerrr rules, skills, hooks, workflows, agents and plugins while retaining legacy Cline locations.
+- Global and workspace discovery now prefers Makerrr rules, skills, hooks, workflows, agents and plugins while retaining legacy Cline locations, including the `~/Makerrr/Rules` fallback used on headless/WSL systems.
 - Existing Cline session, team, connector, database and chat-workspace directories remain the active runtime stores when present. New users use Makerrr data directories; existing runtime stores are not silently hidden or split between two databases.
 - MCP settings now use `makerrr_mcp_settings.json`; the migration maps the old Cline MCP file to this name.
 - CLI migration defaults to preview. Actual copying requires `makerrr migrate --yes`.
 - VS Code offers a one-time consent prompt before copying settings.
-- Migration uses exclusive file creation, owner-only file mode where supported, rejects symlink sources, never overwrites destination files and never deletes originals.
+- Migration uses exclusive file creation, owner-only file mode where supported, rejects symlinked source files/directories and destination directories, never overwrites destination files and never deletes originals.
 
 **Migration boundary:** settings-only migration remains the lightweight default. Draft PR #4 adds a shared SQLite-aware runtime migration prototype: it stages the destination and Cline source, snapshots SQLite databases with `VACUUM INTO` (including committed WAL content), skips transient SQLite sidecars, rejects symlinks/special files and conflicting data, writes an external fsynced transaction journal, and supports interrupted-cutover recovery and explicit rollback. The CLI requires `--runtime --yes --offline`; recovery and rollback also require explicit confirmation. Cline source data is not deleted. A committed journal makes shared runtime resolvers switch to the Makerrr destination, while rollback restores legacy path selection. This is not yet production-approved: process quiescence is user-asserted, and full schema/version compatibility, application-level record validation and cross-client acceptance remain release gates.
 
@@ -38,7 +39,9 @@
 - Update/delete operations refuse to overwrite a file whose content changed after patch computation.
 - Add operations refuse an existing destination.
 - Move operations refuse an existing destination.
-- Relative patch paths that resolve outside the workspace through symbolic links are rejected.
+- Relative and absolute patch paths that resolve outside the workspace are rejected when workspace restriction is enabled, including symlink escapes.
+- New-file and move destinations use exclusive creation so a file created after preflight is not overwritten.
+- Path checks are segment-aware, allowing valid in-workspace names that begin with `..`.
 - Regression tests cover stale files, multi-file preflight and symlink escapes.
 - Existing checkpoint restore transaction and refusal tests were inspected and retained; no restore semantics were rewritten.
 

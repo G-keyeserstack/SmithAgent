@@ -380,9 +380,9 @@ export async function runCli(): Promise<void> {
 				setClineDir(opts.config.trim());
 			}
 			// Honor --data-dir before constructing the provider settings manager
-			// so writes land under the chosen data dir instead of ~/.cline.
+			// so writes land under the chosen Makerrr data dir.
 			configureSandboxEnvironment({
-				enabled: !!opts.dataDir || process.env.CLINE_SANDBOX?.trim() === "1",
+				enabled: !!opts.dataDir || (process.env.MAKERRR_SANDBOX?.trim() || process.env.CLINE_SANDBOX?.trim()) === "1",
 				cwd: opts.cwd ?? process.cwd(),
 				explicitDir: opts.dataDir,
 			});
@@ -1008,7 +1008,7 @@ export async function runCli(): Promise<void> {
 	// when CLINE_SANDBOX=1 is set in the environment (in which case the data
 	// dir falls back to $CLINE_SANDBOX_DATA_DIR or /tmp/cline-sandbox).
 	const sandboxEnabled =
-		!!args.dataDir || process.env.CLINE_SANDBOX?.trim() === "1";
+		!!args.dataDir || (process.env.MAKERRR_SANDBOX?.trim() || process.env.CLINE_SANDBOX?.trim()) === "1";
 	const sandboxDataDir = configureSandboxEnvironment({
 		enabled: sandboxEnabled,
 		cwd,

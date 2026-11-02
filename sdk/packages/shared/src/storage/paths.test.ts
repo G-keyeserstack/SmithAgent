@@ -42,6 +42,14 @@ import {
 } from "./paths";
 
 type EnvSnapshot = {
+	MAKERRR_CONNECTOR_DATA_DIR: string | undefined;
+	MAKERRR_CONNECTOR_SETTINGS_PATH: string | undefined;
+	MAKERRR_CONNECTORS_DB_PATH: string | undefined;
+	MAKERRR_CRON_DB_PATH: string | undefined;
+	MAKERRR_DB_DATA_DIR: string | undefined;
+	MAKERRR_SESSION_DATA_DIR: string | undefined;
+	MAKERRR_TEAM_DATA_DIR: string | undefined;
+	MAKERRR_TASKS_DB_PATH: string | undefined;
 	MAKERRR_DIR: string | undefined;
 	MAKERRR_DATA_DIR: string | undefined;
 	CLINE_DIR: string | undefined;
@@ -63,6 +71,14 @@ type EnvSnapshot = {
 
 function captureEnv(): EnvSnapshot {
 	return {
+		MAKERRR_CONNECTOR_DATA_DIR: process.env.MAKERRR_CONNECTOR_DATA_DIR,
+		MAKERRR_CONNECTOR_SETTINGS_PATH: process.env.MAKERRR_CONNECTOR_SETTINGS_PATH,
+		MAKERRR_CONNECTORS_DB_PATH: process.env.MAKERRR_CONNECTORS_DB_PATH,
+		MAKERRR_CRON_DB_PATH: process.env.MAKERRR_CRON_DB_PATH,
+		MAKERRR_DB_DATA_DIR: process.env.MAKERRR_DB_DATA_DIR,
+		MAKERRR_SESSION_DATA_DIR: process.env.MAKERRR_SESSION_DATA_DIR,
+		MAKERRR_TEAM_DATA_DIR: process.env.MAKERRR_TEAM_DATA_DIR,
+		MAKERRR_TASKS_DB_PATH: process.env.MAKERRR_TASKS_DB_PATH,
 		MAKERRR_DIR: process.env.MAKERRR_DIR,
 		MAKERRR_DATA_DIR: process.env.MAKERRR_DATA_DIR,
 		CLINE_DIR: process.env.CLINE_DIR,
@@ -154,14 +170,43 @@ describe("storage path resolution", () => {
 			mkdirSync(join(legacyRoot, "data", "sessions"), { recursive: true });
 			mkdirSync(join(legacyRoot, "data", "db"), { recursive: true });
 			mkdirSync(join(legacyRoot, "data", "workspaces"), { recursive: true });
+			mkdirSync(join(legacyRoot, "data", "teams"), { recursive: true });
+			mkdirSync(join(legacyRoot, "data", "connectors"), { recursive: true });
 
 			expect(resolveSessionDataDir()).toBe(join(legacyRoot, "data", "sessions"));
 			expect(resolveDbDataDir()).toBe(join(legacyRoot, "data", "db"));
+			expect(resolveTeamDataDir()).toBe(join(legacyRoot, "data", "teams"));
+			expect(resolveConnectorDataDir()).toBe(join(legacyRoot, "data", "connectors"));
 			expect(resolveChatWorkspacePath()).toBe(
 				join(legacyRoot, "data", "workspaces", "chat"),
 			);
 
 			rmSync(join(legacyRoot, "data"), { recursive: true, force: true });
+			expect(resolveSessionDataDir()).toBe(
+				join(homeRoot, ".makerrr", "data", "sessions"),
+			);
+		} finally {
+			rmSync(homeRoot, { recursive: true, force: true });
+		}
+	});
+
+	it("honors explicit Makerrr data overrides before legacy store discovery", () => {
+		snapshot = captureEnv();
+		const homeRoot = mkdtempSync(join(tmpdir(), "makerrr-explicit-data-"));
+		const legacyRoot = join(homeRoot, ".cline");
+		const explicitData = join(homeRoot, "custom-state");
+		try {
+			process.env.MAKERRR_DIR = join(homeRoot, ".makerrr");
+			process.env.MAKERRR_LEGACY_CLINE_DIR = legacyRoot;
+			delete process.env.MAKERRR_LEGACY_CLINE_DATA_DIR;
+			delete process.env.MAKERRR_DATA_DIR;
+			delete process.env.CLINE_DATA_DIR;
+			delete process.env.CLINE_DIR;
+			mkdirSync(join(legacyRoot, "data", "sessions"), { recursive: true });
+			process.env.MAKERRR_DATA_DIR = explicitData;
+			expect(resolveSessionDataDir()).toBe(join(explicitData, "sessions"));
+
+			delete process.env.MAKERRR_DATA_DIR;
 			expect(resolveSessionDataDir()).toBe(
 				join(homeRoot, ".makerrr", "data", "sessions"),
 			);
@@ -305,27 +350,32 @@ describe("storage path resolution", () => {
 		);
 	});
 
-	it("resolves global rules from ~/.cline", () => {
+	it("resolves Makerrr and legacy global rules locations", () => {
 		snapshot = captureEnv();
 		delete process.env.MAKERRR_DATA_DIR;
 		process.env.CLINE_DIR = "/tmp/home/.cline";
 		process.env.CLINE_DATA_DIR = "/tmp/home/.cline/data";
 
-		expect(resolveRulesConfigSearchPaths()).toEqual(
-			expect.arrayContaining([
-				resolveGlobalAgentsRulesPath(),
-				join("/tmp/home", ".cline", RULES_CONFIG_DIRECTORY_NAME),
-				// xdg-user-dir's unconfigured Documents fallback (cline/cline#13542)
-				join(
-					dirname(dirname(resolveGlobalAgentsRulesPath())),
-					"Cline",
-					"Rules",
-				),
-			]),
-		);
-		expect(resolveRulesConfigSearchPaths()).not.toContain(
-			join("/tmp/home", ".cline", "data", RULES_CONFIG_DIRECTORY_NAME),
-		);
+			expect(resolveRulesConfigSearchPaths()).toEqual(
+				expect.arrayContaining([
+					resolveGlobalAgentsRulesPath(),
+					join("/tmp/home", ".makerrr", RULES_CONFIG_DIRECTORY_NAME),
+					join("/tmp/home", ".cline", RULES_CONFIG_DIRECTORY_NAME),
+					join("/tmp/home", "Makerrr", "Rules"),
+					// xdg-user-dir's unconfigured Documents fallback (cline/cline#13542)
+					join(
+						dirname(dirname(resolveGlobalAgentsRulesPath())),
+						"Cline",
+						"Rules",
+					),
+				]),
+			);
+			expect(resolveRulesConfigSearchPaths()).not.toContain(
+				join("/tmp/home", ".cline", "data", RULES_CONFIG_DIRECTORY_NAME),
+			);
+		} finally {
+			setHomeDir(previousHome);
+		}
 	});
 
 	it("resolves Makerrr and legacy workspace rule layouts", () => {

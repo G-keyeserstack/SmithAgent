@@ -21,6 +21,7 @@
       "name": "@cline/cli",
       "version": "3.0.74",
       "bin": {
+        "makerrr": "src/index.ts",
         "cline": "src/index.ts",
       },
       "dependencies": {

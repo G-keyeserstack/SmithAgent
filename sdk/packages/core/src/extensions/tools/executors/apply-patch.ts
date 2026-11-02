@@ -65,12 +65,16 @@ function resolveFilePath(
 	const resolved = isAbsoluteInput
 		? path.normalize(inputPath)
 		: path.resolve(cwd, inputPath);
-	if (!restrictToCwd || isAbsoluteInput) {
+	if (!restrictToCwd) {
 		return resolved;
 	}
 
-	const rel = path.relative(cwd, resolved);
-	if (rel.startsWith("..") || path.isAbsolute(rel)) {
+	const rel = path.relative(path.resolve(cwd), resolved);
+	if (
+		rel === ".." ||
+		rel.startsWith(`..${path.sep}`) ||
+		path.isAbsolute(rel)
+	) {
 		throw new DiffError(`Path must stay within cwd: ${inputPath}`);
 	}
 	return resolved;
@@ -82,7 +86,7 @@ async function assertWorkspacePath(
 	inputPath: string,
 	restrictToCwd: boolean,
 ): Promise<void> {
-	if (!restrictToCwd || path.isAbsolute(inputPath)) {
+	if (!restrictToCwd) {
 		return;
 	}
 	const realCwd = await fs.realpath(cwd);
@@ -91,7 +95,11 @@ async function assertWorkspacePath(
 		try {
 			const realCandidate = await fs.realpath(candidate);
 			const relativePath = path.relative(realCwd, realCandidate);
-			if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+			if (
+				relativePath === ".." ||
+				relativePath.startsWith(`..${path.sep}`) ||
+				path.isAbsolute(relativePath)
+			) {
 				throw new DiffError("Path resolves outside cwd through a symbolic link: " + inputPath);
 			}
 			return;
@@ -402,7 +410,7 @@ export async function applyPatchChanges(
 					throw new DiffError(`Cannot create ${filePath} with no content`);
 				}
 				await fs.mkdir(path.dirname(sourceAbsPath), { recursive: true });
-				await fs.writeFile(sourceAbsPath, change.newContent, { encoding });
+				await fs.writeFile(sourceAbsPath, change.newContent, { encoding, flag: "wx" });
 				touched.push(filePath);
 				break;
 			case PatchActionType.UPDATE: {
@@ -419,7 +427,7 @@ export async function applyPatchChanges(
 						restrictToCwd,
 					);
 					await fs.mkdir(path.dirname(moveAbsPath), { recursive: true });
-					await fs.writeFile(moveAbsPath, change.newContent, { encoding });
+					await fs.writeFile(moveAbsPath, change.newContent, { encoding, flag: "wx" });
 					await fs.rm(sourceAbsPath, { force: true });
 					touched.push(`${filePath} -> ${change.movePath}`);
 				} else {

@@ -713,6 +713,8 @@ export function resolveGlobalRulesConfigPaths(): string[] {
 	return dedupePaths([
 		join(resolveClineDir(), RULES_CONFIG_DIRECTORY_NAME),
 		join(resolveLegacyClineDir(), RULES_CONFIG_DIRECTORY_NAME),
+		// Match the bare-home Documents fallback used by headless/WSL systems.
+		join(HOME_DIR, "Makerrr", "Rules"),
 		// The VS Code Rules tab resolves Documents via `xdg-user-dir DOCUMENTS`,
 		// which prints bare $HOME when unconfigured (WSL/headless), putting
 		// global rules at ~/Cline/Rules instead of ~/Documents/Cline/Rules
