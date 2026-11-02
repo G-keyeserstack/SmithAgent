@@ -41,8 +41,18 @@ fi
 git -C "$UPSTREAM_DIR" fetch --depth 1 origin "$VSCODIUM_COMMIT"
 git -C "$UPSTREAM_DIR" checkout --detach "$VSCODIUM_COMMIT"
 
-# The upstream build helper merges this product.json over the Code OSS defaults.
-cp "$EDITOR_DIR/product.json" "$UPSTREAM_DIR/product.json"
+# Keep the pinned upstream checkout reusable even when the build fails.
+TMP_DIR=""
+cleanup() {
+  if [[ -n "$TMP_DIR" ]]; then rm -rf "$TMP_DIR"; fi
+  git -C "$UPSTREAM_DIR" restore --worktree -- product.json >/dev/null 2>&1 || true
+}
+trap cleanup EXIT
+
+# Preserve upstream build metadata (icons, platform identifiers and gallery
+# defaults), overriding only the product fields owned by Makerrr.
+jq -s '.[0] * .[1]' "$UPSTREAM_DIR/product.json" "$EDITOR_DIR/product.json" > "$UPSTREAM_DIR/product.json.makerrr"
+mv "$UPSTREAM_DIR/product.json.makerrr" "$UPSTREAM_DIR/product.json"
 
 # Build the agent extension first. The packaged editor ships with it enabled.
 (
@@ -94,7 +104,6 @@ fi
 
 EXTENSION_DIR="$APP_DIR/resources/app/extensions/makerrr.claude-dev"
 TMP_DIR="$(mktemp -d)"
-trap 'rm -rf "$TMP_DIR"' EXIT
 unzip -q "$BUILD_DIR/makerrr-agent.vsix" 'extension/*' -d "$TMP_DIR"
 rm -rf "$EXTENSION_DIR"
 mkdir -p "$(dirname "$EXTENSION_DIR")"
