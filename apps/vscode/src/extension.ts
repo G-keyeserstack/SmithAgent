@@ -14,6 +14,7 @@ import {
 import * as vscode from "vscode"
 import { Logger } from "@/shared/services/Logger"
 import { registerMakerrrTabCompletionProvider } from "@/hosts/vscode/tab-completion-provider"
+import { registerMakerrrCodebaseSearch } from "@/hosts/vscode/codebase-search"
 import { sendAccountButtonClickedEvent } from "./core/controller/ui/subscribeToAccountButtonClicked"
 import { sendChatButtonClickedEvent } from "./core/controller/ui/subscribeToChatButtonClicked"
 import { sendHistoryButtonClickedEvent } from "./core/controller/ui/subscribeToHistoryButtonClicked"
@@ -155,6 +156,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	// First-party Cursor-style inline Tab completions. Disabled by default until
 	// the developer explicitly enables provider-backed code suggestions.
 	context.subscriptions.push(...registerMakerrrTabCompletionProvider(webview.controller))
+	context.subscriptions.push(registerMakerrrCodebaseSearch())
 
 	// 5. Register services and commands specific to VS Code
 	// Initialize hook discovery cache for performance optimization
