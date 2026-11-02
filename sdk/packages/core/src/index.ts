@@ -864,6 +864,12 @@ export {
 } from "./services/usage";
 export type {
 	FastFileIndexOptions,
+	CodeSearchResponse,
+	CodeSearchResult,
+	EmbeddingProvider,
+	RepositoryMap,
+	RepositoryMapOptions,
+	SemanticSearchOptions,
 	MentionEnricherOptions,
 	MentionEnrichmentResult,
 } from "./services/workspace";
