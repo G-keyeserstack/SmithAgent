@@ -398,6 +398,46 @@ function generatedModels(providerId: string): Record<string, ModelInfo> {
 	return cloneModels(getGeneratedModelsForProvider(providerId));
 }
 
+/**
+ * Add the current Kimi K3.1 models before the generated upstream catalogue catches up.
+ * Pricing is USD per million tokens from Moonshot's official API platform, checked 2026-11-02.
+ */
+function buildMoonshotModels(): Record<string, ModelInfo> {
+	const models = generatedModels("moonshot")
+	const currentModels: Record<string, ModelInfo> = {
+		"kimi-k3.1-pro": {
+			id: "kimi-k3.1-pro",
+			name: "Kimi K3.1 Pro",
+			description: "Moonshot's 1M-context flagship for long-horizon coding and agentic workflows.",
+			contextWindow: 1_000_000,
+			capabilities: ["images", "video", "tools", "streaming", "prompt-cache", "reasoning", "reasoning-effort"],
+			modalities: { input: ["text", "image", "video"], output: ["text"] },
+			reasoningOptions: [{ type: "effort", values: ["low", "high", "max"] }],
+			pricing: { input: 2, output: 10, cacheWrite: 2, cacheRead: 0.2 },
+			status: "active",
+			releaseDate: "2026-10-24",
+			metadata: { reasoningDefaultOn: true },
+		},
+		"kimi-k3.1-pro-highspeed": {
+			id: "kimi-k3.1-pro-highspeed",
+			name: "Kimi K3.1 Pro Highspeed",
+			description: "High-speed Kimi K3.1 Pro variant with the same 1M context window.",
+			contextWindow: 1_000_000,
+			capabilities: ["images", "video", "tools", "streaming", "prompt-cache", "reasoning", "reasoning-effort"],
+			modalities: { input: ["text", "image", "video"], output: ["text"] },
+			reasoningOptions: [{ type: "effort", values: ["low", "high", "max"] }],
+			pricing: { input: 4, output: 20, cacheWrite: 4, cacheRead: 0.2 },
+			status: "active",
+			releaseDate: "2026-10-24",
+			metadata: { reasoningDefaultOn: true },
+		},
+	}
+	for (const [modelId, model] of Object.entries(currentModels)) {
+		models[modelId] = { ...models[modelId], ...model }
+	}
+	return models
+}
+
 function firstGeneratedModelId(providerId: string): string {
 	// The generated list is release-date ordered and mixes tiers (cline-pass/*,
 	// cline-free/*, :free). Only a subscribed-tier model is a safe default;
@@ -1013,9 +1053,15 @@ const OPENAI_COMPATIBLE_SPEC_OVERRIDES: BuiltinSpecOverride[] = [
 		metadata: QWEN_CACHE_ROUTING_METADATA,
 	},
 	{
-		// Fully described by models.dev except for the regional endpoint
-		// routing policy (`apiLineBaseUrls`), which is Cline-specific.
 		id: "moonshot",
+		name: "Moonshot AI",
+		description: "Moonshot's Kimi family of long-context models",
+		family: "openai-compatible",
+		defaultModelId: "kimi-k3.1-pro",
+		apiKeyEnv: ["MOONSHOT_API_KEY"],
+		modelsProviderId: "moonshot",
+		modelsFactory: buildMoonshotModels,
+		docsUrl: "https://platform.kimi.ai/docs/get-your-api-key",
 		apiLineBaseUrls: {
 			china: "https://api.moonshot.cn/v1",
 			international: "https://api.moonshot.ai/v1",
