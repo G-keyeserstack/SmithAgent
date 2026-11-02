@@ -41,8 +41,22 @@ fi
 git -C "$UPSTREAM_DIR" fetch --depth 1 origin "$VSCODIUM_COMMIT"
 git -C "$UPSTREAM_DIR" checkout --detach "$VSCODIUM_COMMIT"
 
-# The upstream build helper merges this product.json over the Code OSS defaults.
-cp "$EDITOR_DIR/product.json" "$UPSTREAM_DIR/product.json"
+# Keep the pinned upstream checkout reusable even when the build fails.
+TMP_DIR=""
+cleanup() {
+  if [[ -n "$TMP_DIR" ]]; then rm -rf "$TMP_DIR"; fi
+  git -C "$UPSTREAM_DIR" restore --worktree -- product.json >/dev/null 2>&1 || true
+}
+trap cleanup EXIT
+
+# Preserve upstream build metadata (icons, platform identifiers and gallery
+# defaults), overriding only the product fields owned by Makerrr.
+jq -s '.[0] * .[1]' "$UPSTREAM_DIR/product.json" "$EDITOR_DIR/product.json" > "$UPSTREAM_DIR/product.json.makerrr"
+mv "$UPSTREAM_DIR/product.json.makerrr" "$UPSTREAM_DIR/product.json"
+
+# Build local SDK packages first: the VS Code extension typecheck and bundle
+# resolve @cline/core, @cline/shared and @cline/llms from these workspace builds.
+(cd "$ROOT" && bun run build:sdk)
 
 # Build the agent extension first. The packaged editor ships with it enabled.
 (
@@ -66,6 +80,8 @@ cp "$EDITOR_DIR/product.json" "$UPSTREAM_DIR/product.json"
   export MS_TAG=""
   export MS_COMMIT=""
   export GITHUB_ENV=""
+  export BUILD_SOURCEVERSION=""
+  export npm_config_arch=""
   export DISABLE_UPDATE="yes"
   export OS_NAME VSCODE_PLATFORM VSCODE_ARCH
   export APP_NAME="Makerrr"
@@ -76,8 +92,12 @@ cp "$EDITOR_DIR/product.json" "$UPSTREAM_DIR/product.json"
   export ASSETS_REPOSITORY="G-keyeserstack/SmithAgent"
   export TUNNEL_APP_NAME="makerrr-tunnel"
   export MAX_OLD_SPACE_SIZE="${MAX_OLD_SPACE_SIZE:-8192}"
+  # The upstream scripts do not run with Bash nounset enabled. Keep errexit
+  # and pipefail, but disable -u only while sourcing the pinned upstream code.
+  set +u
   . ./get_repo.sh
   . ./build.sh
+  set -u
 )
 
 APP_DIR="$UPSTREAM_DIR/VSCode-$VSCODE_PLATFORM-$VSCODE_ARCH"
@@ -88,7 +108,6 @@ fi
 
 EXTENSION_DIR="$APP_DIR/resources/app/extensions/makerrr.claude-dev"
 TMP_DIR="$(mktemp -d)"
-trap 'rm -rf "$TMP_DIR"' EXIT
 unzip -q "$BUILD_DIR/makerrr-agent.vsix" 'extension/*' -d "$TMP_DIR"
 rm -rf "$EXTENSION_DIR"
 mkdir -p "$(dirname "$EXTENSION_DIR")"
