@@ -1,4 +1,5 @@
 import * as coreModule from "@cline/core"
+import * as providerMigrationModule from "@/sdk/provider-migration"
 import { FileContextTracker } from "@core/context/context-tracking/FileContextTracker"
 import * as extractTextModule from "@integrations/misc/extract-text"
 import { UrlContentFetcher } from "@services/browser/UrlContentFetcher"
@@ -227,6 +228,9 @@ Error fetching content: Network error
 
 	describe("Codebase mention", () => {
 		it("adds local search results and a repository map to Composer context", async () => {
+			sandbox.stub(providerMigrationModule, "getProviderSettingsManager").returns({
+				getProviderSettings: () => undefined,
+			} as any)
 			const searchStub = sandbox.stub(coreModule, "searchWorkspaceCode").resolves({
 				mode: "lexical",
 				results: [{
@@ -257,6 +261,55 @@ Error fetching content: Network error
 			expect(result).to.contain('<codebase_search mode="lexical"')
 			expect(result).to.contain("src/auth/tokens.ts")
 			expect(result).to.contain("Search runs locally")
+		})
+
+		it("uses the configured local Qwen3 embedding model for semantic ranking", async () => {
+			sandbox.stub(providerMigrationModule, "getProviderSettingsManager").returns({
+				getProviderSettings: () => ({ baseUrl: "http://localhost:11434" }),
+			} as any)
+			const searchStub = sandbox.stub(coreModule, "searchWorkspaceCode").resolves({
+				mode: "semantic",
+				provider: "ollama:qwen3-embedding:0.6b",
+				results: [],
+			})
+			sandbox.stub(coreModule, "buildRepositoryMap").resolves({
+				workspace: "project",
+				generatedAt: 1,
+				fileCount: 1,
+				languages: [],
+				directories: [],
+				entryPoints: [],
+				files: [],
+			})
+			const result = await parseMentions("Find the token lifecycle @codebase", cwd, urlContentFetcherStub)
+			const options = searchStub.firstCall.args[2]
+
+			expect(options?.embeddingProvider?.id).to.equal("ollama:qwen3-embedding:0.6b")
+			expect(options?.maxChunks).to.equal(256)
+			expect(result).to.contain("semantic via ollama:qwen3-embedding:0.6b")
+		})
+
+		it("falls back to lexical retrieval when the configured local embedding model is unavailable", async () => {
+			sandbox.stub(providerMigrationModule, "getProviderSettingsManager").returns({
+				getProviderSettings: () => ({ baseUrl: "http://localhost:11434" }),
+			} as any)
+			const searchStub = sandbox.stub(coreModule, "searchWorkspaceCode")
+			searchStub.onFirstCall().rejects(new Error("model not installed"))
+			searchStub.onSecondCall().resolves({ mode: "lexical", results: [] })
+			sandbox.stub(coreModule, "buildRepositoryMap").resolves({
+				workspace: "project",
+				generatedAt: 1,
+				fileCount: 1,
+				languages: [],
+				directories: [],
+				entryPoints: [],
+				files: [],
+			})
+			const result = await parseMentions("Find the token lifecycle @codebase", cwd, urlContentFetcherStub)
+
+			expect(searchStub.calledTwice).to.be.true
+			expect(searchStub.secondCall.args[2]).to.deep.equal({ topK: 6, maxFiles: 1_200 })
+			expect(result).to.contain("lexical fallback (local Qwen3 embeddings unavailable)")
 		})
 
 		it("asks for a query instead of indexing the workspace when @codebase has no question", async () => {
