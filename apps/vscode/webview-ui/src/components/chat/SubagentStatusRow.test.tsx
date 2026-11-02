@@ -116,7 +116,7 @@ describe("SubagentStatusRow Makerrr Bot identity", () => {
 		} as ClineMessage
 		render(<SubagentStatusRow message={message} isLast />)
 		expect(screen.getByText("Makerrr Bot wants to delegate to a subagent:")).toBeTruthy()
-		expect(screen.getByText("3 tools · 1,200 input / 400 output · 1,600 context · $0.04")).toBeTruthy()
+		expect(screen.getByText("3 tools called · 1,600 tokens · $0.04")).toBeTruthy()
 	})
 
 	it("reports malformed subagent messages without crashing", () => {
