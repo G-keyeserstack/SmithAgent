@@ -88,6 +88,7 @@ export interface RepositoryMap {
 
 export interface RepositoryMapOptions {
 	maxFiles?: number;
+	maxChunks?: number;
 }
 
 export async function buildRepositoryMap(
