@@ -13,16 +13,21 @@ This document is the go-live contract. A feature is not complete because a compo
 | Makerrr Desktop | First-party branded editor, workspace, terminal, source control, extensions, settings, keyboard shortcuts, update and recovery paths |
 | Makerrr Composer | Multi-file agent workflow, Plan/Act, codebase context, streaming progress, steering, queued follow-ups, diffs, review and restore |
 | Makerrr Tab | Low-latency inline completions, cancellation, acceptance/rejection, model selection and privacy controls |
-| Makerrr Bot | Persistent agent identity across desktop, CLI and cloud; task execution, tool use, delegation, approvals and resumability |
-| Makerrr CLI | Interactive and headless coding, scripts, CI use, model selection, usage output, session resume and secure credential handling |
+| Makerrr Chat | Multi-model chat, codebase Q&A, file/image inputs, conversation history, voice input and shareable outputs |
+| Makerrr Bot | Persistent agent identity across desktop, CLI and cloud; autonomous task execution, tool use, delegation, approvals and resumability |
+| Makerrr Models | Model catalogue and router for Kimi, GLM, OpenAI, Anthropic, Google, xAI and compatible/local models, with capability and rate disclosure |
 | Makerrr Cloud | Isolated remote workspaces, background agents, persistent sessions, artifacts, logs, cancellation and recovery |
+| Makerrr Origin | Hosted Git repositories, import/export, branches, pull requests, protected branches, CI status, access controls and repository activity |
 | Makerrr Automations | Scheduled and event-triggered repository tasks with explicit permissions, budgets, logs and failure notifications |
+| Makerrr CLI | Interactive and headless coding, scripts, CI use, model selection, usage output, session resume and secure credential handling |
 | Makerrr Review | Pull-request review, bug finding, suggested patches, inline findings, severity/confidence and human approval |
 | Makerrr Marketplace | Discoverable extensions, MCP servers, skills, rules, workflows and team-curated private catalogues |
+| Makerrr Studio | Voice dictation/response, image generation for UI mockups and assets, diagram creation, screenshot understanding and multimodal context for Composer |
 | Makerrr Mobile | Secure companion experience for monitoring, steering, approving and resuming cloud agents; not a substitute for the desktop editor |
+| Makerrr API | Public API, SDKs, webhooks and service-to-service access for tasks, models, repositories and automations |
 | Teams and Enterprise | Shared workspaces, pooled or assigned usage, roles, SSO, policy, audit, procurement and administrative controls |
 
-The desktop editor is the primary product. CLI, cloud, automations, review and mobile must share the same identity, agent/task model, model catalogue, permissions and usage ledger rather than becoming disconnected products.
+The desktop editor is the primary product. Chat, Bot, Composer, Models, Origin, CLI, Cloud, Automations, Review, Studio, Marketplace, Mobile and API must share the same identity, agent/task model, model catalogue, permissions and usage ledger rather than becoming disconnected products.
 
 ## 2. Composer: one end-to-end coding workflow
 
@@ -57,6 +62,10 @@ Makerrr Bot is the first-party agent identity. It is model-agnostic and uses the
 
 ### Core capabilities
 
+- **Chat:** answer engineering questions, explain repositories, research documentation and work with user-supplied files and images.
+- **Voice:** accept speech-to-text instructions and support hands-free steering or spoken responses where the selected platform/provider supports it.
+- **Imagine / Studio:** generate UI mockups, diagrams and design assets; let users attach those outputs to Composer as implementation context.
+- **Build:** inspect, plan, edit, run tests, debug, iterate, produce previews and explain the result.
 - **Autonomous coding:** inspect, plan, edit, run tests, debug, iterate and explain.
 - **Multi-agent orchestration:** create specialist agents (for example, planner, implementer, reviewer, test engineer and researcher), delegate scoped tasks, run independent tasks concurrently and consolidate results.
 - **Tool execution:** workspace filesystem, terminal, Git, browser, documentation/search, MCP tools and approved external integrations.
@@ -116,18 +125,23 @@ Every usage record must include a stable task/session identifier, timestamp, pro
 
 The commercial structure should be competitive with the market benchmark supplied for Cursor, but Makerrr must set its own prices after model, cloud, support and payment costs have been measured. Do not copy competitor prices or promise unlimited use.
 
-| Makerrr plan | Intended customer | Entitlement shape |
-| --- | --- | --- |
-| Free | Evaluation and light personal use | Desktop, Tab and Composer with a small included usage allowance; BYOK/local models; limited cloud trial |
-| Individual | Regular solo developer | Larger included usage pool, full model choice, higher agent concurrency and usage history |
-| Pro | Professional power user | Higher usage, priority capacity, cloud agents, automations and advanced review |
-| Max | Heavy individual / early adopter | Significantly higher allowance and priority model/agent capacity; metered overage or top-ups |
-| Teams | Engineering teams | Shared or assigned pools, team marketplace, central billing, analytics, policy and collaboration |
-| Enterprise | Regulated and large organisations | SSO, SCIM, audit logs, service accounts, private networking options, retention controls, procurement and support commitments |
+Indicative launch anchors below are a commercial hypothesis based on the supplied market benchmark, **not approved prices**. Final prices, included usage and overages must be set only after Gate 5 measures inference, cloud, support and payment costs.
+
+| Makerrr plan | Indicative price | Usage-pool target | Intended customer and entitlement shape |
+| --- | --- | --- | --- |
+| Free | $0/month | Limited | Evaluation; desktop, Tab, Composer and Chat with a small allowance; BYOK/local models; limited cloud trial |
+| Individual | $8/month | 1× base pool | Regular solo developer; larger included usage, full model choice, usage history and standard agent concurrency |
+| Pro | $30/month | 4× Individual | Professional power user; cloud agents, automations, Origin hosting, advanced review and priority capacity |
+| Max | $100/month | 15× Individual | Heavy individual; higher agent concurrency, priority model access and larger cloud allowance |
+| Ultra | $200/month | 50× Individual | Highest individual tier; priority access at peak times, highest included allowance and early access to new capabilities |
+| Teams | From $30/user/month | Pooled or assigned, configurable | Team marketplace, shared billing, usage analytics, mix-and-match seats, central privacy/policy controls and collaboration |
+| Enterprise | Custom | Contracted pool | SSO, SCIM, audit logs, service accounts, invoice/PO, private networking options, custom retention, granular spend controls and support commitments |
 
 Commercial rules:
 
 - Show included usage and the current consumption multiplier before checkout.
+- Provide Makerrr API access with separate rate limits, service-account entitlements and usage attribution; never let API keys bypass team policies.
+- Offer voice and Studio capabilities as metered or included features according to the plan, with model/provider cost visibility.
 - Separate subscription-included usage from third-party BYOK/API charges.
 - Meter premium model and cloud usage transparently; allow admins to disable overages.
 - Enforce concurrency, model access, cloud minutes/storage and team controls by entitlement on the server, not by hiding UI.
