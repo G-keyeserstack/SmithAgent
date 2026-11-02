@@ -18,7 +18,7 @@ describe("Makerrr Tab completion prompt", () => {
 		expect(prompt.userPrompt).toContain("Language: typescript")
 		expect(prompt.userPrompt).toContain("File: editor.ts")
 		expect(prompt.userPrompt).toContain("<makerrr-prefix>\nconst answer = ")
-		expect(prompt.userPrompt).toContain("<makerrr-suffix>\nconsole.log(answer)")
+		expect(prompt.userPrompt).toContain("<makerrr-suffix>\n\nconsole.log(answer)")
 	})
 
 	it("bounds context while preserving the nearest text around the cursor", () => {
