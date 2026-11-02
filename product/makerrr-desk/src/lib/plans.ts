@@ -510,7 +510,7 @@ test("rejects a second settle with the same order id", async () => {
 
 export const RULES_DEFAULT = `Settle a checkout once.
 Use an idempotency key on every charge.
-Johannesburg is the default desk.
+The desk stays on your machine until a cloud agent starts.
 `;
 
 export function chargeIsSafe(source: string) {

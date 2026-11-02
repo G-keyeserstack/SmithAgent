@@ -66,7 +66,7 @@ export type Session = {
   id: string;
   title: string;
   brief: string;
-  location: "Johannesburg";
+  location: string;
   column: Column;
   modelId: ModelId;
   mode: Mode;
@@ -174,9 +174,9 @@ function freshFiles(): ProjectFile[] {
 function freshSession(): Session {
   return {
     id: "jhb-rosebank",
-    title: "Harden the Rosebank checkout",
-    brief: "Review the pay path, open the diff, and keep the session on the Johannesburg board.",
-    location: "Johannesburg",
+    title: "Build the landing page",
+    brief: "Open the charge path, show the diff, and keep the session on the board.",
+    location: "Desk",
     column: "queued",
     modelId: "grok-4",
     mode: "plan",
@@ -195,7 +195,7 @@ function freshSession(): Session {
 function freshAccount(): Account {
   return {
     signedIn: true,
-    name: "Johannesburg desk",
+    name: "",
     planId: "pro",
     region: "za",
     teamSeats: 5,
@@ -339,8 +339,8 @@ export const useAgent = create<AgentState>()(
             surface,
             "agent.startJob()",
             first
-              ? "Opened src/checkout/pay.ts and moved the Johannesburg session to Running."
-              : "Diff already open. Johannesburg session stays on the board.",
+              ? "Opened src/checkout/pay.ts and moved this session to Running."
+              : "Diff already open. This session stays on the board.",
           );
           if (get().account.autoRun && session.mode === "act" && get().account.network) {
             return get().approveShell(surface);
@@ -385,7 +385,7 @@ export const useAgent = create<AgentState>()(
         acceptDiff: (surface) => {
           const current = get().session;
           if (current.mode !== "act") return "Switch to Act before accepting the diff.";
-          if (current.column === "queued") return "Start the Johannesburg job first.";
+          if (current.column === "queued") return "Start the this job first.";
           const project = get().project;
           if (!get().account.mcp) return "MCP writes are off. Turn them on under Enterprise.";
           if (rulesBlockEdit(project.rules)) return "Rules block edits to pay.ts.";
@@ -414,7 +414,7 @@ export const useAgent = create<AgentState>()(
         approveShell: (surface) => {
           const current = get().session;
           if (current.mode !== "act" && !get().account.autoRun) return "Switch to Act before approving the shell.";
-          if (current.column === "queued") return "Start the Johannesburg job first.";
+          if (current.column === "queued") return "Start the this job first.";
           if (!get().account.network) return "Network is off for this desk. The test runner stays closed.";
           const blocked = gate(surface, "agent.approveShell()");
           if (blocked) return blocked;
@@ -439,7 +439,7 @@ export const useAgent = create<AgentState>()(
         },
         denyShell: (surface) => {
           const current = get().session;
-          if (current.column === "queued") return "Start the Johannesburg job first.";
+          if (current.column === "queued") return "Start the this job first.";
           set({
             session: {
               ...current,
@@ -502,21 +502,21 @@ export const useAgent = create<AgentState>()(
           const current = get().session;
           if (current.column === "queued") return;
           set({ session: { ...current, column: "held", surface } });
-          push(surface, "agent.hold()", "Johannesburg session moved to Held.");
+          push(surface, "agent.hold()", "This session moved to Held.");
         },
         finish: (surface) => {
           const current = get().session;
           if (current.column === "queued") return;
           set({ session: { ...current, column: "done", surface, openDiff: true } });
-          push(surface, "agent.finish()", "Johannesburg session moved to Done.");
+          push(surface, "agent.finish()", "This session moved to Done.");
         },
         resume: (surface) => {
           const current = get().session;
           set({ session: { ...current, column: "running", surface, openDiff: true } });
-          push(surface, "agent.resume()", "Johannesburg session is running again.");
+          push(surface, "agent.resume()", "This session is running again.");
         },
         signIn: (name) => {
-          const cleaned = name.trim() || "Johannesburg desk";
+          const cleaned = name.trim() || "your desk";
           set({ account: { ...get().account, signedIn: true, name: cleaned } });
         },
         signOut: () => {
@@ -569,7 +569,7 @@ export const useAgent = create<AgentState>()(
         inlineEdit: (instruction, surface) => {
           const current = get().session;
           if (current.mode !== "act") return "Switch to Act before an inline edit.";
-          if (current.column === "queued") return "Start the Johannesburg job first.";
+          if (current.column === "queued") return "Start the this job first.";
           const blocked = gate(surface, "editor.inlineEdit()");
           if (blocked) return blocked;
           if (rulesBlockEdit(get().project.rules)) return "Rules block edits to pay.ts.";

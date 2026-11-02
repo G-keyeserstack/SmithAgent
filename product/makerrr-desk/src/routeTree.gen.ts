@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BoardRouteImport } from './routes/board'
+import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CliRouteImport } from './routes/cli'
 import { Route as CloudRouteImport } from './routes/cloud'
 import { Route as DesktopRouteImport } from './routes/desktop'
@@ -29,6 +30,11 @@ const IndexRoute = IndexRouteImport.update({
 const BoardRoute = BoardRouteImport.update({
   id: '/board',
   path: '/board',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CliRoute = CliRouteImport.update({
@@ -80,6 +86,7 @@ const SdkRoute = SdkRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/board': typeof BoardRoute
+  '/checkout': typeof CheckoutRoute
   '/cli': typeof CliRoute
   '/cloud': typeof CloudRoute
   '/desktop': typeof DesktopRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/board': typeof BoardRoute
+  '/checkout': typeof CheckoutRoute
   '/cli': typeof CliRoute
   '/cloud': typeof CloudRoute
   '/desktop': typeof DesktopRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/board': typeof BoardRoute
+  '/checkout': typeof CheckoutRoute
   '/cli': typeof CliRoute
   '/cloud': typeof CloudRoute
   '/desktop': typeof DesktopRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/board'
+    | '/checkout'
     | '/cli'
     | '/cloud'
     | '/desktop'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/board'
+    | '/checkout'
     | '/cli'
     | '/cloud'
     | '/desktop'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/board'
+    | '/checkout'
     | '/cli'
     | '/cloud'
     | '/desktop'
@@ -162,6 +174,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BoardRoute: typeof BoardRoute
+  CheckoutRoute: typeof CheckoutRoute
   CliRoute: typeof CliRoute
   CloudRoute: typeof CloudRoute
   DesktopRoute: typeof DesktopRoute
@@ -187,6 +200,13 @@ declare module '@tanstack/react-router' {
       path: '/board'
       fullPath: '/board'
       preLoaderRoute: typeof BoardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cli': {
@@ -258,6 +278,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BoardRoute: BoardRoute,
+  CheckoutRoute: CheckoutRoute,
   CliRoute: CliRoute,
   CloudRoute: CloudRoute,
   DesktopRoute: DesktopRoute,

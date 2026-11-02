@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { PlanCards, SiteFrame } from "@/components/chrome";
+import { startCheckout, type PayProvider } from "@/lib/billing";
 import { useAgent } from "@/lib/agent-store";
 import { planById, PLANS, priceLabel, PUBLIC_PLANS, teamTotal, type PlanId, type Region, type Segment } from "@/lib/plans";
 
@@ -24,9 +25,35 @@ function PricingPage() {
   const account = useAgent((state) => state.account);
   const setRegion = useAgent((state) => state.setRegion);
   const setTeamSeats = useAgent((state) => state.setTeamSeats);
+  const [email, setEmail] = useState("");
+  const [payPlan, setPayPlan] = useState<PlanId>("pro");
+  const [payNote, setPayNote] = useState("");
+  const [paying, setPaying] = useState(false);
   const current = planById(account.planId);
   const publicPlans = PUBLIC_PLANS.map((id) => planById(id));
   const ids = (segment === "individual" ? PUBLIC_PLANS : PLANS.filter((item) => item.segment === segment).map((item) => item.id)) as PlanId[];
+
+  async function pay(provider: PayProvider) {
+    setPaying(true);
+    setPayNote("");
+    const result = await startCheckout({
+      data: {
+        planId: payPlan,
+        region: account.region,
+        seats: account.teamSeats,
+        provider,
+        email,
+        origin: window.location.origin,
+      },
+    });
+    setPaying(false);
+    if ("url" in result) {
+      window.location.assign(result.url);
+      return;
+    }
+    setPayNote(result.error);
+  }
+
   return (
     <SiteFrame>
       <main className="mx-auto max-w-6xl px-4 py-12">
@@ -102,6 +129,46 @@ function PricingPage() {
         <div className="mt-6">
           <PlanCards ids={ids} />
         </div>
+        <section className="mt-8 rounded-2xl border border-line bg-paper p-5">
+          <h2 className="text-lg font-medium">Pay</h2>
+          <p className="mt-1 max-w-xl text-sm text-mute">
+            Stripe or Paystack. The amount is calculated on the server from the price list. Card details never touch this desk.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {publicPlans
+              .filter((item) => item.amounts && item.id !== "free")
+              .map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setPayPlan(item.id)}
+                  className={`h-10 rounded-full px-3 text-sm ${payPlan === item.id ? "bg-ink text-bone" : "border border-line"}`}
+                >
+                  {item.name} · {item.perUser ? teamTotal(item, account.region, account.teamSeats) : priceLabel(item, account.region)}
+                </button>
+              ))}
+          </div>
+          <label className="mt-4 block text-sm" htmlFor="pay-email">
+            Email for the receipt
+          </label>
+          <input
+            id="pay-email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="you@company.com"
+            className="mt-2 h-11 w-full max-w-md rounded-lg border border-line bg-white px-3 text-sm"
+          />
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button type="button" disabled={paying} onClick={() => pay("stripe")} className="h-11 rounded-full bg-ink px-4 text-sm text-bone disabled:opacity-50">
+              Pay with Stripe
+            </button>
+            <button type="button" disabled={paying} onClick={() => pay("paystack")} className="h-11 rounded-full border border-ink px-4 text-sm disabled:opacity-50">
+              Pay with Paystack
+            </button>
+          </div>
+          {payNote ? <p className="mt-3 text-sm text-clay">{payNote}</p> : null}
+        </section>
         <div className="mt-8 overflow-x-auto">
           <table className="w-full min-w-[36rem] border-collapse text-left text-sm">
             <thead>

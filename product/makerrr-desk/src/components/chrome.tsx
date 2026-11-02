@@ -14,7 +14,7 @@ import {
 import { planById, PLANS, priceLabel, type PlanId } from "@/lib/plans";
 
 const PRODUCT = [
-  { to: "/cloud", label: "Agents", note: "The Johannesburg session" },
+  { to: "/cloud", label: "Agents", note: "The open session" },
   { to: "/desktop", label: "Desktop", note: "Same agent, own window" },
   { to: "/ide", label: "IDE", note: "Editor, Tab, inline edit" },
   { to: "/cli", label: "CLI", note: "Same calls, typed" },
@@ -43,7 +43,7 @@ export function NewsBar() {
       to="/cloud"
       className="block bg-ink px-4 py-2 text-center text-xs font-medium tracking-wide text-bone sm:text-sm"
     >
-      One open agent runtime. Desktop, IDE, CLI, and Cloud share the Johannesburg session.
+      One agent runtime. Desktop, IDE, CLI, and Cloud share the same files.
     </Link>
   );
 }
@@ -83,7 +83,7 @@ export function CenterNav() {
   const [name, setName] = useState("");
 
   return (
-    <header className="border-b border-line bg-[#f6f4ee]">
+    <header className="bg-[#f7f6f3]">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-3">
         <Link to="/" className="mr-2 flex items-center gap-2 text-ink">
           <Mark className="size-6" />
@@ -206,7 +206,7 @@ function SignInRow({
         id="desk-name"
         value={name}
         onChange={(event) => setName(event.target.value)}
-        placeholder="Johannesburg desk"
+        placeholder="Your name"
         className="h-11 min-w-0 flex-1 border border-line bg-paper px-3 text-sm"
       />
       <button type="submit" className="h-11 bg-ink px-4 text-sm text-bone">
@@ -248,7 +248,6 @@ export function SiteFooter() {
           <ul className="mt-3 space-y-2 text-sm text-mute">
             <li><Link to="/enterprise">Enterprise</Link></li>
             <li>Suppple Group Plc</li>
-            <li>Johannesburg</li>
           </ul>
         </div>
         <div>
@@ -264,8 +263,7 @@ export function SiteFooter() {
 export function SiteFrame({ children }: { children: ReactNode }) {
   useAgentReady();
   return (
-    <div className="min-h-screen bg-[#f6f4ee] text-ink">
-      <NewsBar />
+    <div className="min-h-screen bg-[#f7f6f3] text-ink">
       <CenterNav />
       {children}
       <SiteFooter />
