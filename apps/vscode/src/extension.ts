@@ -13,6 +13,7 @@ import {
 } from "@cline/shared/storage"
 import * as vscode from "vscode"
 import { Logger } from "@/shared/services/Logger"
+import { registerMakerrrTabCompletionProvider } from "@/integrations/editor/tab-completion-provider"
 import { sendAccountButtonClickedEvent } from "./core/controller/ui/subscribeToAccountButtonClicked"
 import { sendChatButtonClickedEvent } from "./core/controller/ui/subscribeToChatButtonClicked"
 import { sendHistoryButtonClickedEvent } from "./core/controller/ui/subscribeToHistoryButtonClicked"
@@ -150,6 +151,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	// 4. Register services and perform common initialization
 	// IMPORTANT: Must be done after host provider is setup and migrations are complete
 	const webview = (await initialize(storageContext)) as VscodeWebviewProvider
+
+	// First-party Cursor-style inline Tab completions. Disabled by default until
+	// the developer explicitly enables provider-backed code suggestions.
+	context.subscriptions.push(...registerMakerrrTabCompletionProvider(webview.controller))
 
 	// 5. Register services and commands specific to VS Code
 	// Initialize hook discovery cache for performance optimization

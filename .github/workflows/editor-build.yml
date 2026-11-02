@@ -1,0 +1,80 @@
+name: Makerrr Desktop Build
+
+on:
+  pull_request:
+    paths:
+      - "apps/editor/**"
+      - "apps/vscode/package.json"
+      - "apps/vscode/src/**"
+      - "package.json"
+      - "bun.lock"
+      - ".github/workflows/editor-build.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/editor/**"
+      - "apps/vscode/package.json"
+      - "apps/vscode/src/**"
+      - "package.json"
+      - "bun.lock"
+      - ".github/workflows/editor-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-desktop:
+    name: Build Makerrr desktop editor (Linux x64)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      MAX_OLD_SPACE_SIZE: 8192
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential pkg-config jq unzip \
+            libx11-dev libxkbfile-dev libsecret-1-dev libkrb5-dev \
+            libgtk-3-dev libnss3-dev libasound2-dev libgbm-dev \
+            libnotify-dev libxss-dev libxtst-dev
+
+      - name: Install locked workspace dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Verify Makerrr desktop product contract
+        run: bun run editor:verify
+
+      - name: Build the Makerrr desktop editor and bundle its agent
+        run: bun run editor:build
+
+      - name: Upload Linux editor build
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: makerrr-editor-linux-x64
+          path: apps/editor/.build/vscodium/VSCode-linux-x64/
+          if-no-files-found: warn
+          retention-days: 7
