@@ -59,6 +59,10 @@ jobs:
         working-directory: apps/vscode
         run: bunx --bun vitest run --config vitest.config.ts src/hosts/vscode/codebase-search.test.ts ../../sdk/packages/core/src/services/workspace/repository-intelligence.test.ts
 
+      - name: Lint desktop codebase search
+        working-directory: apps/vscode
+        run: bunx --bun @biomejs/biome check --config-path biome.jsonc --diagnostic-level=error src/hosts/vscode/codebase-search.ts src/hosts/vscode/codebase-search.test.ts src/extension.ts
+
       - name: Typecheck the VS Code host and webview
         working-directory: apps/vscode
         run: bun run check-types
