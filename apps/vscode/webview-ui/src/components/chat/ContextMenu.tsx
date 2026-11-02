@@ -95,6 +95,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 
 	// Shared label definitions for simple option types
 	const SIMPLE_OPTION_LABELS: Partial<Record<ContextMenuOptionType, string>> = {
+		[ContextMenuOptionType.Codebase]: "Search codebase",
 		[ContextMenuOptionType.Problems]: "Problems",
 		[ContextMenuOptionType.Terminal]: "Terminal",
 		[ContextMenuOptionType.URL]: "Paste URL to fetch contents",
@@ -194,6 +195,8 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 				return "file"
 			case ContextMenuOptionType.Folder:
 				return "folder"
+			case ContextMenuOptionType.Codebase:
+				return "search"
 			case ContextMenuOptionType.Problems:
 				return "warning"
 			case ContextMenuOptionType.Terminal:
@@ -340,7 +343,8 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 										}}
 									/>
 								)}
-							{(option.type === ContextMenuOptionType.Problems ||
+							{(option.type === ContextMenuOptionType.Codebase ||
+								option.type === ContextMenuOptionType.Problems ||
 								option.type === ContextMenuOptionType.Terminal ||
 								((option.type === ContextMenuOptionType.File ||
 									option.type === ContextMenuOptionType.Folder ||

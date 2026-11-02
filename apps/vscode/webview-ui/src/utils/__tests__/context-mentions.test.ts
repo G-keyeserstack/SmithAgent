@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest"
-import { insertMention, insertMentionDirectly } from "../context-mentions"
+import { ContextMenuOptionType, getContextMenuOptions, insertMention, insertMentionDirectly } from "../context-mentions"
 
 describe("context-mentions", () => {
+	it("offers a codebase context action with a clear privacy and context description", () => {
+		const options = getContextMenuOptions("codebase", null, [])
+		expect(options).toContainEqual({
+			type: ContextMenuOptionType.Codebase,
+			value: "codebase",
+			label: "Search codebase",
+			description: "Search local repository code and add matching snippets to model context",
+		})
+	})
+
 	describe("insertMention", () => {
 		it("should add quotes to file paths with spaces", () => {
 			const text = "Check @"

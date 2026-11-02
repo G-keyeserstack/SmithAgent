@@ -7,6 +7,10 @@ export interface MakerrrUsageMeterProps {
 	cacheWriteTokens?: number
 	costUsd?: number
 	costKind?: "estimated" | "cloud-reported"
+	provider?: string
+	model?: string
+	contextTokens?: number
+	contextWindow?: number
 }
 
 /**
@@ -21,10 +25,16 @@ export function MakerrrUsageMeter({
 	cacheWriteTokens = 0,
 	costUsd,
 	costKind = "estimated",
+	provider,
+	model,
+	contextTokens = 0,
+	contextWindow = 0,
 }: MakerrrUsageMeterProps) {
 	const totalTokens = Math.max(0, inputTokens) + Math.max(0, outputTokens)
 	const hasTokens = totalTokens > 0
 	const hasCost = typeof costUsd === "number" && Number.isFinite(costUsd) && costUsd >= 0
+	const hasContext = contextTokens > 0 && contextWindow > 0
+	const contextPercentage = hasContext ? Math.min(100, (contextTokens / contextWindow) * 100) : 0
 
 	if (!hasTokens && !hasCost) {
 		return null
@@ -47,6 +57,11 @@ export function MakerrrUsageMeter({
 				<div className="mb-2 flex items-center justify-between gap-3 font-semibold">
 					<span>Task usage</span>
 					<span className="text-[10px] font-normal text-description">Updates as the agent runs</span>
+				</div>
+				<div className="mb-2 space-y-1 text-[11px] text-description">
+					{provider && <div className="flex justify-between gap-4"><span>Provider</span><span className="max-w-36 truncate font-mono text-foreground">{provider}</span></div>}
+					{model && <div className="flex justify-between gap-4"><span>Model</span><span className="max-w-36 truncate font-mono text-foreground">{model}</span></div>}
+					{hasContext && <div className="flex justify-between gap-4"><span>Context used</span><span className="font-mono text-foreground">{formatLargeNumber(contextTokens)} / {formatLargeNumber(contextWindow)} ({contextPercentage.toFixed(1)}%)</span></div>}
 				</div>
 				<div className="space-y-1 font-mono tabular-nums">
 					<div className="flex justify-between gap-4"><span>Input</span><span>{formatLargeNumber(inputTokens)}</span></div>
