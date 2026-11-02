@@ -313,7 +313,7 @@ export class McpOAuthManager {
 				}
 			}
 
-			// Drop the migrated entry only after the shared settings write is verified. so this only happens once per server.
+			// Drop the migrated entry only after the shared settings write is verified.
 			delete secrets[serverHash]
 			StateManager.get().setSecret("mcpOAuthSecrets", Object.keys(secrets).length ? JSON.stringify(secrets) : undefined)
 		} catch (error) {
