@@ -68,11 +68,13 @@ describe("DefaultRuntimeBuilder", () => {
 	const tempDirs: string[] = [];
 
 	afterEach(() => {
-		process.env.HOME = previousHome;
+		if (previousHome === undefined) delete process.env.HOME;
+		else process.env.HOME = previousHome;
 		setHomeDir(previousHome ?? "~");
 		if (previousMakerrrDir === undefined) delete process.env.MAKERRR_DIR;
 		else process.env.MAKERRR_DIR = previousMakerrrDir;
-		process.env.CLINE_GLOBAL_SETTINGS_PATH = previousGlobalSettingsPath;
+		if (previousGlobalSettingsPath === undefined) delete process.env.CLINE_GLOBAL_SETTINGS_PATH;
+		else process.env.CLINE_GLOBAL_SETTINGS_PATH = previousGlobalSettingsPath;
 		for (const dir of tempDirs.splice(0)) {
 			rmSync(dir, { recursive: true, force: true });
 		}
@@ -219,10 +221,11 @@ You are a code reviewer.`,
 		const cwd = join(workspaceRoot, "packages", "app");
 		tempDirs.push(tempHome, workspaceRoot);
 		setHomeDir(tempHome);
+		process.env.MAKERRR_DIR = join(tempHome, ".makerrr");
 		mkdirSync(cwd, { recursive: true });
 
-		const agentsDir = join(workspaceRoot, ".cline", "agents");
-		const skillDir = join(workspaceRoot, ".cline", "skills", "review");
+		const agentsDir = join(workspaceRoot, ".makerrr", "agents");
+		const skillDir = join(workspaceRoot, ".makerrr", "skills", "review");
 		mkdirSync(agentsDir, { recursive: true });
 		mkdirSync(skillDir, { recursive: true });
 		writeFileSync(
@@ -1050,7 +1053,8 @@ Use conventional commits.`,
 		const cwd = mkdtempSync(join(tmpdir(), "runtime-builder-plugin-skills-"));
 		process.env.HOME = cwd;
 		setHomeDir(cwd);
-		const pluginDir = join(cwd, ".cline", "plugins", "review-plugin");
+		process.env.MAKERRR_DIR = join(cwd, ".makerrr");
+		const pluginDir = join(cwd, ".makerrr", "plugins", "review-plugin");
 		const skillDir = join(pluginDir, "skills", "review");
 		mkdirSync(skillDir, { recursive: true });
 		writeFileSync(
@@ -1059,7 +1063,7 @@ Use conventional commits.`,
 				{
 					name: "review-plugin",
 					private: true,
-					cline: {
+					makerrr: {
 						plugins: [{ paths: ["./index.ts"] }],
 					},
 				},
@@ -1109,7 +1113,8 @@ Use the review plugin guidance.`,
 		);
 		process.env.HOME = cwd;
 		setHomeDir(cwd);
-		const pluginDir = join(cwd, ".cline", "plugins", "review-plugin");
+		process.env.MAKERRR_DIR = join(cwd, ".makerrr");
+		const pluginDir = join(cwd, ".makerrr", "plugins", "review-plugin");
 		const skillRoot = join(pluginDir, "skills");
 		const skillDir = join(skillRoot, "review");
 		mkdirSync(skillDir, { recursive: true });
@@ -1167,7 +1172,8 @@ Use the review plugin guidance.`,
 		);
 		process.env.HOME = cwd;
 		setHomeDir(cwd);
-		const pluginDir = join(cwd, ".cline", "plugins", "review-plugin");
+		process.env.MAKERRR_DIR = join(cwd, ".makerrr");
+		const pluginDir = join(cwd, ".makerrr", "plugins", "review-plugin");
 		const skillDir = join(pluginDir, "skills", "review");
 		mkdirSync(skillDir, { recursive: true });
 		writeFileSync(

@@ -57,6 +57,16 @@ describe("storage home directory fallback", () => {
 		expect(resolveClineDir()).toBe(join("C:\\Users\\saoud", ".makerrr"));
 	});
 
+	it("prefers MAKERRR_DIR over a legacy CLINE_DIR override", async () => {
+		snapshot = captureEnv();
+		process.env.MAKERRR_DIR = join("C:\\Users\\saoud", ".makerrr-custom");
+		process.env.CLINE_DIR = join("C:\\Users\\saoud", ".cline");
+
+		const { resolveClineDir, setClineDir } = await import("./paths");
+		setClineDir(join("C:\\Users\\saoud", ".cline"));
+		expect(resolveClineDir()).toBe(join("C:\\Users\\saoud", ".makerrr-custom"));
+	});
+
 	it("treats HOME=~ as unset and falls back to USERPROFILE", async () => {
 		snapshot = captureEnv();
 		process.env.HOME = "~";

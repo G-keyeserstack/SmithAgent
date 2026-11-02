@@ -15,6 +15,7 @@ import {
 	isChatWorkspacePath,
 	RULES_CONFIG_DIRECTORY_NAME,
 	resolveAgentPluginSearchPaths,
+	resolveAgentConfigSearchPaths,
 	resolveAgentsConfigDirPath,
 	resolveChatWorkspacePath,
 	resolveClineDataDir,
@@ -116,6 +117,7 @@ describe("storage path resolution", () => {
 
 	it("defaults the shared runtime storage root to Makerrr", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		const homeRoot = mkdtempSync(join(tmpdir(), "makerrr-default-root-"));
 		const previousHome = process.env.HOME ?? "~";
 		try {
@@ -135,6 +137,7 @@ describe("storage path resolution", () => {
 
 	it("keeps existing Cline runtime stores visible until they are migrated offline", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		const homeRoot = mkdtempSync(join(tmpdir(), "makerrr-legacy-runtime-data-"));
 		const legacyRoot = join(homeRoot, ".cline");
 		try {
@@ -165,6 +168,7 @@ describe("storage path resolution", () => {
 
 	it("uses CLINE_DATA_DIR as-is when set", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
 
 		expect(resolveClineDataDir()).toBe("/tmp/cline-data");
@@ -172,6 +176,7 @@ describe("storage path resolution", () => {
 
 	it("falls back to CLINE_DATA_DIR/sessions for session storage", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		delete process.env.CLINE_SESSION_DATA_DIR;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
 
@@ -180,6 +185,7 @@ describe("storage path resolution", () => {
 
 	it("falls back to CLINE_DATA_DIR/teams for team storage", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		delete process.env.CLINE_TEAM_DATA_DIR;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
 
@@ -188,6 +194,7 @@ describe("storage path resolution", () => {
 
 	it("falls back to CLINE_DATA_DIR/connectors for connector storage", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		delete process.env.CLINE_CONNECTOR_DATA_DIR;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
 
@@ -198,6 +205,7 @@ describe("storage path resolution", () => {
 
 	it("falls back to CLINE_DATA_DIR/connectors/settings.json for connector settings", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		delete process.env.CLINE_CONNECTOR_DATA_DIR;
 		delete process.env.CLINE_CONNECTOR_SETTINGS_PATH;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
@@ -209,6 +217,7 @@ describe("storage path resolution", () => {
 
 	it("uses CLINE_CONNECTOR_SETTINGS_PATH as-is when set", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		process.env.CLINE_CONNECTOR_SETTINGS_PATH =
 			"/tmp/cline-connectors/custom-settings.json";
 
@@ -219,6 +228,7 @@ describe("storage path resolution", () => {
 
 	it("falls back to CLINE_DATA_DIR/db for sqlite storage", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		delete process.env.CLINE_DB_DATA_DIR;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
 
@@ -227,6 +237,7 @@ describe("storage path resolution", () => {
 
 	it("falls back to CLINE_DATA_DIR/settings/providers.json for provider settings", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		delete process.env.CLINE_PROVIDER_SETTINGS_PATH;
 		delete process.env.MAKERRR_PROVIDER_SETTINGS_PATH;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
@@ -238,6 +249,7 @@ describe("storage path resolution", () => {
 
 	it("falls back to CLINE_DATA_DIR/settings/global-settings.json for global settings", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		delete process.env.CLINE_GLOBAL_SETTINGS_PATH;
 		delete process.env.MAKERRR_GLOBAL_SETTINGS_PATH;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
@@ -249,6 +261,7 @@ describe("storage path resolution", () => {
 
 	it("uses the Makerrr MCP settings filename under the configured data directory", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		delete process.env.CLINE_MCP_SETTINGS_PATH;
 		delete process.env.MAKERRR_MCP_SETTINGS_PATH;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
@@ -258,17 +271,23 @@ describe("storage path resolution", () => {
 		);
 	});
 
-	it("falls back to ~/.cline/.agents for agent configs", () => {
+	it("uses the Makerrr agent root while retaining legacy Cline discovery", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
+		process.env.MAKERRR_DIR = "/tmp/home/.makerrr";
 		process.env.CLINE_DIR = "/tmp/home/.cline";
 
 		expect(resolveAgentsConfigDirPath()).toBe(
+			join("/tmp/home", ".makerrr", AGENT_CONFIG_DIRECTORY_NAME),
+		);
+		expect(resolveAgentConfigSearchPaths()).toContain(
 			join("/tmp/home", ".cline", AGENT_CONFIG_DIRECTORY_NAME),
 		);
 	});
 
 	it("resolves global hooks from ~/.cline", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		process.env.CLINE_DIR = "/tmp/home/.cline";
 		process.env.CLINE_DATA_DIR = "/tmp/home/.cline/data";
 
@@ -284,6 +303,7 @@ describe("storage path resolution", () => {
 
 	it("resolves global rules from ~/.cline", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		process.env.CLINE_DIR = "/tmp/home/.cline";
 		process.env.CLINE_DATA_DIR = "/tmp/home/.cline/data";
 
@@ -319,6 +339,7 @@ describe("storage path resolution", () => {
 
 	it("includes OneDrive-redirected Documents rule locations when the env vars are set", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		const previousOneDrive = process.env.OneDrive;
 		const previousOneDriveConsumer = process.env.OneDriveConsumer;
 		try {
@@ -364,6 +385,7 @@ describe("storage path resolution", () => {
 
 	it("resolves legacy and new workflow paths, with .cline paths later for duplicate-name precedence", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		process.env.CLINE_DIR = "/tmp/home/.cline";
 		process.env.MAKERRR_DIR = "/tmp/home/.makerrr";
 		const workspacePath = "/repo/demo";
@@ -394,18 +416,20 @@ describe("chat workspace paths", () => {
 		expect(CLINE_CHAT_WORKSPACE_DIRECTORY_NAME).toBe("chat");
 	});
 
-	it("resolves the shared chat workspace under the configured data dir", () => {
+	it("resolves the shared chat workspace under the Makerrr data dir", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		delete process.env.CLINE_DATA_DIR;
-		process.env.CLINE_DIR = "/tmp/home/.cline";
+		process.env.MAKERRR_DIR = "/tmp/home/.makerrr";
 
 		expect(resolveChatWorkspacePath()).toBe(
-			join("/tmp/home/.cline", "data", "workspaces", "chat"),
+			join("/tmp/home/.makerrr", "data", "workspaces", "chat"),
 		);
 	});
 
 	it("honors the CLINE_DATA_DIR compatibility override", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
 
 		expect(resolveChatWorkspacePath()).toBe(

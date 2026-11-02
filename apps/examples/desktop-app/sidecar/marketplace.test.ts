@@ -34,12 +34,12 @@ const SKILL_ENTRY = {
 };
 
 let tempClineDir: string;
-let previousClineDir: string | undefined;
+let previousMakerrrDir: string | undefined;
 
 beforeEach(async () => {
 	tempClineDir = await mkdtemp(join(tmpdir(), "desktop-marketplace-"));
-	previousClineDir = process.env.CLINE_DIR;
-	process.env.CLINE_DIR = tempClineDir;
+	previousMakerrrDir = process.env.MAKERRR_DIR;
+	process.env.MAKERRR_DIR = tempClineDir;
 	installPluginMock.mockReset().mockImplementation(async (options) => ({
 		source: options.source,
 		installPath: goalInstallDir(),
@@ -51,10 +51,10 @@ beforeEach(async () => {
 
 afterEach(async () => {
 	vi.unstubAllEnvs();
-	if (previousClineDir === undefined) {
-		delete process.env.CLINE_DIR;
+	if (previousMakerrrDir === undefined) {
+		delete process.env.MAKERRR_DIR;
 	} else {
-		process.env.CLINE_DIR = previousClineDir;
+		process.env.MAKERRR_DIR = previousMakerrrDir;
 	}
 	await rm(tempClineDir, { recursive: true, force: true });
 });

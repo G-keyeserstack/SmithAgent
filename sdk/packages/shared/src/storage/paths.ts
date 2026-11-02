@@ -21,7 +21,6 @@ import type { PluginManifest } from "..";
 import {
 	resolveLegacyClineDataDir,
 	resolveLegacyClineDir,
-	resolveMakerrrDataDir,
 } from "./makerrr-paths";
 import {
 	CLINE_CHAT_WORKSPACE_DIRECTORY_NAME,
@@ -68,7 +67,7 @@ export const AGENTS_RULES_FILE_NAME = "AGENTS.md";
  * it the discriminator between the two package lanes:
  *
  * - Agent plugin  -> `<root>/plugin.json`, discovered under `.agents/plugins`
- * - Cline plugin  -> a JS/TS module, discovered under `.cline/plugins`
+ * - Makerrr/Cline module plugin -> a JS/TS module under `.makerrr/plugins` or legacy `.cline/plugins`
  *
  * Cline plugin discovery treats it as a hard stop: a directory carrying this
  * file is never scanned for Cline plugin modules, so a plugin authored for
@@ -162,12 +161,14 @@ export function setClineDirIfUnset(dir: string): void {
 }
 
 export function resolveClineDir(): string {
-	if (CLINE_DIR_SET_EXPLICITLY && CLINE_DIR) {
-		return CLINE_DIR;
-	}
+	// The Makerrr-specific environment override is canonical and must win over
+	// any in-process Cline compatibility path left by an older client.
 	const makerrrDir = process.env.MAKERRR_DIR?.trim();
 	if (makerrrDir) {
 		return makerrrDir;
+	}
+	if (CLINE_DIR_SET_EXPLICITLY && CLINE_DIR) {
+		return CLINE_DIR;
 	}
 	if (CLINE_DIR) {
 		return CLINE_DIR;
@@ -203,7 +204,8 @@ export function resolveLegacyDocumentsExtensionPath(
 }
 
 export function resolveClineDataDir(): string {
-	const makerrrDataDir = resolveMakerrrDataDir();
+	const makerrrDataDir =
+		process.env.MAKERRR_DATA_DIR?.trim() || join(resolveClineDir(), "data");
 	const legacyOverride = process.env.CLINE_DATA_DIR?.trim();
 	if (process.env.MAKERRR_DATA_DIR?.trim()) {
 		return makerrrDataDir;
@@ -254,15 +256,29 @@ function hasCommittedRuntimeMigration(destinationDataDir: string): boolean {
 }
 
 function resolveRuntimeDataSubdirectory(name: string): string {
-	const makerrrDataDir = resolveMakerrrDataDir();
+	const makerrrDataDir =
+		process.env.MAKERRR_DATA_DIR?.trim() || join(resolveClineDir(), "data");
 	const makerrrPath = join(makerrrDataDir, name);
-	const legacyPath = join(resolveLegacyClineDataDir(), name);
-	// Once a journaled migration commits, every client using this shared
-	// resolver must switch to the staged Makerrr store even though the
-	// untouched Cline source directory still exists for rollback/audit.
-	if (hasCommittedRuntimeMigration(makerrrDataDir)) {
+
+	// An explicit Makerrr data root always wins. A committed migration also
+	// takes precedence over legacy overrides so clients cannot silently reopen
+	// the pre-migration store after cutover.
+	if (
+		process.env.MAKERRR_DATA_DIR?.trim() ||
+		hasCommittedRuntimeMigration(makerrrDataDir)
+	) {
 		return makerrrPath;
 	}
+
+	// Preserve the documented CLINE_DATA_DIR compatibility override even when
+	// the target subdirectory has not been created yet. Existence-based legacy
+	// discovery is only for the implicit default location.
+	const legacyDataOverride = process.env.CLINE_DATA_DIR?.trim();
+	if (legacyDataOverride) {
+		return join(legacyDataOverride, name);
+	}
+
+	const legacyPath = join(resolveLegacyClineDataDir(), name);
 	return existsSync(legacyPath) ? legacyPath : makerrrPath;
 }
 
@@ -386,7 +402,7 @@ export interface ResolveTaskSpecsDirOptions {
 }
 
 /**
- * Home workspace for agent-created schedules: `~/.cline/schedules/`.
+ * Home workspace for agent-created schedules: `~/.makerrr/schedules/` (with legacy `.cline` fallback).
  * Agent-created schedules are user-level routines, so they anchor here (and
  * their unattended sessions run here) instead of inheriting whichever chat
  * workspace happened to create them.
@@ -411,12 +427,12 @@ export function resolveAgentSchedulesDir(): string {
 	return resolveConfigSubdirectory("schedules");
 }
 
-/** Global file-backed agenda tasks: `~/.cline/tasks/`. */
+/** Global file-backed agenda tasks: `~/.makerrr/tasks/` (with legacy `.cline` fallback). */
 export function resolveGlobalTaskSpecsDir(): string {
 	return resolveConfigSubdirectory("tasks");
 }
 
-/** Workspace file-backed agenda tasks: `<workspace>/.cline/tasks/`. */
+/** Workspace file-backed agenda tasks: `<workspace>/.makerrr/tasks/` (with legacy `.cline` fallback). */
 export function resolveWorkspaceTaskSpecsDir(workspaceRoot: string): string {
 	const normalized = workspaceRoot.trim();
 	if (!normalized) {
@@ -446,7 +462,7 @@ export interface ResolveCronSpecsDirOptions {
 	 * to provide their own merged/global/workspace cron source root.
 	 */
 	cronSpecsDir?: string;
-	/** Defaults to `global`, i.e. `~/.cline/cron`. */
+	/** Defaults to `global`, i.e. `~/.makerrr/cron`. */
 	scope?: CronSpecsScope;
 	/** Required when `scope` is `workspace`. */
 	workspaceRoot?: string;
@@ -454,7 +470,7 @@ export interface ResolveCronSpecsDirOptions {
 
 /**
  * Global file-based cron spec authoring directory:
- *   `~/.cline/cron/`
+ *   `~/.makerrr/cron/`
  */
 export function resolveGlobalCronSpecsDir(): string {
 	return resolveConfigSubdirectory("cron");
@@ -463,7 +479,7 @@ export function resolveGlobalCronSpecsDir(): string {
 /**
  * Workspace file-based cron spec authoring directory reserved for future
  * workspace-scoped automation support:
- *   `${workspaceRoot}/.cline/cron/`
+ *   `${workspaceRoot}/.makerrr/cron/`
  */
 export function resolveWorkspaceCronSpecsDir(workspaceRoot: string): string {
 	return resolveWorkspaceConfigSubdirectory(workspaceRoot, "cron");
@@ -472,7 +488,7 @@ export function resolveWorkspaceCronSpecsDir(workspaceRoot: string): string {
 /**
  * Directory containing file-based cron spec authoring.
  *
- * Default: global `~/.cline/cron/`.
+ * Default: global `~/.makerrr/cron/`.
  * One-off: `*.md`
  * Recurring: `*.cron.md`
  * Event-driven: `events/*.event.md`
@@ -649,10 +665,10 @@ export function resolveGlobalAgentsRulesPath(): string {
 
 /**
  * The workspace-local directories rule files may live in: the legacy
- * `<workspace>/.clinerules` layout and the current
- * `<workspace>/.cline/rules` layout. Every Cline surface (CLI, VS Code
- * extension, desktop app) must honor both — hosts that hardcode one of them
- * silently drop the other's rules (cline/cline#14186).
+ * `<workspace>/.clinerules` legacy layout, `<workspace>/.cline/rules`
+ * compatibility layout, and the current `<workspace>/.makerrr/rules` layout.
+ * Every Makerrr client must honor all three so existing Cline workspaces keep
+ * their rules after migration.
  */
 export function resolveWorkspaceRulesConfigPaths(
 	workspacePath: string,
@@ -818,12 +834,21 @@ function readPluginPackageManifest(
 ): PluginPackageManifest | null {
 	try {
 		const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as {
+			makerrr?: PluginPackageManifest;
 			cline?: PluginPackageManifest;
 		};
-		if (!packageJson.cline || typeof packageJson.cline !== "object") {
+		const makerrrManifest = packageJson.makerrr;
+		const clineManifest = packageJson.cline;
+		const manifests = [makerrrManifest, clineManifest].filter(
+			(manifest): manifest is PluginPackageManifest =>
+				!!manifest && typeof manifest === "object",
+		);
+		if (manifests.length === 0) {
 			return null;
 		}
-		return packageJson.cline;
+		return {
+			plugins: manifests.flatMap((manifest) => manifest.plugins ?? []),
+		};
 	} catch {
 		return null;
 	}

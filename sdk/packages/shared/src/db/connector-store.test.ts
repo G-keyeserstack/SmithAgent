@@ -11,16 +11,16 @@ import { afterEach, describe, expect, it } from "vitest";
 import { SqliteConnectorStore } from "./connector-store";
 
 describe("SqliteConnectorStore", () => {
-	const previousDataDir = process.env.CLINE_DATA_DIR;
+	const previousDataDir = process.env.MAKERRR_DATA_DIR;
 	const previousSettingsPath = process.env.CLINE_CONNECTOR_SETTINGS_PATH;
 	const previousDbPath = process.env.CLINE_CONNECTORS_DB_PATH;
 	const tempRoots: string[] = [];
 
 	afterEach(() => {
-		process.env.CLINE_DATA_DIR = previousDataDir;
+		process.env.MAKERRR_DATA_DIR = previousDataDir;
 		process.env.CLINE_CONNECTOR_SETTINGS_PATH = previousSettingsPath;
 		process.env.CLINE_CONNECTORS_DB_PATH = previousDbPath;
-		if (previousDataDir === undefined) delete process.env.CLINE_DATA_DIR;
+		if (previousDataDir === undefined) delete process.env.MAKERRR_DATA_DIR;
 		if (previousSettingsPath === undefined)
 			delete process.env.CLINE_CONNECTOR_SETTINGS_PATH;
 		if (previousDbPath === undefined)
@@ -33,7 +33,7 @@ describe("SqliteConnectorStore", () => {
 	function useTempDataDir(): string {
 		const root = mkdtempSync(join(tmpdir(), "connector-store-"));
 		tempRoots.push(root);
-		process.env.CLINE_DATA_DIR = root;
+		process.env.MAKERRR_DATA_DIR = root;
 		delete process.env.CLINE_CONNECTOR_SETTINGS_PATH;
 		delete process.env.CLINE_CONNECTORS_DB_PATH;
 		return root;

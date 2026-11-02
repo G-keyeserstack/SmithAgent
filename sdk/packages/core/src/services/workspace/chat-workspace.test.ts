@@ -31,21 +31,21 @@ describe("chat workspace", () => {
 	let isolatedDataDir: string;
 
 	beforeEach(async () => {
-		previousDataDir = process.env.CLINE_DATA_DIR;
+		previousDataDir = process.env.MAKERRR_DATA_DIR;
 		isolatedDataDir = await mkdtemp(join(tmpdir(), "chat-workspace-test-"));
-		process.env.CLINE_DATA_DIR = isolatedDataDir;
+		process.env.MAKERRR_DATA_DIR = isolatedDataDir;
 	});
 
 	afterEach(async () => {
 		if (previousDataDir === undefined) {
-			delete process.env.CLINE_DATA_DIR;
+			delete process.env.MAKERRR_DATA_DIR;
 		} else {
-			process.env.CLINE_DATA_DIR = previousDataDir;
+			process.env.MAKERRR_DATA_DIR = previousDataDir;
 		}
 		await rm(isolatedDataDir, { recursive: true, force: true });
 	});
 
-	it("creates the shared chat workspace under the cline data directory", async () => {
+	it("creates the shared chat workspace under the Makerrr data directory", async () => {
 		const workspace = await ensureChatWorkspace();
 		expect(workspace).toBe(resolveChatWorkspacePath());
 		expect(workspace).toBe(join(isolatedDataDir, "workspaces", "chat"));

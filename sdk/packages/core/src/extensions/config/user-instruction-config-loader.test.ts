@@ -94,17 +94,19 @@ describe("user instruction config loader", () => {
 		);
 	});
 
-	it("discovers managed plugin instruction roots from workspace .cline manifests", () => {
+	it("discovers managed plugin instruction roots from Makerrr and legacy Cline manifests", () => {
 		const workspacePath = "/repo/demo";
-		expect(
-			createSkillsConfigDefinition({ workspacePath }).directories,
-		).toContain(join(workspacePath, ".cline"));
-		expect(
-			createRulesConfigDefinition({ workspacePath }).directories,
-		).toContain(join(workspacePath, ".cline"));
-		expect(
-			createWorkflowsConfigDefinition({ workspacePath }).directories,
-		).toContain(join(workspacePath, ".cline"));
+		for (const managedRoot of [".makerrr", ".cline"]) {
+			expect(
+				createSkillsConfigDefinition({ workspacePath }).directories,
+			).toContain(join(workspacePath, managedRoot));
+			expect(
+				createRulesConfigDefinition({ workspacePath }).directories,
+			).toContain(join(workspacePath, managedRoot));
+			expect(
+				createWorkflowsConfigDefinition({ workspacePath }).directories,
+			).toContain(join(workspacePath, managedRoot));
+		}
 	});
 
 	it("parses markdown frontmatter for skill, rule, and workflow configs", () => {
@@ -316,6 +318,41 @@ Escalation runbook`,
 			);
 			expect(rules).toContain("Never introduce ESM syntax.");
 			expect(rules).toContain("Sign off with GLOBAL-OK.");
+		} finally {
+			if (originalMakerrrDir === undefined) delete process.env.MAKERRR_DIR;
+			else process.env.MAKERRR_DIR = originalMakerrrDir;
+			setHomeDir(originalHomeDir);
+		}
+	});
+
+	it("loads rules from a legacy .clinerules directory", async () => {
+		const tempRoot = await mkdtemp(
+			join(tmpdir(), "core-user-instructions-clinerules-directory-"),
+		);
+		tempRoots.push(tempRoot);
+
+		const originalHomeDir = process.env.HOME?.trim() || homedir();
+		const originalMakerrrDir = process.env.MAKERRR_DIR;
+		setHomeDir(join(tempRoot, "home"));
+		process.env.MAKERRR_DIR = join(tempRoot, "home", ".makerrr");
+		const workspaceRoot = join(tempRoot, "workspace");
+		const legacyRulesDir = join(workspaceRoot, ".clinerules");
+		await mkdir(legacyRulesDir, { recursive: true });
+		await writeFile(
+			join(legacyRulesDir, "legacy-style.md"),
+			"Preserve the legacy rules directory.",
+		);
+
+		const watcher = createUserInstructionConfigWatcher({
+			rules: { workspacePath: workspaceRoot },
+		});
+
+		try {
+			await watcher.refreshAll();
+			const rules = [...watcher.getSnapshot("rule").values()].map(
+				(record) => record.item.instructions,
+			);
+			expect(rules).toContain("Preserve the legacy rules directory.");
 		} finally {
 			if (originalMakerrrDir === undefined) delete process.env.MAKERRR_DIR;
 			else process.env.MAKERRR_DIR = originalMakerrrDir;
@@ -563,6 +600,67 @@ Use the security review checklist.`,
 		expect(
 			[...skills.values()].some((skill) =>
 				skill.item.instructions.includes("security review checklist"),
+			),
+		).toBe(true);
+	});
+
+	it("loads enterprise managed rules, workflows, and skills from the Makerrr root", async () => {
+		const tempRoot = await mkdtemp(
+			join(tmpdir(), "core-user-instructions-makerrr-managed-"),
+		);
+		tempRoots.push(tempRoot);
+
+		const pluginRoot = join(tempRoot, ".makerrr", "enterprise");
+		await mkdir(join(pluginRoot, "workflows"), { recursive: true });
+		await mkdir(join(pluginRoot, "skills", "security-review"), {
+			recursive: true,
+		});
+		await writeFile(
+			join(pluginRoot, "managed.json"),
+			JSON.stringify({ source: "enterprise", version: "1", files: [] }),
+		);
+		await writeFile(
+			join(pluginRoot, "rules.md"),
+			`---
+name: makerrr-enterprise-policy
+---
+Follow Makerrr enterprise policy.`,
+		);
+		await writeFile(
+			join(pluginRoot, "workflows", "triage.md"),
+			`---
+name: makerrr-triage
+---
+Follow the Makerrr triage workflow.`,
+		);
+		await writeFile(
+			join(pluginRoot, "skills", "security-review", "SKILL.md"),
+			`---
+name: makerrr-security-review
+---
+Use the Makerrr security review checklist.`,
+		);
+
+		const watcher = createUserInstructionConfigWatcher({
+			skills: { workspacePath: tempRoot },
+			rules: { workspacePath: tempRoot },
+			workflows: { workspacePath: tempRoot },
+		});
+
+		await watcher.refreshAll();
+		expect(
+			[...watcher.getSnapshot("rule").values()].some((record) =>
+				record.item.instructions.includes("Follow Makerrr enterprise policy."),
+			),
+		).toBe(true);
+		expect(
+			[...watcher.getSnapshot("workflow").values()].some((record) =>
+				record.item.instructions.includes("Follow the Makerrr triage workflow."),
+			),
+		).toBe(true);
+		expect(
+			[...watcher.getSnapshot("skill").values()].some((record) =>
+				record.item.instructions.includes("Use the Makerrr security review checklist."),
 			),
 		).toBe(true);
 	});

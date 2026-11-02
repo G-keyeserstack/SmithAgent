@@ -6,20 +6,26 @@ import { AgentTeamsRuntime } from "./multi-agent";
 import { createAgentTeamsTools } from "./team-tools";
 
 type EnvSnapshot = {
+	MAKERRR_DATA_DIR: string | undefined;
 	CLINE_DATA_DIR: string | undefined;
 	CLINE_TEAM_DATA_DIR: string | undefined;
 };
 
 function captureEnv(): EnvSnapshot {
 	return {
+		MAKERRR_DATA_DIR: process.env.MAKERRR_DATA_DIR,
 		CLINE_DATA_DIR: process.env.CLINE_DATA_DIR,
 		CLINE_TEAM_DATA_DIR: process.env.CLINE_TEAM_DATA_DIR,
 	};
 }
 
 function restoreEnv(snapshot: EnvSnapshot): void {
-	process.env.CLINE_DATA_DIR = snapshot.CLINE_DATA_DIR;
-	process.env.CLINE_TEAM_DATA_DIR = snapshot.CLINE_TEAM_DATA_DIR;
+	if (snapshot.MAKERRR_DATA_DIR === undefined) delete process.env.MAKERRR_DATA_DIR;
+	else process.env.MAKERRR_DATA_DIR = snapshot.MAKERRR_DATA_DIR;
+	if (snapshot.CLINE_DATA_DIR === undefined) delete process.env.CLINE_DATA_DIR;
+	else process.env.CLINE_DATA_DIR = snapshot.CLINE_DATA_DIR;
+	if (snapshot.CLINE_TEAM_DATA_DIR === undefined) delete process.env.CLINE_TEAM_DATA_DIR;
+	else process.env.CLINE_TEAM_DATA_DIR = snapshot.CLINE_TEAM_DATA_DIR;
 }
 
 function makeTeammateConfigProvider(
@@ -41,6 +47,7 @@ describe("resolveTeamDataDir", () => {
 
 	it("uses CLINE_TEAM_DATA_DIR when set", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		process.env.CLINE_TEAM_DATA_DIR = "/tmp/team-dir";
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
 		expect(resolveTeamDataDir()).toBe("/tmp/team-dir");
@@ -48,6 +55,7 @@ describe("resolveTeamDataDir", () => {
 
 	it("falls back to CLINE_DATA_DIR/teams", () => {
 		snapshot = captureEnv();
+		delete process.env.MAKERRR_DATA_DIR;
 		delete process.env.CLINE_TEAM_DATA_DIR;
 		process.env.CLINE_DATA_DIR = "/tmp/cline-data";
 		expect(resolveTeamDataDir()).toBe(join("/tmp/cline-data", "teams"));

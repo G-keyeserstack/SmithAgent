@@ -29,7 +29,7 @@ beforeEach(() => {
 	repo = join(sandbox, "my-app");
 	git(sandbox, "init", "-q", "-b", "main", repo);
 	git(repo, "commit", "-q", "--allow-empty", "-m", "init");
-	vi.stubEnv("CLINE_DIR", join(sandbox, "cline-dir"));
+	vi.stubEnv("MAKERRR_DIR", join(sandbox, "cline-dir"));
 });
 
 afterEach(() => {
@@ -46,7 +46,7 @@ async function run(cwd: string) {
 }
 
 describe("create_git_worktree command", () => {
-	it("creates a worktree on a new branch under ~/.cline/worktrees/<id>/<repo>", async () => {
+	it("creates a worktree on a new branch under ~/.makerrr/worktrees/<id>/<repo>", async () => {
 		const result = await run(repo);
 
 		expect(
@@ -91,7 +91,7 @@ describe("create_git_worktree command", () => {
 		};
 
 		// The webview matches task worktrees against this root, so it must be
-		// the same CLINE_DIR-aware location the worktree was created under.
+		// the same MAKERRR_DIR-aware location the worktree was created under.
 		expect(context.taskWorktreeRoot).toBe(
 			join(sandbox, "cline-dir", "worktrees"),
 		);
@@ -131,7 +131,7 @@ describe("remove_git_worktree command", () => {
 		expect(git(repo, "branch", "--list", worktree.branch)).toBe("");
 	});
 
-	it("refuses paths outside ~/.cline/worktrees/<id>/<repo>", async () => {
+	it("refuses paths outside ~/.makerrr/worktrees/<id>/<repo>", async () => {
 		await expect(
 			handleCommand(ctx, "remove_git_worktree", { path: repo }),
 		).rejects.toThrow("Not a task worktree");

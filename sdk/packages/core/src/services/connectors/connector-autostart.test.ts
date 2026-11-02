@@ -10,14 +10,14 @@ import {
 } from "./connector-autostart";
 
 describe("connector autostart", () => {
-	const previousDataDir = process.env.CLINE_DATA_DIR;
+	const previousDataDir = process.env.MAKERRR_DATA_DIR;
 	const tempRoots: string[] = [];
 
 	afterEach(() => {
 		if (previousDataDir === undefined) {
-			delete process.env.CLINE_DATA_DIR;
+			delete process.env.MAKERRR_DATA_DIR;
 		} else {
-			process.env.CLINE_DATA_DIR = previousDataDir;
+			process.env.MAKERRR_DATA_DIR = previousDataDir;
 		}
 		for (const root of tempRoots.splice(0)) {
 			rmSync(root, { recursive: true, force: true });
@@ -27,7 +27,7 @@ describe("connector autostart", () => {
 	function useTempDataDir(): void {
 		const root = mkdtempSync(join(tmpdir(), "connector-autostart-"));
 		tempRoots.push(root);
-		process.env.CLINE_DATA_DIR = root;
+		process.env.MAKERRR_DATA_DIR = root;
 	}
 
 	function withStore<T>(fn: (store: SqliteConnectorStore) => T): T {
