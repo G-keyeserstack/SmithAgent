@@ -43,9 +43,9 @@ export function HeroWindow() {
       style={{ backgroundImage: "url(/hero-field.jpg)" }}
     >
       <div className="mx-auto max-w-5xl overflow-hidden rounded-xl border border-white/50 bg-[#f4f1ea]/95 shadow-[0_30px_80px_rgba(40,30,20,0.28)] backdrop-blur-sm">
-        <div className="flex items-center gap-3 border-b border-[#e4dfd4] bg-black px-4 py-2">
-          <img src="/makerrr-mark.png" alt="Makerrr" className="h-8 w-auto" />
-          <p className="ml-auto text-xs text-white/70">Agent is typing</p>
+        <div className="flex items-center gap-3 border-b border-[#e4dfd4] bg-white px-4 py-2">
+          <img src="/makerrr-mark.png" alt="Makerrr" className="h-9 w-auto bg-white" />
+          <p className="ml-auto text-xs text-[#6d675d]">Agent is typing</p>
         </div>
         <div className="grid min-h-[26rem] lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <section className="border-b border-[#e4dfd4] p-4 lg:border-b-0 lg:border-r">

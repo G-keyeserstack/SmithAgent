@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/makerrr-mark.svg" width="88" alt="Makerrr geometric mark" />
+  <img src="assets/makerrr-mark.png" width="88" alt="Makerrr geometric mark" />
 </p>
 
 <h1 align="center">Makerrr</h1>
