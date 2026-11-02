@@ -46,3 +46,20 @@ Enable **Makerrr: Toggle Tab Completions** from the Command Palette or set `make
 ## Codebase search (first release slice)
 
 Run **Makerrr: Search Codebase** from the Command Palette (or use the configured shortcut) to search the active trusted workspace. Search is local and lexical in this release slice; it does not send source code to an embedding service. The SDK bounds indexing to 1,200 candidate files and 2,000 chunks, skips generated/dependency directories and known secret-file names, and limits individual source files to 256 KiB. Search results show file paths and line ranges and open the selected source location. This is not yet persistent/incremental indexing or semantic vector search.
+
+
+## Go-live acceptance: desktop codebase search
+
+The local codebase search slice is not considered release-ready until all of the following are demonstrated on the same release candidate:
+
+- [ ] Desktop build and bundled Makerrr agent install successfully on supported Linux, Windows and macOS architectures.
+- [ ] Command Palette and keyboard shortcut launch search from the desktop editor.
+- [ ] Workspace trust is enforced before any source files are read.
+- [ ] Search remains local; no source text is sent to a remote embedding provider in lexical mode.
+- [ ] Secret-file filters, generated/dependency exclusions, file-size and chunk-count bounds are covered by tests.
+- [ ] Selecting a result opens the correct file and line on all supported platforms.
+- [ ] Empty, cancelled, inaccessible and large-workspace cases fail safely without blocking the editor.
+- [ ] Linux, Windows and macOS CI matrix is green; full desktop build, extension E2E and installer smoke tests are green on the release candidate.
+- [ ] Search latency, indexed file/chunk counts and memory use are measured on representative repositories before enabling persistent background indexing.
+
+The current CI workflow covers the command interaction, repository-intelligence tests, SDK build, product identity and host typecheck on Linux, Windows and macOS. It is a feature regression lane, not a substitute for the full native desktop build and installer acceptance matrix.
