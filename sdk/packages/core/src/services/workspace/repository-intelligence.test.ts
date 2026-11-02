@@ -33,7 +33,7 @@ async function createWorkspace(): Promise<string> {
 	await mkdir(path.join(workspace, "src", "auth"), { recursive: true });
 	await writeFile(path.join(workspace, "package.json"), '{"name":"sample"}');
 	await writeFile(path.join(workspace, "README.md"), "# Sample repository");
-	await writeFile(path.join(workspace, "src", "auth", "session.ts"), 'import { token } from "./token";\\nexport function createSession() { return token; }');
+	await writeFile(path.join(workspace, "src", "auth", "session.ts"), 'import { token } from "./token";\nexport function createSession() { return token; }');
 	await writeFile(path.join(workspace, "src", "auth", "token.ts"), "export const token = 'session-token';");
 	await writeFile(path.join(workspace, ".env"), "API_KEY=do-not-index");
 	await writeFile(path.join(workspace, "id_rsa.pem"), "private key do-not-index");
