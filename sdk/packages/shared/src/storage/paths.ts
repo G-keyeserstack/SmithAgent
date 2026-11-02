@@ -1024,7 +1024,10 @@ export function discoverPluginModulePaths(directoryPath: string): string[] {
 			}
 		}
 	}
-	return discovered.sort((a, b) => a.localeCompare(b));
+	// Makerrr and legacy Cline manifests can declare the same module. The
+	// recursive scan can also encounter a manifest-declared module; never load
+	// or report the same plugin module twice.
+	return [...new Set(discovered)].sort((a, b) => a.localeCompare(b));
 }
 
 export function resolveConfiguredPluginModulePaths(
