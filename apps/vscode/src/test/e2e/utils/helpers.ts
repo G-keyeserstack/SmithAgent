@@ -253,25 +253,19 @@ export class E2ETestHelper {
 	}
 
 	public async signin(webview: Frame): Promise<void> {
-		// Use the deterministic bring-your-own-key path in E2E. The "Login to
-		// Cline" button starts an external OAuth flow and cannot authenticate
-		// the isolated test profile without a browser identity session.
-		await webview.getByText("Bring my own API key").click({ delay: 100 })
-		await webview.getByRole("button", { name: "Continue" }).click({ delay: 100 })
+		// E2E_TEST=true routes the Cline account login command through
+		// AuthService.createMockAuthRequest(), which exchanges the fixture's
+		// well-known test token with the local mock API. Keep the Cline account
+		// provider selected: BYOK/OpenRouter sends model requests outside the
+		// local mock server and cannot satisfy the agent-turn assertions.
+		const loginButton = webview.getByRole("button", {
+			name: /^(?:login|sign in|continue)(?: to| with)? (?:cline|makerrr)$/i,
+		}).or(webview.getByRole("button", { name: /^(?:sign in|continue)$/i }))
+		await loginButton.first().click({ delay: 100 })
 
-		const providerSelector = webview.getByTestId("provider-selector-input")
-		await expect(providerSelector).toBeVisible()
-		await providerSelector.click({ delay: 100 })
-		const openRouterOption = webview.getByTestId("provider-option-openrouter")
-		await expect(openRouterOption).toBeVisible()
-		await openRouterOption.click({ delay: 100 })
-
-		const apiKeyInput = webview.getByRole("textbox", { name: "OpenRouter API Key" })
-		await apiKeyInput.fill("test-api-key")
-		await webview.getByRole("button", { name: "Continue" }).click({ delay: 100 })
-
-		// Assert the real post-setup destination, not merely that a login
-		// button disappeared (which can also happen when OAuth opens a modal).
+		// Wait for the mock authentication flow to finish and the welcome view
+		// to be replaced by the actual chat input before a test sends a prompt.
+		await expect(loginButton.first()).not.toBeVisible()
 		await expect(webview.getByTestId("chat-input")).toBeVisible({ timeout: 15_000 })
 	}
 
