@@ -76,15 +76,15 @@ describe("repository intelligence", () => {
 	});
 
 	it("bounds the number of chunks sent to a local embedding provider", async () => {
-		const cwd = await createWorkspace()
+		const cwd = await createWorkspace();
 		const provider = {
 			id: "bounded-test-embeddings",
 			embed: vi.fn(async (texts: string[]) => texts.map(() => [1, 0])),
 		}
-		await searchWorkspaceCode(cwd, "session", { embeddingProvider: provider, maxChunks: 2 })
-		expect(provider.embed).toHaveBeenCalledOnce()
-		expect(provider.embed.mock.calls[0]?.[0]).toHaveLength(3)
-	})
+		await searchWorkspaceCode(cwd, "session", { embeddingProvider: provider, maxChunks: 2 });
+		expect(provider.embed).toHaveBeenCalledOnce();
+		expect(provider.embed.mock.calls[0]?.[0]).toHaveLength(3);
+	});
 
 	it("rejects embedding providers that return an incomplete vector batch", async () => {
 		const cwd = await createWorkspace();
