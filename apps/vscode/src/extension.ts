@@ -13,7 +13,7 @@ import {
 } from "@cline/shared/storage"
 import * as vscode from "vscode"
 import { Logger } from "@/shared/services/Logger"
-import { registerMakerrrTabCompletionProvider } from "@/integrations/editor/tab-completion-provider"
+import { registerMakerrrTabCompletionProvider } from "@/hosts/vscode/tab-completion-provider"
 import { sendAccountButtonClickedEvent } from "./core/controller/ui/subscribeToAccountButtonClicked"
 import { sendChatButtonClickedEvent } from "./core/controller/ui/subscribeToChatButtonClicked"
 import { sendHistoryButtonClickedEvent } from "./core/controller/ui/subscribeToHistoryButtonClicked"
