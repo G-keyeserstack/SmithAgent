@@ -28,13 +28,25 @@ import type { WorkspaceRootManager } from "../workspace"
  * The model is never downloaded automatically; an unavailable model falls
  * back to the bounded lexical search path.
  */
+let cachedLocalEmbeddingProvider:
+	| { baseUrl: string; apiKey?: string; provider: OllamaEmbeddingProvider }
+	| undefined
+
 function resolveLocalEmbeddingProvider(): OllamaEmbeddingProvider | undefined {
 	try {
 		const settings = getProviderSettingsManager().getProviderSettings("ollama")
 		if (!settings) return undefined
-		return new OllamaEmbeddingProvider({
-			baseUrl: settings.baseUrl ?? "http://localhost:11434",
-		})
+		const baseUrl = settings.baseUrl ?? "http://localhost:11434"
+		const apiKey = settings.apiKey
+		if (
+			cachedLocalEmbeddingProvider?.baseUrl === baseUrl &&
+			cachedLocalEmbeddingProvider.apiKey === apiKey
+		) {
+			return cachedLocalEmbeddingProvider.provider
+		}
+		const provider = new OllamaEmbeddingProvider({ baseUrl, apiKey })
+		cachedLocalEmbeddingProvider = { baseUrl, apiKey, provider }
+		return provider
 	} catch {
 		return undefined
 	}
