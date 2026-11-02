@@ -40,15 +40,24 @@ function waitForDelay(milliseconds: number, signal: AbortSignal): Promise<boolea
 	}
 
 	return new Promise((resolve) => {
+		let timer: ReturnType<typeof setTimeout> | undefined
+		const cleanup = () => {
+			if (timer) clearTimeout(timer)
+			signal.removeEventListener("abort", onAbort)
+		}
 		const onAbort = () => {
-			clearTimeout(timer)
+			cleanup()
 			resolve(false)
 		}
-		const timer = setTimeout(() => {
-			signal.removeEventListener("abort", onAbort)
+		signal.addEventListener("abort", onAbort, { once: true })
+		if (signal.aborted) {
+			onAbort()
+			return
+		}
+		timer = setTimeout(() => {
+			cleanup()
 			resolve(true)
 		}, milliseconds)
-		signal.addEventListener("abort", onAbort, { once: true })
 	})
 }
 
@@ -126,7 +135,6 @@ async function provideTabCompletion(
 			if (chunk.type === "text") {
 				response += chunk.text
 				if (response.length >= MAX_COMPLETION_CHARACTERS) {
-					handler.abort?.()
 					break
 				}
 			} else if (chunk.type === "done" && chunk.success === false) {
