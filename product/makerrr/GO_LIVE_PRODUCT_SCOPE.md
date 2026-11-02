@@ -22,7 +22,7 @@ This document is the go-live contract. A feature is not complete because a compo
 | Makerrr CLI | Interactive and headless coding, scripts, CI use, model selection, usage output, session resume and secure credential handling |
 | Makerrr Review | Pull-request review, bug finding, suggested patches, inline findings, severity/confidence and human approval |
 | Makerrr Marketplace | Discoverable extensions, MCP servers, skills, rules, workflows and team-curated private catalogues |
-| Makerrr Studio | Voice dictation/response, image generation for UI mockups and assets, diagram creation, screenshot understanding and multimodal context for Composer |
+| Makerrr Studio | Voice dictation/response, image and video generation for UI mockups/assets, diagram creation, screenshot understanding and multimodal context for Composer |
 | Makerrr Mobile | Secure companion experience for monitoring, steering, approving and resuming cloud agents; not a substitute for the desktop editor |
 | Makerrr API | Public API, SDKs, webhooks and service-to-service access for tasks, models, repositories and automations |
 | Teams and Enterprise | Shared workspaces, pooled or assigned usage, roles, SSO, policy, audit, procurement and administrative controls |
@@ -130,17 +130,18 @@ Indicative launch anchors below are a commercial hypothesis based on the supplie
 | Makerrr plan | Indicative price | Usage-pool target | Intended customer and entitlement shape |
 | --- | --- | --- | --- |
 | Free | $0/month | Limited | Evaluation; desktop, Tab, Composer and Chat with a small allowance; BYOK/local models; limited cloud trial |
-| Individual | $8/month | 1× base pool | Regular solo developer; larger included usage, full model choice, usage history and standard agent concurrency |
-| Pro | $30/month | 4× Individual | Professional power user; cloud agents, automations, Origin hosting, advanced review and priority capacity |
-| Max | $100/month | 15× Individual | Heavy individual; higher agent concurrency, priority model access and larger cloud allowance |
-| Ultra | $200/month | 50× Individual | Highest individual tier; priority access at peak times, highest included allowance and early access to new capabilities |
-| Teams | From $30/user/month | Pooled or assigned, configurable | Team marketplace, shared billing, usage analytics, mix-and-match seats, central privacy/policy controls and collaboration |
-| Enterprise | Custom | Contracted pool | SSO, SCIM, audit logs, service accounts, invoice/PO, private networking options, custom retention, granular spend controls and support commitments |
+| Individual | $8/month | 1× base pool | Solo developer; included Makerrr-hosted model allowance, usage history and standard agent concurrency; third-party models via BYOK |
+| Pro | $30/month | 4× Individual | Professional power user; cloud agents, automations, Origin hosting, advanced Review, priority capacity and third-party models at provider API list price |
+| Max | $100/month | 15× Individual | Heavy individual; higher agent concurrency, priority model access and larger cloud allowance; third-party models at provider API list price |
+| Ultra | $200/month | 50× Individual | Highest individual tier; priority access at peak times, highest included allowance, earliest access to new capabilities and third-party models at provider API list price |
+| Teams | From $30/user/month | Pooled or assigned, configurable | Shared billing, pooled usage, usage analytics, team marketplace for internal rules/skills/MCP/plugins, mix-and-match seats, central privacy/policy controls and collaboration |
+| Enterprise | Custom | Contracted pool | SAML/OIDC SSO, SCIM, audit logs, service accounts, invoice/PO, private networking options, custom retention, granular/group spend controls, repository/model/MCP access policies and support commitments |
 
 Commercial rules:
 
 - Show included usage and the current consumption multiplier before checkout.
 - Provide Makerrr API access with separate rate limits, service-account entitlements and usage attribution; never let API keys bypass team policies.
+- Keep third-party model usage at provider API list price, billed separately and attributed to the user or team; show the provider, model, token counts, cache use and rate before/after each task.
 - Offer voice and Studio capabilities as metered or included features according to the plan, with model/provider cost visibility.
 - Separate subscription-included usage from third-party BYOK/API charges.
 - Meter premium model and cloud usage transparently; allow admins to disable overages.
