@@ -1,4 +1,4 @@
-name: Makerrr Composer UI
+name: Makerrr Composer and codebase context UI
 
 on:
   pull_request:
@@ -27,6 +27,13 @@ on:
       - "apps/vscode/webview-ui/src/components/chat/task-header/**"
       - "apps/vscode/webview-ui/src/components/chat/chat-view/**"
       - "apps/vscode/webview-ui/src/components/chat/ChatTextArea.tsx"
+      - "apps/vscode/src/core/mentions/**"
+      - "apps/vscode/src/shared/context-mentions.ts"
+      - "apps/vscode/src/shared/__tests__/context-mentions.test.ts"
+      - "apps/vscode/src/services/telemetry/TelemetryService.ts"
+      - "apps/vscode/webview-ui/src/utils/context-mentions.ts"
+      - "apps/vscode/webview-ui/src/utils/__tests__/context-mentions.test.ts"
+      - "apps/vscode/webview-ui/src/components/chat/ContextMenu.tsx"
       - "apps/vscode/webview-ui/src/services/**"
       - ".github/workflows/makerrr-composer-ui.yml"
       - "sdk/packages/ui/**"
