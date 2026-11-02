@@ -293,6 +293,11 @@
 					"command": "cline.settingsButtonClicked",
 					"group": "navigation@6",
 					"when": "view == claude-dev.SidebarProvider"
+				},
+				{
+					"command": "makerrr.searchCodebase",
+					"group": "navigation@4",
+					"when": "view == claude-dev.SidebarProvider"
 				}
 			],
 			"editor/context": [
