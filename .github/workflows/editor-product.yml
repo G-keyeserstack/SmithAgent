@@ -1,0 +1,45 @@
+name: Makerrr Editor Product
+
+on:
+  pull_request:
+    paths:
+      - "apps/editor/**"
+      - "apps/vscode/package.json"
+      - "package.json"
+      - ".github/workflows/editor-product.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/editor/**"
+      - "apps/vscode/package.json"
+      - "package.json"
+      - ".github/workflows/editor-product.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  product-contract:
+    name: Product identity and build-script validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Verify Makerrr product identity
+        run: node apps/editor/scripts/verify-product.mjs
+
+      - name: Validate desktop build script syntax
+        run: bash -n apps/editor/scripts/build.sh
+
+      - name: Validate JSON manifests
+        run: |
+          node -e "JSON.parse(require('node:fs').readFileSync('apps/editor/product.json', 'utf8'))"
+          node -e "JSON.parse(require('node:fs').readFileSync('apps/vscode/package.json', 'utf8'))"
+          node -e "JSON.parse(require('node:fs').readFileSync('package.json', 'utf8'))"
