@@ -1397,7 +1397,7 @@ export class TelemetryService {
 	 * @param contentLength Optional length of content retrieved (for size tracking)
 	 */
 	public captureMentionUsed(
-		mentionType: "file" | "folder" | "url" | "problems" | "terminal" | "git-changes" | "commit",
+		mentionType: "file" | "folder" | "url" | "problems" | "terminal" | "git-changes" | "commit" | "codebase",
 		contentLength?: number,
 	) {
 		this.capture({
@@ -1421,7 +1421,7 @@ export class TelemetryService {
 	 * @param fsContext Optional filesystem info, emitted as `fs_class` and `fs_type`.
 	 */
 	public captureMentionFailed(
-		mentionType: "file" | "folder" | "url" | "problems" | "terminal" | "git-changes" | "commit",
+		mentionType: "file" | "folder" | "url" | "problems" | "terminal" | "git-changes" | "commit" | "codebase",
 		errorType:
 			| "not_found"
 			| "permission_denied"
