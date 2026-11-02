@@ -10,7 +10,7 @@ describe("OllamaEmbeddingProvider", () => {
 			}), { status: 200 })
 		})
 		const provider = new OllamaEmbeddingProvider({
-			baseUrl: "http://localhost:11434/",
+			baseUrl: "http://localhost:11434/v1/",
 			batchSize: 16,
 			fetchImpl: fetchImpl as typeof fetch,
 		})
@@ -20,6 +20,7 @@ describe("OllamaEmbeddingProvider", () => {
 
 		expect(provider.id).toBe("ollama:qwen3-embedding:0.6b")
 		expect(fetchImpl).toHaveBeenCalledTimes(3)
+		expect(fetchImpl.mock.calls[0]?.[0]).toBe("http://localhost:11434/api/embed")
 		expect(vectors).toHaveLength(33)
 		expect(vectors[0]?.[0]).toBe(texts[0].length)
 		expect(vectors[32]?.[0]).toBe(texts[32].length)
