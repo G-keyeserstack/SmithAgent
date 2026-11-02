@@ -24,10 +24,20 @@ permissions:
   contents: read
 
 jobs:
-  linux-desktop:
-    name: Build Makerrr desktop editor (Linux x64)
-    runs-on: ubuntu-24.04
+  desktop-build:
+    name: Build Makerrr desktop editor (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            platform: linux
+          - os: windows-latest
+            platform: windows
+          - os: macos-latest
+            platform: macos
     env:
       MAX_OLD_SPACE_SIZE: 8192
     steps:
@@ -52,7 +62,8 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install native build dependencies
+      - name: Install Linux native build dependencies
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -70,11 +81,11 @@ jobs:
       - name: Build the Makerrr desktop editor and bundle its agent
         run: bun run editor:build
 
-      - name: Upload Linux editor build
+      - name: Upload desktop editor build
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: makerrr-editor-linux-x64
-          path: apps/editor/.build/vscodium/VSCode-linux-x64/
+          name: makerrr-editor-${{ matrix.platform }}
+          path: apps/editor/.build/vscodium/VSCode-*
           if-no-files-found: warn
           retention-days: 7
