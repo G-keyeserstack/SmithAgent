@@ -75,7 +75,7 @@ async function provideTabCompletion(
 	token: vscode.CancellationToken,
 ): Promise<vscode.InlineCompletionItem[] | undefined> {
 	const settings = vscode.workspace.getConfiguration("makerrr.tabCompletion")
-	if (!settings.get<boolean>("enabled", false) || !shouldOfferCompletion(document, position)) {
+	if (!settings.get<boolean>("enabled", false) || !vscode.workspace.isTrusted || !shouldOfferCompletion(document, position)) {
 		return undefined
 	}
 
@@ -172,5 +172,10 @@ export function registerMakerrrTabCompletionProvider(controller: Controller): vs
 		void vscode.window.showInformationMessage(`Makerrr Tab completions ${enabled ? "enabled" : "disabled"}.`)
 	})
 
-	return [completionProvider, toggleCommand]
+	const lifecycle = new vscode.Disposable(() => {
+		for (const request of activeRequests.values()) request.abort()
+		activeRequests.clear()
+	})
+
+	return [completionProvider, toggleCommand, lifecycle]
 }
