@@ -7,7 +7,7 @@ This app uses the MIT-licensed Code OSS workbench and the VSCodium community bui
 ## What this first editor slice does
 
 - Builds a native desktop editor for the host OS and CPU architecture.
-- Applies Makerrr application identity and isolated `~/.makerrr` user-data paths.
+- Applies Makerrr application identity and a distinct `.makerrr` data-folder identifier.
 - Uses Open VSX for extension discovery; it does not depend on the Microsoft Marketplace.
 - Builds and bundles the existing Makerrr agent extension into the editor distribution.
 - Includes opt-in, model-backed Tab completions using the developer's selected Act-mode provider. The feature is disabled by default, respects workspace trust, sends a bounded cursor context window, and supports cancellation.
