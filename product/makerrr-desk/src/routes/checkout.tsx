@@ -1,16 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteFrame } from "@/components/chrome";
-import { confirmCheckout } from "@/lib/billing";
+import { confirmCheckout, type PayProvider } from "@/lib/billing";
 import { useAgent } from "@/lib/agent-store";
 import { planById } from "@/lib/plans";
 
 export const Route = createFileRoute("/checkout")({
   validateSearch: (search: Record<string, unknown>) => ({
-    provider: search.provider === "paystack" ? ("paystack" as const) : ("stripe" as const),
+    provider: (["stripe", "paystack", "paypal", "flutterwave", "payfast", "yoco", "ozow"].includes(String(search.provider))
+      ? search.provider
+      : "stripe") as PayProvider,
     plan: typeof search.plan === "string" ? search.plan : "",
     session_id: typeof search.session_id === "string" ? search.session_id : "",
-    reference: typeof search.reference === "string" ? search.reference : "",
+    reference: typeof search.reference === "string" ? search.reference : typeof search.token === "string" ? search.token : "",
+    tx_ref: typeof search.tx_ref === "string" ? search.tx_ref : "",
+    token: typeof search.token === "string" ? search.token : "",
+    checkoutId: typeof search.checkoutId === "string" ? search.checkoutId : typeof search.id === "string" ? search.id : "",
   }),
   component: CheckoutPage,
 });
@@ -29,6 +34,9 @@ function CheckoutPage() {
         planId: search.plan,
         sessionId: search.session_id,
         reference: search.reference,
+        txRef: search.tx_ref,
+        token: search.token,
+        checkoutId: search.checkoutId,
       },
     }).then((result) => {
       if (!live) return;
@@ -43,7 +51,7 @@ function CheckoutPage() {
     return () => {
       live = false;
     };
-  }, [search.plan, search.provider, search.reference, search.session_id, setPlan]);
+  }, [search.checkoutId, search.plan, search.provider, search.reference, search.session_id, search.token, search.tx_ref, setPlan]);
 
   return (
     <SiteFrame>

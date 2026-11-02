@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { PlanCards, SiteFrame } from "@/components/chrome";
-import { startCheckout, type PayProvider } from "@/lib/billing";
+import { RAILS, startCheckout, type PayProvider } from "@/lib/billing";
 import { useAgent } from "@/lib/agent-store";
 import { planById, PLANS, priceLabel, PUBLIC_PLANS, teamTotal, type PlanId, type Region, type Segment } from "@/lib/plans";
 
@@ -49,6 +49,21 @@ function PricingPage() {
     setPaying(false);
     if ("url" in result) {
       window.location.assign(result.url);
+      return;
+    }
+    if ("action" in result) {
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = result.action;
+      for (const [key, value] of Object.entries(result.fields)) {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = value;
+        form.append(input);
+      }
+      document.body.append(form);
+      form.submit();
       return;
     }
     setPayNote(result.error);
@@ -132,7 +147,7 @@ function PricingPage() {
         <section className="mt-8 rounded-2xl border border-line bg-paper p-5">
           <h2 className="text-lg font-medium">Pay</h2>
           <p className="mt-1 max-w-xl text-sm text-mute">
-            Stripe or Paystack. The amount is calculated on the server from the price list. Card details never touch this desk.
+            Stripe includes Link. Paystack and Flutterwave cover Nigeria, South Africa, and Kenya. PayPal, PayFast, Yoco, and Ozow settle rand. The amount is calculated on the server. Card details never touch this desk.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             {publicPlans
@@ -159,13 +174,22 @@ function PricingPage() {
             placeholder="you@company.com"
             className="mt-2 h-11 w-full max-w-md rounded-lg border border-line bg-white px-3 text-sm"
           />
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button type="button" disabled={paying} onClick={() => pay("stripe")} className="h-11 rounded-full bg-ink px-4 text-sm text-bone disabled:opacity-50">
-              Pay with Stripe
-            </button>
-            <button type="button" disabled={paying} onClick={() => pay("paystack")} className="h-11 rounded-full border border-ink px-4 text-sm disabled:opacity-50">
-              Pay with Paystack
-            </button>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {RAILS.map((rail) => {
+              const open = rail.regions.includes(account.region);
+              return (
+                <button
+                  key={rail.id}
+                  type="button"
+                  disabled={paying || !open}
+                  onClick={() => pay(rail.id)}
+                  className="rounded-xl border border-line bg-white px-3 py-3 text-left disabled:opacity-40"
+                >
+                  <span className="block text-sm font-medium">{rail.label}</span>
+                  <span className="mt-1 block text-xs text-mute">{open ? rail.note : "Not available for this country."}</span>
+                </button>
+              );
+            })}
           </div>
           {payNote ? <p className="mt-3 text-sm text-clay">{payNote}</p> : null}
         </section>

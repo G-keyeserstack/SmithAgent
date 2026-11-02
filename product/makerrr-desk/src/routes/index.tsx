@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { SiteFrame } from "@/components/chrome";
 import { HeroWindow } from "@/components/hero-window";
-import type { DeskOs } from "@/lib/agent-store";
+import { useAgent, type DeskOs } from "@/lib/agent-store";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -74,7 +74,83 @@ function Home() {
             </div>
           </div>
         </section>
+        <HomeRest />
       </main>
     </SiteFrame>
+  );
+}
+
+const GATES = ["Stripe", "Paystack", "PayPal", "Flutterwave", "PayFast", "Yoco", "Ozow"];
+
+function HomeRest() {
+  const session = useAgent((state) => state.session);
+  const fleet = useAgent((state) => state.fleet);
+  const chat = useAgent((state) => state.project.chat);
+  return (
+    <>
+      <section className="mx-auto max-w-6xl px-4 pb-20 text-center">
+        <p className="text-sm text-mute">Built for teams that ship from Lagos, Nairobi, Cape Town, and London.</p>
+        <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+          {GATES.map((name) => (
+            <li key={name} className="flex h-16 items-center justify-center rounded-xl border border-line bg-[#f3f1eb] text-sm font-semibold tracking-tight">
+              {name}
+            </li>
+          ))}
+        </ul>
+      </section>
+      <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-24 lg:grid-cols-[18rem_minmax(0,1fr)]">
+        <div>
+          <h2 className="text-4xl font-medium leading-tight tracking-tight">Agents turn ideas into code</h2>
+          <p className="mt-4 text-lg text-mute">Hand the charge path to the agent. You stay on the decision.</p>
+          <Link to="/ide" className="mt-6 inline-flex text-sm text-clay">Open the IDE</Link>
+        </div>
+        <div className="rounded-2xl bg-[#e7e4dc] p-4 sm:p-8">
+          <HeroWindow />
+        </div>
+      </section>
+      <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-24 lg:grid-cols-[minmax(0,1.2fr)_18rem]">
+        <div className="rounded-2xl border border-line bg-paper p-4">
+          <p className="text-xs uppercase tracking-widest text-mute">This week</p>
+          <p className="mt-3 rounded-lg bg-white px-3 py-2 text-sm font-medium">{session.title}</p>
+          <ul className="mt-3 space-y-2 text-sm text-mute">
+            {fleet.slice(0, 4).map((job) => (
+              <li key={job.id}>{job.title} · {job.column}</li>
+            ))}
+            {fleet.length === 0 ? <li>No parallel agent yet. Cloud can start one.</li> : null}
+          </ul>
+        </div>
+        <div>
+          <h2 className="text-4xl font-medium leading-tight tracking-tight">Works on its own, runs in parallel</h2>
+          <p className="mt-4 text-lg text-mute">Each cloud agent keeps its own copy of the files. Pro runs two. Pro Plus runs four.</p>
+          <Link to="/cloud" className="mt-6 inline-flex text-sm text-clay">Open cloud agents</Link>
+        </div>
+      </section>
+      <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-24 lg:grid-cols-[18rem_minmax(0,1fr)]">
+        <div>
+          <h2 className="text-4xl font-medium leading-tight tracking-tight">In the editor, the terminal, and the review</h2>
+          <p className="mt-4 text-lg text-mute">The same session answers in the CLI, shows the diff, and waits before a shell command runs.</p>
+          <Link to="/cli" className="mt-6 inline-flex text-sm text-clay">Open the CLI</Link>
+        </div>
+        <div className="rounded-2xl bg-[#d9d3c6] p-6">
+          <pre className="overflow-x-auto rounded-xl bg-[#1c1b19] p-4 text-xs leading-6 text-[#f3f0e7]">{`$ agent add the idempotency key
+$ sandbox
+$ print`}</pre>
+          <ul className="mt-4 space-y-2 text-sm">
+            {chat.slice(-3).map((line, index) => (
+              <li key={`${line.role}-${index}`} className="rounded-lg bg-white/80 px-3 py-2">
+                <span className="text-xs uppercase text-mute">{line.role}</span>
+                <span className="mt-1 block">{line.text.slice(0, 160)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+      <section className="mx-auto max-w-3xl px-4 pb-24 text-center">
+        <h2 className="text-5xl font-medium tracking-tight">Try Makerrr now.</h2>
+        <Link to="/desktop" search={{ os: "mac" }} className="mt-8 inline-flex h-12 items-center rounded-full bg-ink px-5 text-sm text-bone">
+          Download for macOS
+        </Link>
+      </section>
+    </>
   );
 }
