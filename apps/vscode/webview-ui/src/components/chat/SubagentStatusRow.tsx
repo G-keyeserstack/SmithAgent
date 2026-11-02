@@ -229,7 +229,7 @@ export default function SubagentStatusRow({ message, isLast, lastModifiedMessage
 					const isStreamingPromptUnderConstruction =
 						isPromptConstructionRow && message.partial === true && index === data.items.length - 1
 					const shouldShowStats = !isStreamingPromptUnderConstruction
-					const statsText = `${formatCount(entry.toolCalls)} tools called · ${formatCount(entry.contextTokens)} tokens · ${formatCost(entry.totalCost)}`
+					const statsText = `${formatCount(entry.toolCalls)} tools · ${formatCount(entry.inputTokens)} input / ${formatCount(entry.outputTokens)} output · ${formatCount(entry.contextTokens)} context · ${formatCost(entry.totalCost)}`
 					const latestToolCallText = entry.latestToolCall?.trim() || ""
 					return (
 						<div
