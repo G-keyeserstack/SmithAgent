@@ -173,7 +173,7 @@ export const PLANS: Plan[] = [
     team: true,
     sandbox: true,
     subagents: true,
-    parallel: 4,
+    parallel: 8,
     byok: true,
     privateRepo: true,
     analytics: true,

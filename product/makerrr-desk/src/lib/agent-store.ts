@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { classifyCommand, TOUR } from "@/lib/controls";
 import { DOCS, polish, searchProject, WEBHOOK_PATH, WEBHOOK_SOURCE } from "@/lib/search";
 import {
   applyIdempotency,
@@ -119,6 +120,13 @@ export type Project = {
   chat: ChatLine[];
   formatHook: boolean;
   secretHook: boolean;
+  allow: string[];
+  block: string[];
+  pendingCommand: string;
+  reduceMotion: boolean;
+  tourStep: number;
+  imageNote: string;
+  themeName: string;
 };
 
 type AgentState = {
@@ -162,6 +170,14 @@ type AgentState = {
   readFile: (surface: Surface) => string;
   composer: (prompt: string, surface: Surface) => string;
   setHook: (key: "formatHook" | "secretHook", value: boolean) => void;
+  setCommand: (command: string) => void;
+  setList: (key: "allow" | "block", value: string) => void;
+  steer: (text: string, surface: Surface) => string;
+  reclaimChats: () => string;
+  toggleMotion: () => void;
+  importSettings: (raw: string) => string;
+  tourNext: () => string;
+  attachImage: (name: string) => string;
 };
 
 function freshFiles(): ProjectFile[] {
@@ -220,6 +236,13 @@ function freshProject(): Project {
     chat: [],
     formatHook: true,
     secretHook: true,
+    allow: ["bun test"],
+    block: ["rm -rf", "sudo"],
+    pendingCommand: SHELL_COMMAND,
+    reduceMotion: false,
+    tourStep: 0,
+    imageNote: "",
+    themeName: "",
   };
 }
 
@@ -385,7 +408,7 @@ export const useAgent = create<AgentState>()(
         acceptDiff: (surface) => {
           const current = get().session;
           if (current.mode !== "act") return "Switch to Act before accepting the diff.";
-          if (current.column === "queued") return "Start the this job first.";
+          if (current.column === "queued") return "Start the job first.";
           const project = get().project;
           if (!get().account.mcp) return "MCP writes are off. Turn them on under Enterprise.";
           if (rulesBlockEdit(project.rules)) return "Rules block edits to pay.ts.";
@@ -413,12 +436,36 @@ export const useAgent = create<AgentState>()(
         },
         approveShell: (surface) => {
           const current = get().session;
+          const project = get().project;
+          const command = project.pendingCommand || SHELL_COMMAND;
+          const verdict = classifyCommand(command, project.allow, project.block);
+          if (verdict === "block") {
+            set({
+              session: { ...current, surface, shellStatus: "denied", shellOutput: `Blocked by the desk list: ${command}` },
+            });
+            push(surface, "agent.approveShell()", "Blocked before it ran.");
+            return "Command blocked.";
+          }
+          if (verdict === "sandbox") {
+            set({
+              session: {
+                ...current,
+                surface,
+                shellStatus: "pending",
+                shellOutput: `Sandbox only. ${command} did not touch the files or the network.`,
+              },
+            });
+            push(surface, "agent.approveShell()", "Ran inside the sandbox.");
+            return "Sandboxed.";
+          }
           if (current.mode !== "act" && !get().account.autoRun) return "Switch to Act before approving the shell.";
-          if (current.column === "queued") return "Start the this job first.";
+          if (current.column === "queued") return "Start the job first.";
           if (!get().account.network) return "Network is off for this desk. The test runner stays closed.";
           const blocked = gate(surface, "agent.approveShell()");
           if (blocked) return blocked;
-          const project = get().project;
+          if (verdict === "ask" && !get().account.autoRun) {
+            return "This command is not on the allow list. Add it, or turn auto-run on.";
+          }
           const file = fileByPath(project.files, PAY_PATH);
           const result = runCheckoutTest(file.text, project.rules);
           const first = !current.charged.shell;
@@ -439,7 +486,7 @@ export const useAgent = create<AgentState>()(
         },
         denyShell: (surface) => {
           const current = get().session;
-          if (current.column === "queued") return "Start the this job first.";
+          if (current.column === "queued") return "Start the job first.";
           set({
             session: {
               ...current,
@@ -569,7 +616,7 @@ export const useAgent = create<AgentState>()(
         inlineEdit: (instruction, surface) => {
           const current = get().session;
           if (current.mode !== "act") return "Switch to Act before an inline edit.";
-          if (current.column === "queued") return "Start the this job first.";
+          if (current.column === "queued") return "Start the job first.";
           const blocked = gate(surface, "editor.inlineEdit()");
           if (blocked) return blocked;
           if (rulesBlockEdit(get().project.rules)) return "Rules block edits to pay.ts.";
@@ -892,6 +939,55 @@ export const useAgent = create<AgentState>()(
           push(surface, "agent.print()", text);
           return text;
         },
+        setCommand: (command) => set({ project: { ...get().project, pendingCommand: command } }),
+        setList: (key, value) => {
+          const items = value.split("\n").map((item) => item.trim()).filter(Boolean);
+          set({ project: { ...get().project, [key]: items } });
+        },
+        steer: (text, surface) => {
+          const note = text.trim();
+          if (!note) return "Type the correction first.";
+          talk("you", note);
+          talk("agent", `Steering kept. The current job stays ${get().session.column}.`);
+          push(surface, "agent.steer()", note);
+          return "Steered.";
+        },
+        reclaimChats: () => {
+          const chat = get().project.chat;
+          const kept = chat.slice(-2);
+          const removed = chat.length - kept.length;
+          set({ project: { ...get().project, chat: kept, notice: `Removed ${removed} old chat lines.` } });
+          return `Removed ${removed} old chat lines.`;
+        },
+        toggleMotion: () => set({ project: { ...get().project, reduceMotion: !get().project.reduceMotion } }),
+        importSettings: (raw) => {
+          try {
+            const parsed = JSON.parse(raw) as { "workbench.colorTheme"?: string; keybindings?: unknown[] };
+            const theme = typeof parsed["workbench.colorTheme"] === "string" ? parsed["workbench.colorTheme"] : "Default Dark+";
+            const keys = Array.isArray(parsed.keybindings) ? parsed.keybindings.length : 0;
+            set({ project: { ...get().project, themeName: theme, notice: `Imported ${theme}. ${keys} keybindings.` } });
+            return `Imported ${theme}.`;
+          } catch {
+            return "That is not VS Code settings JSON.";
+          }
+        },
+        tourNext: () => {
+          const step = (get().project.tourStep + 1) % TOUR.length;
+          const path = TOUR[step]?.path ?? PAY_PATH;
+          set({
+            project: {
+              ...get().project,
+              tourStep: step,
+              activePath: path === ".makerrrrules" ? get().project.activePath : path,
+            },
+          });
+          return path;
+        },
+        attachImage: (name) => {
+          const note = name.trim() ? `Image attached: ${name.trim()}` : "No image.";
+          set({ project: { ...get().project, imageNote: note } });
+          return note;
+        },
         delegateTests: (surface) => {
           const plan = planById(get().account.planId);
           if (!plan.subagents) return "Subagents start on Pro Plus.";
@@ -941,6 +1037,13 @@ export const useAgent = create<AgentState>()(
             chat: saved.project?.chat ?? current.project.chat,
             formatHook: saved.project?.formatHook ?? current.project.formatHook,
             secretHook: saved.project?.secretHook ?? current.project.secretHook,
+            allow: saved.project?.allow ?? current.project.allow,
+            block: saved.project?.block ?? current.project.block,
+            pendingCommand: saved.project?.pendingCommand || current.project.pendingCommand,
+            reduceMotion: saved.project?.reduceMotion ?? current.project.reduceMotion,
+            tourStep: saved.project?.tourStep ?? current.project.tourStep,
+            imageNote: saved.project?.imageNote ?? "",
+            themeName: saved.project?.themeName ?? "",
           },
         };
       },

@@ -14,6 +14,7 @@ import { Route as BoardRouteImport } from './routes/board'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CliRouteImport } from './routes/cli'
 import { Route as CloudRouteImport } from './routes/cloud'
+import { Route as ControlsRouteImport } from './routes/controls'
 import { Route as DesktopRouteImport } from './routes/desktop'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as EnterpriseRouteImport } from './routes/enterprise'
@@ -45,6 +46,11 @@ const CliRoute = CliRouteImport.update({
 const CloudRoute = CloudRouteImport.update({
   id: '/cloud',
   path: '/cloud',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ControlsRoute = ControlsRouteImport.update({
+  id: '/controls',
+  path: '/controls',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DesktopRoute = DesktopRouteImport.update({
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/checkout': typeof CheckoutRoute
   '/cli': typeof CliRoute
   '/cloud': typeof CloudRoute
+  '/controls': typeof ControlsRoute
   '/desktop': typeof DesktopRoute
   '/docs': typeof DocsRoute
   '/enterprise': typeof EnterpriseRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/checkout': typeof CheckoutRoute
   '/cli': typeof CliRoute
   '/cloud': typeof CloudRoute
+  '/controls': typeof ControlsRoute
   '/desktop': typeof DesktopRoute
   '/docs': typeof DocsRoute
   '/enterprise': typeof EnterpriseRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/checkout': typeof CheckoutRoute
   '/cli': typeof CliRoute
   '/cloud': typeof CloudRoute
+  '/controls': typeof ControlsRoute
   '/desktop': typeof DesktopRoute
   '/docs': typeof DocsRoute
   '/enterprise': typeof EnterpriseRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/cli'
     | '/cloud'
+    | '/controls'
     | '/desktop'
     | '/docs'
     | '/enterprise'
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/cli'
     | '/cloud'
+    | '/controls'
     | '/desktop'
     | '/docs'
     | '/enterprise'
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/cli'
     | '/cloud'
+    | '/controls'
     | '/desktop'
     | '/docs'
     | '/enterprise'
@@ -177,6 +189,7 @@ export interface RootRouteChildren {
   CheckoutRoute: typeof CheckoutRoute
   CliRoute: typeof CliRoute
   CloudRoute: typeof CloudRoute
+  ControlsRoute: typeof ControlsRoute
   DesktopRoute: typeof DesktopRoute
   DocsRoute: typeof DocsRoute
   EnterpriseRoute: typeof EnterpriseRoute
@@ -221,6 +234,13 @@ declare module '@tanstack/react-router' {
       path: '/cloud'
       fullPath: '/cloud'
       preLoaderRoute: typeof CloudRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/controls': {
+      id: '/controls'
+      path: '/controls'
+      fullPath: '/controls'
+      preLoaderRoute: typeof ControlsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/desktop': {
@@ -281,6 +301,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutRoute: CheckoutRoute,
   CliRoute: CliRoute,
   CloudRoute: CloudRoute,
+  ControlsRoute: ControlsRoute,
   DesktopRoute: DesktopRoute,
   DocsRoute: DocsRoute,
   EnterpriseRoute: EnterpriseRoute,

@@ -278,6 +278,10 @@ export function SiteFooter() {
 
 export function SiteFrame({ children }: { children: ReactNode }) {
   useAgentReady();
+  const reduceMotion = useAgent((state) => state.project.reduceMotion);
+  useEffect(() => {
+    document.documentElement.classList.toggle("reduce-motion", reduceMotion);
+  }, [reduceMotion]);
   return (
     <div className="min-h-screen bg-[#f7f6f3] text-ink">
       <CenterNav />

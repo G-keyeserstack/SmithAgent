@@ -42,6 +42,23 @@ function Home() {
         <section className="px-3 pb-20 sm:px-6">
           <HeroWindow />
         </section>
+        <section className="mx-auto max-w-6xl px-4 pb-16">
+          <div className="overflow-hidden rounded-2xl border border-line bg-black">
+            <video
+              className="aspect-video w-full"
+              controls
+              playsInline
+              preload="metadata"
+              src="/understand-codebase.webm"
+            >
+              <track kind="captions" />
+            </video>
+          </div>
+          <p className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-mute">
+            <span>The agent reads the codebase before it edits.</span>
+            <Link to="/controls" className="text-ink">Open the desk controls</Link>
+          </p>
+        </section>
         <section className="mx-auto max-w-5xl px-4 pb-16">
           <div className="flex items-end overflow-x-auto" role="tablist">
             {TABS.map((item) => (
