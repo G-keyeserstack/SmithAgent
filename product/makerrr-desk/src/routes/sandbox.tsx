@@ -49,7 +49,7 @@ function SandboxPage() {
         <ol className="mt-6 space-y-3 text-sm leading-6">
           <li><strong>Block list first.</strong> If the command contains any blocked phrase, it is refused. This wins even when the same command also matches the allow list.</li>
           <li><strong>Allow list second.</strong> A matching phrase may run, but only after the job has started and the mode is Act. A short phrase matches too much, so keep entries specific, such as <span className="font-mono">bun test</span>.</li>
-          <li><strong>Risky commands third.</strong> <span className="font-mono">curl</span>, <span className="font-mono">npm publish</span>, <span className="font-mono">git push --force</span>, <span className="font-mono">rm</span>, <span className="font-mono">sudo</span>, and a pipe into <span className="font-mono">sh</span> stay in the sandbox unless the block list already refused them.</li>
+          <li><strong>Risky commands third.</strong> <span className="font-mono">curl</span>, <span className="font-mono">npm install</span>, <span className="font-mono">npx</span>, <span className="font-mono">npm publish</span>, <span className="font-mono">git push --force</span>, <span className="font-mono">rm</span>, <span className="font-mono">sudo</span>, and a pipe into <span className="font-mono">sh</span> stay in the sandbox unless the block list already refused them.</li>
           <li><strong>Everything else asks.</strong> The command waits. It does not run on its own.</li>
         </ol>
         <section className="mt-8 rounded-2xl border border-line bg-paper p-4">

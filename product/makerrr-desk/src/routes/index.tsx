@@ -122,7 +122,7 @@ function HomeRest() {
           <ol className="mt-4 space-y-3 text-sm leading-6 text-mute">
             <li>The allow list is checked first. `bun test` may run the checkout test, after you start the job and switch to Act.</li>
             <li>The block list wins over everything else. `sudo` and `rm -rf` are refused and the command does not run.</li>
-            <li>A risky command that is not blocked, such as `curl` or `npm publish`, is sandboxed. You see the result, and the file is not written.</li>
+            <li>A risky command that is not blocked, such as `npm install`, `npx`, or `curl`, is sandboxed. You see the result, and the file is not written.</li>
             <li>Anything else waits until you add it to the allow list, or turn auto-run on.</li>
           </ol>
           <p className="mt-4 text-sm"><Link to="/sandbox" className="text-ink">Open sandbox settings</Link></p>

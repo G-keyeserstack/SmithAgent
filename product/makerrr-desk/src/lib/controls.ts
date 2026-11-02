@@ -1,6 +1,15 @@
 export type Verdict = "allow" | "ask" | "sandbox" | "block";
 
-const RISKY = [/curl\s+\S+/i, /\bnpm\s+publish\b/, /\bgit\s+push\s+--force\b/, /\brm\b/, /\bsudo\b/, /\|\s*sh\b/];
+const RISKY = [
+  /curl\s+\S+/i,
+  /\bnpm\s+publish\b/,
+  /\bnpm\s+(install|i|ci|update|add)\b/,
+  /\bnpx\b/,
+  /\bgit\s+push\s+--force\b/,
+  /\brm\b/,
+  /\bsudo\b/,
+  /\|\s*sh\b/,
+];
 
 export function classifyCommand(command: string, allow: string[], block: string[]): Verdict {
   const text = command.trim();
