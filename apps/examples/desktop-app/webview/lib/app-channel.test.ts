@@ -17,6 +17,11 @@ describe("app channel", () => {
 		expect(isBetaVersion(undefined)).toBe(false);
 	});
 
+	it("uses the Makerrr product names", () => {
+		expect(STABLE_PRODUCT_NAME).toBe("Makerrr");
+		expect(BETA_PRODUCT_NAME).toBe("Makerrr Beta");
+	});
+
 	it("maps the version to the shipped product name", () => {
 		expect(productNameForVersion("0.0.14-beta.1")).toBe(BETA_PRODUCT_NAME);
 		expect(productNameForVersion("0.0.13")).toBe(STABLE_PRODUCT_NAME);
