@@ -429,6 +429,9 @@ describe("plugin install command", () => {
 			JSON.stringify(
 				{
 					name: "plugin-package",
+					makerrr: {
+						plugins: [{ paths: ["./index.ts"], capabilities: ["tools"] }],
+					},
 					cline: {
 						plugins: [{ paths: ["./index.ts"], capabilities: ["tools"] }],
 					},
