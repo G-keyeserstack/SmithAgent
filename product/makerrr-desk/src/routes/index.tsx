@@ -48,10 +48,12 @@ function Home() {
           <div className="overflow-hidden rounded-2xl border border-line bg-black">
             <video
               className="aspect-video w-full"
-              controls
+              autoPlay
+              muted
+              loop
               playsInline
-              preload="metadata"
-              src="/understand-codebase.webm"
+              preload="auto"
+              src="/makerrr-agent.mp4"
             >
               <track kind="captions" />
             </video>
