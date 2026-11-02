@@ -99,9 +99,14 @@ mv "$UPSTREAM_DIR/product.json.makerrr" "$UPSTREAM_DIR/product.json"
 
   # VS Code invokes node-gyp from build/npm/gyp before its main npm ci.
   # The root Bun install does not populate this isolated, lockfile-pinned package.
+  # `node -` reads this script from stdin, so argv[1] is "-" and the path is argv[2].
+  # argv[1] was opening a file named "-" and the gyp bootstrap never ran.
   node - "$UPSTREAM_DIR/prepare_vscode.sh" <<'NODE'
 const fs = require("node:fs");
-const preparePath = process.argv[1];
+const preparePath = process.argv[2];
+if (!preparePath || preparePath === "-") {
+  throw new Error("prepare_vscode.sh path must be argv[2]; argv[1] is the stdin marker '-'");
+}
 let source = fs.readFileSync(preparePath, "utf8");
 const marker = "node build/npm/preinstall.ts";
 const install = "npm ci --prefix build/npm/gyp --ignore-scripts --no-audit --no-fund";
