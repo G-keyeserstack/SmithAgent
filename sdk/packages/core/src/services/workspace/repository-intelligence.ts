@@ -71,7 +71,7 @@ function summarizeDirectory(files: string[]): string[] {
 
 function extractImports(content: string): string[] {
 	const matches = content.matchAll(
-		/(?:from\s*|import\s*\(|require\s*\()(["'])(\.{1,2}\/[^"']+)\\1/g,
+		/(?:from\s*|import\s*\(|require\s*\()(["'])(\.{1,2}\/[^"']+)\1/g,
 	);
 	return [...new Set([...matches].map((match) => match[2]))].slice(0, 40);
 }
