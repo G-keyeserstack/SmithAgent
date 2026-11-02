@@ -864,14 +864,22 @@ export {
 } from "./services/usage";
 export type {
 	FastFileIndexOptions,
+	CodeSearchResponse,
+	CodeSearchResult,
+	EmbeddingProvider,
+	RepositoryMap,
+	RepositoryMapOptions,
+	SemanticSearchOptions,
 	MentionEnricherOptions,
 	MentionEnrichmentResult,
 } from "./services/workspace";
 export {
+	buildRepositoryMap,
 	enrichPromptWithMentions,
 	ensureChatWorkspace,
 	getFileIndex,
 	prewarmFileIndex,
+	searchWorkspaceCode,
 } from "./services/workspace";
 export type {
 	WorkspaceManager,
