@@ -213,7 +213,7 @@ function cosineSimilarity(left: number[], right: number[]): number {
 }
 
 async function readCodeChunks(cwd: string, maxFiles: number, maxChunks = MAX_CHUNKS): Promise<CodeChunk[]> {
-	const boundedMaxChunks = Math.max(1, Math.min(maxChunks, MAX_CHUNKS))
+	const boundedMaxChunks = Math.max(1, Math.min(maxChunks, MAX_CHUNKS));
 	const indexed = await getFileIndex(cwd);
 	const candidates = [...indexed].filter(isIndexable).sort().slice(0, maxFiles);
 	const chunks: CodeChunk[] = [];
