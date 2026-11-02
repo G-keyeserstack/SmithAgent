@@ -51,7 +51,7 @@ The presence of code or documentation for a capability does not by itself mean t
 4. **Provider credentials are not Makerrr identity.** A developer's OpenAI, Anthropic, Google or MCP credential must remain distinct from their Makerrr account, organisation and subscription.
 5. **Scale horizontally.** Cloud workers, durable task state, model routing and observability are designed for growth; 100,000 concurrent developers remains a target requiring load tests and operational evidence.
 
-See the [Makerrr overview](./docs/makerrr-overview.mdx), [authentication architecture](./product/makerrr/AUTHENTICATION_ARCHITECTURE.md) and [product experience requirements](./product/makerrr/PRODUCT_EXPERIENCE_REQUIREMENTS.md).
+See the [Makerrr overview](./docs/makerrr-overview.mdx), [product experience requirements](./product/makerrr/PRODUCT_EXPERIENCE_REQUIREMENTS.md), [authentication architecture](./product/makerrr/AUTHENTICATION_ARCHITECTURE.md) and [10M-user production-readiness programme](./product/makerrr/PRODUCTION_READINESS_10M.md).
 
 ## Development
 
