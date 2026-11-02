@@ -55,9 +55,12 @@ jobs:
       - name: Verify Makerrr desktop identity
         run: bun run editor:verify
 
-      - name: Test repository intelligence and desktop search interaction
+      - name: Test desktop codebase search interaction
         working-directory: apps/vscode
-        run: bunx --bun vitest run --config vitest.config.ts src/hosts/vscode/codebase-search.test.ts ../../sdk/packages/core/src/services/workspace/repository-intelligence.test.ts
+        run: bunx --bun vitest run --config vitest.config.ts src/hosts/vscode/codebase-search.test.ts
+
+      - name: Test SDK repository intelligence
+        run: bunx --bun vitest run --config sdk/packages/core/vitest.config.ts sdk/packages/core/src/services/workspace/repository-intelligence.test.ts
 
       - name: Lint desktop codebase search
         working-directory: apps/vscode
